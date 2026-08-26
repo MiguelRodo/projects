@@ -6,14 +6,6 @@ import (
 	"strings"
 )
 
-// Contract version identifiers.
-const (
-	// ContractVersionV1Alpha1 is the early draft contract version.
-	ContractVersionV1Alpha1 = "projects.dev/v1alpha1"
-	// ContractVersionV1 is the stable v1 contract version.
-	ContractVersionV1 = "projects.dev/v1"
-)
-
 var (
 	// ErrEmptySchemaVersion indicates the schema version header is missing.
 	ErrEmptySchemaVersion = errors.New("schema version cannot be empty")
@@ -23,23 +15,24 @@ var (
 	ErrTargetNotFound = errors.New("target project reference not found")
 )
 
-// SingleProjectContract represents a conforming repository mapped to a single GitHub Project.
+// SingleProjectContract represents the canonical in-memory model of a repository
+// mapped to a single GitHub Project.
 type SingleProjectContract struct {
-	SchemaVersion string          `json:"schema_version" yaml:"schema_version"`
-	Project       ProjectIdentity `json:"project" yaml:"project"`
-	Repository    RepositoryRef   `json:"repository" yaml:"repository"`
-	Target        TargetProject   `json:"target" yaml:"target"`
-	Mappings      []FieldMapping  `json:"mappings,omitempty" yaml:"mappings,omitempty"`
-	Capabilities  CapabilitySet   `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
-	Mutation      MutationPolicy  `json:"mutation,omitempty" yaml:"mutation,omitempty"`
-	Privacy       PrivacyPolicy   `json:"privacy,omitempty" yaml:"privacy,omitempty"`
-	Sources       []SourceRef     `json:"sources,omitempty" yaml:"sources,omitempty"`
+	SchemaVersion string                  `json:"schema_version,omitempty" yaml:"schema_version,omitempty"`
+	Project       ProjectIdentity         `json:"project" yaml:"project"`
+	Repository    RepositoryRef           `json:"repository" yaml:"repository"`
+	Target        TargetProject           `json:"target" yaml:"target"`
+	Mappings      []FieldMapping          `json:"mappings,omitempty" yaml:"mappings,omitempty"`
+	Capabilities  CapabilitySet           `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
+	Mutation      MutationPolicy          `json:"mutation,omitempty" yaml:"mutation,omitempty"`
+	Privacy       RepositoryPrivacyPolicy `json:"privacy,omitempty" yaml:"privacy,omitempty"`
+	Sources       []SourceRef             `json:"sources,omitempty" yaml:"sources,omitempty"`
 }
 
 // NewSingleProjectContract initializes a SingleProjectContract with safe defaults.
 func NewSingleProjectContract(name, repoURL string, target TargetProject) SingleProjectContract {
+	_ = target.Validate()
 	return SingleProjectContract{
-		SchemaVersion: ContractVersionV1,
 		Project: ProjectIdentity{
 			Name: name,
 			Slug: generateSlug(name),
@@ -51,15 +44,12 @@ func NewSingleProjectContract(name, repoURL string, target TargetProject) Single
 		Target:       target,
 		Capabilities: DefaultCapabilities(),
 		Mutation:     DefaultMutationPolicy(),
-		Privacy:      DefaultPrivacyPolicy(),
+		Privacy:      DefaultRepositoryPrivacyPolicy(),
 	}
 }
 
 // Validate verifies all fields and invariants for a SingleProjectContract.
 func (c *SingleProjectContract) Validate() error {
-	if strings.TrimSpace(c.SchemaVersion) == "" {
-		return ErrEmptySchemaVersion
-	}
 	if err := c.Project.Validate(); err != nil {
 		return fmt.Errorf("invalid project identity: %w", err)
 	}
@@ -98,36 +88,41 @@ func (c *SingleProjectContract) Validate() error {
 	return nil
 }
 
-// MultiProjectContract represents a dispatcher managing multiple Projects and repositories.
+// MultiProjectContract represents the canonical in-memory model of a multi-project dispatcher.
 type MultiProjectContract struct {
-	SchemaVersion string            `json:"schema_version" yaml:"schema_version"`
-	IssueStore    RepositoryRef     `json:"issue_store" yaml:"issue_store"`
-	Projects      []ProjectIdentity `json:"projects,omitempty" yaml:"projects,omitempty"`
-	Targets       []TargetProject   `json:"targets" yaml:"targets"`
-	Dispatcher    DispatcherConfig  `json:"dispatcher" yaml:"dispatcher"`
-	Mappings      []FieldMapping    `json:"mappings,omitempty" yaml:"mappings,omitempty"`
-	Capabilities  CapabilitySet     `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
-	Mutation      MutationPolicy    `json:"mutation,omitempty" yaml:"mutation,omitempty"`
-	Privacy       PrivacyPolicy     `json:"privacy,omitempty" yaml:"privacy,omitempty"`
-	Sources       []SourceRef       `json:"sources,omitempty" yaml:"sources,omitempty"`
+	SchemaVersion string                  `json:"schema_version,omitempty" yaml:"schema_version,omitempty"`
+	IssueStore    RepositoryRef           `json:"issue_store" yaml:"issue_store"`
+	Projects      []ProjectIdentity       `json:"projects,omitempty" yaml:"projects,omitempty"`
+	Targets       []TargetProject         `json:"targets" yaml:"targets"`
+	Dispatcher    DispatcherConfig        `json:"dispatcher" yaml:"dispatcher"`
+	Mappings      []FieldMapping          `json:"mappings,omitempty" yaml:"mappings,omitempty"`
+	Capabilities  CapabilitySet           `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
+	Mutation      MutationPolicy          `json:"mutation,omitempty" yaml:"mutation,omitempty"`
+	Privacy       RepositoryPrivacyPolicy `json:"privacy,omitempty" yaml:"privacy,omitempty"`
+	Sources       []SourceRef             `json:"sources,omitempty" yaml:"sources,omitempty"`
 }
 
 // NewMultiProjectContract initializes a MultiProjectContract with safe defaults.
+// It ensures target references are properly generated before populating the dispatcher.
 func NewMultiProjectContract(issueStore RepositoryRef, defaultTarget TargetProject) MultiProjectContract {
+	_ = defaultTarget.Validate()
+	if defaultTarget.Ref == "" && defaultTarget.Owner != "" && defaultTarget.Number > 0 {
+		defaultTarget.Ref = fmt.Sprintf("%s/%d", defaultTarget.Owner, defaultTarget.Number)
+	}
+
 	caps := DefaultCapabilities()
 	caps.Add(CapabilityRouteDispatcher)
 
 	return MultiProjectContract{
-		SchemaVersion: ContractVersionV1,
-		IssueStore:    issueStore,
-		Targets:       []TargetProject{defaultTarget},
+		IssueStore: issueStore,
+		Targets:    []TargetProject{defaultTarget},
 		Dispatcher: DispatcherConfig{
 			DefaultTargetRef: defaultTarget.Ref,
 			Fallback:         FallbackBehaviorDefaultTarget,
 		},
 		Capabilities: caps,
 		Mutation:     DefaultMutationPolicy(),
-		Privacy:      DefaultPrivacyPolicy(),
+		Privacy:      DefaultRepositoryPrivacyPolicy(),
 	}
 }
 
@@ -141,41 +136,8 @@ func (m *MultiProjectContract) FindTarget(ref string) (*TargetProject, bool) {
 	return nil, false
 }
 
-// ResolveTarget determines the destination TargetProject for a given rule key/value pair.
-func (m *MultiProjectContract) ResolveTarget(key, value string) (*TargetProject, error) {
-	for _, rule := range m.Dispatcher.Routes {
-		if strings.EqualFold(rule.Key, key) && (rule.Value == "*" || strings.EqualFold(rule.Value, value)) {
-			if target, found := m.FindTarget(rule.TargetRef); found {
-				return target, nil
-			}
-			return nil, fmt.Errorf("%w: %q referenced in route for key=%s, value=%s",
-				ErrTargetNotFound, rule.TargetRef, key, value)
-		}
-	}
-
-	// Fallback handling
-	switch m.Dispatcher.Fallback {
-	case FallbackBehaviorDefaultTarget:
-		if m.Dispatcher.DefaultTargetRef != "" {
-			if target, found := m.FindTarget(m.Dispatcher.DefaultTargetRef); found {
-				return target, nil
-			}
-			return nil, fmt.Errorf("%w: default target %q not found", ErrTargetNotFound, m.Dispatcher.DefaultTargetRef)
-		}
-	case FallbackBehaviorIgnore:
-		return nil, nil
-	case FallbackBehaviorError:
-		return nil, fmt.Errorf("%w: no matching route for key=%s, value=%s", ErrRouteNotFound, key, value)
-	}
-
-	return nil, fmt.Errorf("%w: no matching route for key=%s, value=%s", ErrRouteNotFound, key, value)
-}
-
 // Validate verifies all fields and invariants for a MultiProjectContract.
 func (m *MultiProjectContract) Validate() error {
-	if strings.TrimSpace(m.SchemaVersion) == "" {
-		return ErrEmptySchemaVersion
-	}
 	if err := m.IssueStore.Validate(); err != nil {
 		return fmt.Errorf("invalid issue store: %w", err)
 	}

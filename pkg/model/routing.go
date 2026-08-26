@@ -13,23 +13,23 @@ var (
 	ErrEmptyRouteTarget = errors.New("route target cannot be empty")
 	// ErrInvalidFallbackBehavior indicates an unsupported fallback behavior.
 	ErrInvalidFallbackBehavior = errors.New("invalid fallback behavior")
-	// ErrRouteNotFound indicates no matching route could be found.
-	ErrRouteNotFound = errors.New("matching route not found")
+	// ErrDuplicateRouteRule indicates multiple route rules define the same key-value condition.
+	ErrDuplicateRouteRule = errors.New("duplicate route rule condition")
 )
 
-// FallbackBehavior specifies what to do when an issue does not match any route.
+// FallbackBehavior specifies the intended behavior when an item does not match any route.
 type FallbackBehavior string
 
 const (
 	// FallbackBehaviorDefaultTarget routes to the designated default project.
 	FallbackBehaviorDefaultTarget FallbackBehavior = "default_target"
-	// FallbackBehaviorError fails when no matching route exists.
+	// FallbackBehaviorError indicates routing failure when no matching route exists.
 	FallbackBehaviorError FallbackBehavior = "error"
-	// FallbackBehaviorIgnore skips routing for unmatched issues.
+	// FallbackBehaviorIgnore indicates skipping routing for unmatched items.
 	FallbackBehaviorIgnore FallbackBehavior = "ignore"
 )
 
-// RouteRule maps a key/value match condition to a target project.
+// RouteRule represents a mapping condition from a key/value pair to a target project reference.
 type RouteRule struct {
 	Key           string            `json:"key" yaml:"key"` // e.g. "label", "repository", "component"
 	Value         string            `json:"value" yaml:"value"`
@@ -52,14 +52,14 @@ func (r *RouteRule) Validate() error {
 	return nil
 }
 
-// DispatcherConfig configures routing for multi-project topologies.
+// DispatcherConfig configures routing targets and rules for multi-project topologies.
 type DispatcherConfig struct {
 	DefaultTargetRef string           `json:"default_target_ref,omitempty" yaml:"default_target_ref,omitempty"`
 	Fallback         FallbackBehavior `json:"fallback,omitempty" yaml:"fallback,omitempty"`
 	Routes           []RouteRule      `json:"routes" yaml:"routes"`
 }
 
-// Validate checks dispatcher configuration.
+// Validate checks dispatcher configuration invariants.
 func (d *DispatcherConfig) Validate() error {
 	if d.Fallback == "" {
 		d.Fallback = FallbackBehaviorDefaultTarget
@@ -75,10 +75,17 @@ func (d *DispatcherConfig) Validate() error {
 		return errors.New("dispatcher requires either a default_target_ref or explicit routes")
 	}
 
+	seenConditions := make(map[string]struct{})
 	for i := range d.Routes {
-		if err := d.Routes[i].Validate(); err != nil {
+		r := &d.Routes[i]
+		if err := r.Validate(); err != nil {
 			return fmt.Errorf("route %d: %w", i, err)
 		}
+		conditionKey := fmt.Sprintf("%s=%s", strings.ToLower(r.Key), strings.ToLower(r.Value))
+		if _, exists := seenConditions[conditionKey]; exists {
+			return fmt.Errorf("%w: %q", ErrDuplicateRouteRule, conditionKey)
+		}
+		seenConditions[conditionKey] = struct{}{}
 	}
 	return nil
 }

@@ -15,6 +15,8 @@ var (
 	ErrInvalidFieldKind = errors.New("invalid field kind")
 	// ErrEmptyValueMapping indicates source or target value is empty.
 	ErrEmptyValueMapping = errors.New("value mapping cannot have empty canonical or remote value")
+	// ErrEmptySingleSelectValues indicates a single_select field was defined without values.
+	ErrEmptySingleSelectValues = errors.New("single_select field mapping requires at least one value mapping")
 )
 
 // FieldKind represents the data type of a project custom field.
@@ -65,6 +67,9 @@ func (f *FieldMapping) Validate() error {
 	if f.CanonicalName == "" {
 		return ErrEmptyCanonicalName
 	}
+	if err := ValidateSlug(f.CanonicalName); err != nil {
+		return fmt.Errorf("canonical name %w", err)
+	}
 	if f.GitHubField == "" {
 		return ErrEmptyGitHubField
 	}
@@ -72,8 +77,12 @@ func (f *FieldMapping) Validate() error {
 		f.Kind = FieldKindText
 	}
 	switch f.Kind {
-	case FieldKindText, FieldKindNumber, FieldKindSingleSelect, FieldKindIteration, FieldKindDate:
+	case FieldKindText, FieldKindNumber, FieldKindIteration, FieldKindDate:
 		// Valid
+	case FieldKindSingleSelect:
+		if len(f.Values) == 0 {
+			return fmt.Errorf("%w for field %q", ErrEmptySingleSelectValues, f.CanonicalName)
+		}
 	default:
 		return fmt.Errorf("%w: %q", ErrInvalidFieldKind, f.Kind)
 	}

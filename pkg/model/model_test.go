@@ -5,23 +5,46 @@ import (
 	"testing"
 )
 
-func TestPrivacyPolicyValidation(t *testing.T) {
-	p := DefaultPrivacyPolicy()
-	if err := p.Validate(); err != nil {
-		t.Fatalf("default privacy policy invalid: %v", err)
+func TestPrivacyPolicyAndUserPreference(t *testing.T) {
+	repoPolicy := DefaultRepositoryPrivacyPolicy()
+	if err := repoPolicy.Validate(); err != nil {
+		t.Fatalf("default repository privacy policy invalid: %v", err)
 	}
-	if p.Mode != PrivacyModeShareableByDefault {
-		t.Errorf("expected mode %q, got %q", PrivacyModeShareableByDefault, p.Mode)
+	if repoPolicy.DefaultMode != PrivacyModeShareableByDefault {
+		t.Errorf("expected default mode %q, got %q", PrivacyModeShareableByDefault, repoPolicy.DefaultMode)
 	}
-
-	p.Mode = PrivacyModeFullGitHubContext
-	if err := p.Validate(); err != nil {
-		t.Fatalf("full github context should be valid: %v", err)
+	if !repoPolicy.Supports(PrivacyModeFullGitHubContext) {
+		t.Errorf("expected support for full_github_context")
 	}
 
-	p.Mode = "invalid_mode"
-	if err := p.Validate(); !errors.Is(err, ErrInvalidPrivacyMode) {
-		t.Fatalf("expected ErrInvalidPrivacyMode, got: %v", err)
+	// User preference validation
+	userPref := UserPrivacyPreference{
+		EffectiveMode: PrivacyModeFullGitHubContext,
+	}
+	if err := userPref.Validate(&repoPolicy); err != nil {
+		t.Fatalf("valid user preference failed: %v", err)
+	}
+
+	// User preference default fallback
+	userPrefDefault := UserPrivacyPreference{}
+	if err := userPrefDefault.Validate(&repoPolicy); err != nil {
+		t.Fatalf("empty user preference should inherit default: %v", err)
+	}
+	if userPrefDefault.EffectiveMode != PrivacyModeShareableByDefault {
+		t.Errorf("expected effective mode %q, got %q", PrivacyModeShareableByDefault, userPrefDefault.EffectiveMode)
+	}
+
+	// User preference with unsupported mode
+	strictPolicy := RepositoryPrivacyPolicy{
+		SupportedModes: []PrivacyMode{PrivacyModeShareableByDefault},
+		DefaultMode:    PrivacyModeShareableByDefault,
+	}
+	_ = strictPolicy.Validate()
+	userPrefUnsupported := UserPrivacyPreference{
+		EffectiveMode: PrivacyModeFullGitHubContext,
+	}
+	if err := userPrefUnsupported.Validate(&strictPolicy); !errors.Is(err, ErrUnsupportedPrivacyMode) {
+		t.Fatalf("expected ErrUnsupportedPrivacyMode, got: %v", err)
 	}
 }
 
@@ -69,19 +92,54 @@ func TestRepositoryRefValidation(t *testing.T) {
 }
 
 func TestTargetProjectValidation(t *testing.T) {
-	target := TargetProject{
+	// User-owned project
+	targetUser := TargetProject{
+		Owner:     "alice",
+		OwnerKind: OwnerKindUser,
+		Number:    7,
+		Title:     "Personal Tasks",
+	}
+	if err := targetUser.Validate(); err != nil {
+		t.Fatalf("user target validation failed: %v", err)
+	}
+	if targetUser.OwnerKind != OwnerKindUser {
+		t.Errorf("expected owner kind 'user', got %q", targetUser.OwnerKind)
+	}
+	if targetUser.Ref != "alice/7" {
+		t.Errorf("expected ref 'alice/7', got %q", targetUser.Ref)
+	}
+
+	// Organization-owned project
+	targetOrg := TargetProject{
+		Owner:     "example-org",
+		OwnerKind: OwnerKindOrganization,
+		Number:    42,
+		Title:     "Global Roadmap",
+	}
+	if err := targetOrg.Validate(); err != nil {
+		t.Fatalf("org target validation failed: %v", err)
+	}
+
+	// Target without explicit owner kind (remains unspecified, not defaulted)
+	targetUnspecified := TargetProject{
 		Owner:  "example-org",
-		Number: 42,
-		Title:  "Global Roadmap",
+		Number: 10,
 	}
-	if err := target.Validate(); err != nil {
-		t.Fatalf("validation failed: %v", err)
+	if err := targetUnspecified.Validate(); err != nil {
+		t.Fatalf("unspecified target validation failed: %v", err)
 	}
-	if target.OwnerKind != OwnerKindOrganization {
-		t.Errorf("expected default owner kind 'organization', got %q", target.OwnerKind)
+	if targetUnspecified.OwnerKind != OwnerKindUnspecified {
+		t.Errorf("expected OwnerKindUnspecified, got %q", targetUnspecified.OwnerKind)
 	}
-	if target.Ref != "example-org/42" {
-		t.Errorf("expected ref 'example-org/42', got %q", target.Ref)
+
+	// Invalid owner kind
+	targetBadKind := TargetProject{
+		Owner:     "example-org",
+		OwnerKind: "invalid_kind",
+		Number:    1,
+	}
+	if err := targetBadKind.Validate(); !errors.Is(err, ErrInvalidOwnerKind) {
+		t.Fatalf("expected ErrInvalidOwnerKind, got: %v", err)
 	}
 
 	targetBadNum := TargetProject{Owner: "example-org", Number: 0}
@@ -92,7 +150,7 @@ func TestTargetProjectValidation(t *testing.T) {
 
 func TestFieldMappingValidation(t *testing.T) {
 	mapping := FieldMapping{
-		CanonicalName: "status",
+		CanonicalName: "task-status",
 		GitHubField:   "Status",
 		Kind:          FieldKindSingleSelect,
 		Values: []ValueMapping{
@@ -104,9 +162,22 @@ func TestFieldMappingValidation(t *testing.T) {
 		t.Fatalf("mapping validation failed: %v", err)
 	}
 
-	badMapping := FieldMapping{CanonicalName: ""}
-	if err := badMapping.Validate(); !errors.Is(err, ErrEmptyCanonicalName) {
-		t.Fatalf("expected ErrEmptyCanonicalName, got: %v", err)
+	badSlugMapping := FieldMapping{
+		CanonicalName: "Invalid_Name!",
+		GitHubField:   "Status",
+	}
+	if err := badSlugMapping.Validate(); !errors.Is(err, ErrInvalidSlug) {
+		t.Fatalf("expected ErrInvalidSlug for non-kebab-case canonical name, got: %v", err)
+	}
+
+	emptySingleSelect := FieldMapping{
+		CanonicalName: "priority",
+		GitHubField:   "Priority",
+		Kind:          FieldKindSingleSelect,
+		Values:        nil,
+	}
+	if err := emptySingleSelect.Validate(); !errors.Is(err, ErrEmptySingleSelectValues) {
+		t.Fatalf("expected ErrEmptySingleSelectValues, got: %v", err)
 	}
 
 	badValue := FieldMapping{
@@ -135,15 +206,45 @@ func TestSingleProjectContract(t *testing.T) {
 	}
 
 	contract.Mappings = append(contract.Mappings,
-		FieldMapping{CanonicalName: "priority", GitHubField: "Priority", Kind: FieldKindSingleSelect},
-		FieldMapping{CanonicalName: "priority", GitHubField: "Priority2", Kind: FieldKindText},
+		FieldMapping{
+			CanonicalName: "priority",
+			GitHubField:   "Priority",
+			Kind:          FieldKindSingleSelect,
+			Values:        []ValueMapping{{Canonical: "high", Remote: "High"}},
+		},
+		FieldMapping{
+			CanonicalName: "priority",
+			GitHubField:   "Priority2",
+			Kind:          FieldKindText,
+		},
 	)
 	if err := contract.Validate(); !errors.Is(err, ErrDuplicateFieldMapping) {
 		t.Fatalf("expected ErrDuplicateFieldMapping, got: %v", err)
 	}
 }
 
-func TestMultiProjectContractRouting(t *testing.T) {
+func TestNewMultiProjectContract_NoExplicitRefRegression(t *testing.T) {
+	// Regression test for Review Note 2: NewMultiProjectContract called with target having no explicit Ref
+	store := RepositoryRef{
+		Name: "issues",
+		URL:  "https://github.com/example-org/issues.git",
+	}
+	defaultTarget := TargetProject{
+		Owner:  "example-org",
+		Number: 1,
+		Title:  "Default Board",
+	}
+
+	contract := NewMultiProjectContract(store, defaultTarget)
+	if err := contract.Validate(); err != nil {
+		t.Fatalf("NewMultiProjectContract failed validation with auto-generated target ref: %v", err)
+	}
+	if contract.Dispatcher.DefaultTargetRef != "example-org/1" {
+		t.Errorf("expected Dispatcher.DefaultTargetRef to be 'example-org/1', got %q", contract.Dispatcher.DefaultTargetRef)
+	}
+}
+
+func TestMultiProjectContractDuplicateRoutes(t *testing.T) {
 	store := RepositoryRef{
 		Name: "issue-tracker",
 		URL:  "https://github.com/example-org/issue-tracker.git",
@@ -154,39 +255,15 @@ func TestMultiProjectContractRouting(t *testing.T) {
 		Number: 1,
 		Title:  "Backend Tasks",
 	}
-	targetFrontend := TargetProject{
-		Ref:    "frontend-board",
-		Owner:  "example-org",
-		Number: 2,
-		Title:  "Frontend Tasks",
-	}
 
 	contract := NewMultiProjectContract(store, targetBackend)
-	contract.Targets = append(contract.Targets, targetFrontend)
 	contract.Dispatcher.Routes = []RouteRule{
-		{Key: "label", Value: "area/backend", TargetRef: "backend-board"},
-		{Key: "label", Value: "area/frontend", TargetRef: "frontend-board"},
+		{Key: "label", Value: "backend", TargetRef: "backend-board"},
+		{Key: "label", Value: "backend", TargetRef: "backend-board"},
 	}
 
-	if err := contract.Validate(); err != nil {
-		t.Fatalf("multi-project validation failed: %v", err)
-	}
-
-	// Resolve routes
-	res, err := contract.ResolveTarget("label", "area/backend")
-	if err != nil || res.Ref != "backend-board" {
-		t.Fatalf("expected backend-board, got %+v (err: %v)", res, err)
-	}
-
-	res, err = contract.ResolveTarget("label", "area/frontend")
-	if err != nil || res.Ref != "frontend-board" {
-		t.Fatalf("expected frontend-board, got %+v (err: %v)", res, err)
-	}
-
-	// Fallback to default
-	res, err = contract.ResolveTarget("label", "unmatched")
-	if err != nil || res.Ref != "backend-board" {
-		t.Fatalf("expected default backend-board, got %+v (err: %v)", res, err)
+	if err := contract.Validate(); !errors.Is(err, ErrDuplicateRouteRule) {
+		t.Fatalf("expected ErrDuplicateRouteRule for duplicate route condition, got: %v", err)
 	}
 }
 

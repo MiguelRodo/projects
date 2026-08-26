@@ -20,17 +20,29 @@ var (
 	ErrEmptyURL = errors.New("url cannot be empty")
 	// ErrInvalidProjectNumber indicates a project number <= 0.
 	ErrInvalidProjectNumber = errors.New("project number must be greater than zero")
+	// ErrInvalidOwnerKind indicates an unsupported owner kind value was provided.
+	ErrInvalidOwnerKind = errors.New("invalid owner kind: must be 'organization', 'user', or empty")
 )
 
 // OwnerKind represents the type of owner for a project or repository.
 type OwnerKind string
 
 const (
+	// OwnerKindUnspecified indicates the owner kind is not yet determined.
+	OwnerKindUnspecified OwnerKind = ""
 	// OwnerKindOrganization represents an organization-owned resource.
 	OwnerKindOrganization OwnerKind = "organization"
 	// OwnerKindUser represents a user-owned resource.
 	OwnerKindUser OwnerKind = "user"
 )
+
+// ValidateSlug verifies if a string matches lowercase alphanumeric kebab-case.
+func ValidateSlug(s string) error {
+	if !slugRegex.MatchString(s) {
+		return fmt.Errorf("%w: %q", ErrInvalidSlug, s)
+	}
+	return nil
+}
 
 // ProjectIdentity uniquely identifies a project.
 type ProjectIdentity struct {
@@ -49,8 +61,8 @@ func (p *ProjectIdentity) Validate() error {
 	if p.Slug == "" {
 		p.Slug = generateSlug(p.Name)
 	}
-	if !slugRegex.MatchString(p.Slug) {
-		return fmt.Errorf("%w: %q", ErrInvalidSlug, p.Slug)
+	if err := ValidateSlug(p.Slug); err != nil {
+		return err
 	}
 	return nil
 }
@@ -101,9 +113,15 @@ func (t *TargetProject) Validate() error {
 	if t.Number <= 0 {
 		return ErrInvalidProjectNumber
 	}
-	if t.OwnerKind == "" {
-		t.OwnerKind = OwnerKindOrganization
+
+	// Validate OwnerKind if specified; do NOT silently default to organization
+	switch t.OwnerKind {
+	case OwnerKindUnspecified, OwnerKindOrganization, OwnerKindUser:
+		// Valid
+	default:
+		return fmt.Errorf("%w: %q", ErrInvalidOwnerKind, t.OwnerKind)
 	}
+
 	if t.Ref == "" {
 		t.Ref = fmt.Sprintf("%s/%d", t.Owner, t.Number)
 	}

@@ -23,8 +23,12 @@ type (
 	MultiProjectContract = model.MultiProjectContract
 	// TargetProject identifies a target GitHub Projects v2 board.
 	TargetProject = model.TargetProject
-	// PrivacyPolicy defines privacy behavior and companion storage enablement.
-	PrivacyPolicy = model.PrivacyPolicy
+	// OwnerKind represents the type of owner for a project (organization or user).
+	OwnerKind = model.OwnerKind
+	// RepositoryPrivacyPolicy defines privacy modes and companion capabilities supported by a shared repository.
+	RepositoryPrivacyPolicy = model.RepositoryPrivacyPolicy
+	// UserPrivacyPreference represents an acting user's private session configuration.
+	UserPrivacyPreference = model.UserPrivacyPreference
 	// PrivacyMode represents privacy classification modes.
 	PrivacyMode = model.PrivacyMode
 	// FieldMapping defines a mapping between a canonical field and a GitHub Projects custom field.
@@ -35,13 +39,13 @@ type (
 	DispatcherConfig = model.DispatcherConfig
 )
 
-// Constants for versioning and privacy.
 const (
-	ContractVersionV1Alpha1 = model.ContractVersionV1Alpha1
-	ContractVersionV1       = model.ContractVersionV1
-
 	PrivacyModeShareableByDefault = model.PrivacyModeShareableByDefault
 	PrivacyModeFullGitHubContext  = model.PrivacyModeFullGitHubContext
+
+	OwnerKindOrganization = model.OwnerKindOrganization
+	OwnerKindUser         = model.OwnerKindUser
+	OwnerKindUnspecified  = model.OwnerKindUnspecified
 )
 
 // Common public constructors and helpers.
@@ -65,6 +69,6 @@ var (
 	NewSingleProjectContract = model.NewSingleProjectContract
 	// NewMultiProjectContract creates a new multi-project contract with safe defaults.
 	NewMultiProjectContract = model.NewMultiProjectContract
-	// DefaultPrivacyPolicy returns a PrivacyPolicy with shareable_by_default.
-	DefaultPrivacyPolicy = model.DefaultPrivacyPolicy
+	// DefaultRepositoryPrivacyPolicy returns a RepositoryPrivacyPolicy with shareable_by_default.
+	DefaultRepositoryPrivacyPolicy = model.DefaultRepositoryPrivacyPolicy
 )
