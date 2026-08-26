@@ -37,6 +37,10 @@ type (
 	RouteRule = model.RouteRule
 	// DispatcherConfig configures routing for multi-project topologies.
 	DispatcherConfig = model.DispatcherConfig
+	// StableLinkageID represents a non-sensitive unique linkage identifier.
+	StableLinkageID = model.StableLinkageID
+	// CompanionLinkage associates an issue with a StableLinkageID.
+	CompanionLinkage = model.CompanionLinkage
 )
 
 const (

@@ -13,6 +13,8 @@ var (
 	ErrDuplicateFieldMapping = errors.New("duplicate canonical field mapping name")
 	// ErrTargetNotFound indicates a target reference could not be resolved.
 	ErrTargetNotFound = errors.New("target project reference not found")
+	// ErrPrivateCompanionMismatch indicates inconsistency between CapabilityPrivateCompanion and AllowPrivateCompanion.
+	ErrPrivateCompanionMismatch = errors.New("private companion capability and privacy policy mismatch")
 )
 
 // SingleProjectContract represents the canonical in-memory model of a repository
@@ -64,6 +66,17 @@ func (c *SingleProjectContract) Validate() error {
 	}
 	if err := c.Mutation.Validate(); err != nil {
 		return fmt.Errorf("invalid mutation policy: %w", err)
+	}
+
+	// Enforce invariant between CapabilityPrivateCompanion and Privacy.AllowPrivateCompanion
+	hasCompanionCap := c.Capabilities.Has(CapabilityPrivateCompanion)
+	if c.Privacy.AllowPrivateCompanion && !hasCompanionCap {
+		return fmt.Errorf("%w: AllowPrivateCompanion is true in privacy policy but %q is absent in capabilities",
+			ErrPrivateCompanionMismatch, CapabilityPrivateCompanion)
+	}
+	if !c.Privacy.AllowPrivateCompanion && hasCompanionCap {
+		return fmt.Errorf("%w: %q is present in capabilities but AllowPrivateCompanion is false in privacy policy",
+			ErrPrivateCompanionMismatch, CapabilityPrivateCompanion)
 	}
 
 	seenFields := make(map[string]struct{})
@@ -179,6 +192,17 @@ func (m *MultiProjectContract) Validate() error {
 	}
 	if err := m.Mutation.Validate(); err != nil {
 		return fmt.Errorf("invalid mutation policy: %w", err)
+	}
+
+	// Enforce invariant between CapabilityPrivateCompanion and Privacy.AllowPrivateCompanion
+	hasCompanionCap := m.Capabilities.Has(CapabilityPrivateCompanion)
+	if m.Privacy.AllowPrivateCompanion && !hasCompanionCap {
+		return fmt.Errorf("%w: AllowPrivateCompanion is true in privacy policy but %q is absent in capabilities",
+			ErrPrivateCompanionMismatch, CapabilityPrivateCompanion)
+	}
+	if !m.Privacy.AllowPrivateCompanion && hasCompanionCap {
+		return fmt.Errorf("%w: %q is present in capabilities but AllowPrivateCompanion is false in privacy policy",
+			ErrPrivateCompanionMismatch, CapabilityPrivateCompanion)
 	}
 
 	seenFields := make(map[string]struct{})

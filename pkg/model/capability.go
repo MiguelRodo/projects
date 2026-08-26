@@ -2,7 +2,6 @@ package model
 
 import (
 	"slices"
-	"strings"
 )
 
 // Capability defines supported protocol capabilities for a repository or dispatcher.
@@ -71,5 +70,3 @@ func DefaultMutationPolicy() MutationPolicy {
 func (m *MutationPolicy) Validate() error {
 	return nil
 }
-
-var _ = strings.TrimSpace

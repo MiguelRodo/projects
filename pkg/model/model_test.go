@@ -17,6 +17,15 @@ func TestPrivacyPolicyAndUserPreference(t *testing.T) {
 		t.Errorf("expected AllowPrivateCompanion to default to false (opt-in)")
 	}
 
+	// Regression test for Review Note 2: Explicit SupportedModes not containing DefaultMode fails
+	mismatchedPolicy := RepositoryPrivacyPolicy{
+		SupportedModes: []PrivacyMode{PrivacyModeFullGitHubContext},
+		DefaultMode:    PrivacyModeShareableByDefault,
+	}
+	if err := mismatchedPolicy.Validate(); !errors.Is(err, ErrInvalidPrivacyPolicy) {
+		t.Fatalf("expected ErrInvalidPrivacyPolicy for explicit mismatched SupportedModes, got: %v", err)
+	}
+
 	// User preference validation without companion
 	userPref := UserPrivacyPreference{
 		EffectiveMode: PrivacyModeFullGitHubContext,
@@ -60,6 +69,32 @@ func TestPrivacyPolicyAndUserPreference(t *testing.T) {
 	}
 	if err := userPrefUnsupported.Validate(&strictPolicy); !errors.Is(err, ErrUnsupportedPrivacyMode) {
 		t.Fatalf("expected ErrUnsupportedPrivacyMode, got: %v", err)
+	}
+}
+
+func TestStableLinkageIDAndCompanion(t *testing.T) {
+	validID := StableLinkageID("task-42-companion-notes")
+	if err := validID.Validate(); err != nil {
+		t.Fatalf("expected valid linkage ID: %v", err)
+	}
+
+	emptyID := StableLinkageID("")
+	if err := emptyID.Validate(); !errors.Is(err, ErrEmptyLinkageID) {
+		t.Fatalf("expected ErrEmptyLinkageID, got: %v", err)
+	}
+
+	invalidID := StableLinkageID("Invalid_Slug!")
+	if err := invalidID.Validate(); !errors.Is(err, ErrInvalidSlug) {
+		t.Fatalf("expected ErrInvalidSlug, got: %v", err)
+	}
+
+	companion := CompanionLinkage{
+		LinkageID:   validID,
+		IssueNumber: 42,
+		Repository:  "repo-alpha",
+	}
+	if err := companion.Validate(); err != nil {
+		t.Fatalf("expected valid companion linkage: %v", err)
 	}
 }
 
@@ -220,6 +255,30 @@ func TestSingleProjectContract(t *testing.T) {
 		t.Fatalf("contract validation failed: %v", err)
 	}
 
+	// Test private companion capability vs policy mismatch:
+	// 1. AllowPrivateCompanion=true but capability absent
+	contract.Privacy.AllowPrivateCompanion = true
+	if err := contract.Validate(); !errors.Is(err, ErrPrivateCompanionMismatch) {
+		t.Fatalf("expected ErrPrivateCompanionMismatch when AllowPrivateCompanion=true without capability, got: %v", err)
+	}
+
+	// 2. Capability present but AllowPrivateCompanion=false
+	contract.Privacy.AllowPrivateCompanion = false
+	contract.Capabilities.Add(CapabilityPrivateCompanion)
+	if err := contract.Validate(); !errors.Is(err, ErrPrivateCompanionMismatch) {
+		t.Fatalf("expected ErrPrivateCompanionMismatch when CapabilityPrivateCompanion is present but AllowPrivateCompanion=false, got: %v", err)
+	}
+
+	// 3. Both present -> valid
+	contract.Privacy.AllowPrivateCompanion = true
+	if err := contract.Validate(); err != nil {
+		t.Fatalf("contract should be valid when both are aligned: %v", err)
+	}
+
+	// Reset companion settings
+	contract.Privacy.AllowPrivateCompanion = false
+	contract.Capabilities = DefaultCapabilities()
+
 	contract.Mappings = append(contract.Mappings,
 		FieldMapping{
 			CanonicalName: "priority",
@@ -266,6 +325,12 @@ func TestNewMultiProjectContract_NoExplicitRefRegression(t *testing.T) {
 	_, existsByTitle := contract.FindTarget("Default Board")
 	if existsByTitle {
 		t.Fatalf("FindTarget should be ref-only and not match by title")
+	}
+
+	// Test companion capability mismatch in multi-project contract
+	contract.Privacy.AllowPrivateCompanion = true
+	if err := contract.Validate(); !errors.Is(err, ErrPrivateCompanionMismatch) {
+		t.Fatalf("expected ErrPrivateCompanionMismatch in MultiProjectContract, got: %v", err)
 	}
 }
 

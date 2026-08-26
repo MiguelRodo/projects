@@ -24,10 +24,14 @@ const (
 var (
 	// ErrInvalidPrivacyMode indicates an unsupported privacy mode was supplied.
 	ErrInvalidPrivacyMode = errors.New("invalid privacy mode")
+	// ErrInvalidPrivacyPolicy indicates an inconsistent or invalid repository privacy policy.
+	ErrInvalidPrivacyPolicy = errors.New("invalid privacy policy")
 	// ErrUnsupportedPrivacyMode indicates the requested privacy mode is not supported by the repository contract.
 	ErrUnsupportedPrivacyMode = errors.New("unsupported privacy mode")
 	// ErrPrivateCompanionNotAllowed indicates companion linkage was configured when disallowed by policy.
 	ErrPrivateCompanionNotAllowed = errors.New("private companion linkage is not allowed by repository policy")
+	// ErrEmptyLinkageID indicates a stable linkage ID is empty.
+	ErrEmptyLinkageID = errors.New("stable linkage id cannot be empty")
 )
 
 // RepositoryPrivacyPolicy defines the privacy modes and companion capabilities supported by a shared repository.
@@ -70,7 +74,8 @@ func (p *RepositoryPrivacyPolicy) Validate() error {
 	}
 
 	if !slices.Contains(p.SupportedModes, p.DefaultMode) {
-		p.SupportedModes = append(p.SupportedModes, p.DefaultMode)
+		return fmt.Errorf("%w: default mode %q is not present in explicitly declared supported modes %v",
+			ErrInvalidPrivacyPolicy, p.DefaultMode, p.SupportedModes)
 	}
 
 	return nil
@@ -112,6 +117,31 @@ func (u *UserPrivacyPreference) Validate(repoPolicy *RepositoryPrivacyPolicy) er
 	}
 
 	return nil
+}
+
+// StableLinkageID represents a non-sensitive identifier used to associate public
+// GitHub issues or project cards with optional private companion records.
+type StableLinkageID string
+
+// Validate verifies the format of a StableLinkageID.
+func (s StableLinkageID) Validate() error {
+	trimmed := strings.TrimSpace(string(s))
+	if trimmed == "" {
+		return ErrEmptyLinkageID
+	}
+	return ValidateSlug(trimmed)
+}
+
+// CompanionLinkage defines the canonical in-memory association between an issue and a StableLinkageID.
+type CompanionLinkage struct {
+	LinkageID   StableLinkageID `json:"linkage_id" yaml:"linkage_id"`
+	IssueNumber int             `json:"issue_number,omitempty" yaml:"issue_number,omitempty"`
+	Repository  string          `json:"repository,omitempty" yaml:"repository,omitempty"`
+}
+
+// Validate checks whether the companion linkage identifier is valid.
+func (c *CompanionLinkage) Validate() error {
+	return c.LinkageID.Validate()
 }
 
 func validatePrivacyMode(mode PrivacyMode) error {
