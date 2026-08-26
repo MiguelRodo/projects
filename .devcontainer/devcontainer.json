@@ -1,0 +1,14 @@
+{
+  "name": "projectctl Development",
+  "image": "ghcr.io/miguelrodo/devcontainers-projects:v1.0.0",
+  "remoteUser": "vscode",
+  "postCreateCommand": "if [ -f go.mod ]; then go mod download; fi",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}
