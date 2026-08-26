@@ -1,0 +1,24 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: solo-work
+  target:
+    ref: personal
+    issueStore:
+      owner:
+        kind: user
+        login: example-user
+      repository: solo-tasks
+    project:
+      owner:
+        kind: user
+        login: example-user
+      number: 9
+  fields: {}
+  sourceRefs: []
+  requirements:
+    features:
+      - issues
+      - projects-v2
+    mutations:
+      - issue.create

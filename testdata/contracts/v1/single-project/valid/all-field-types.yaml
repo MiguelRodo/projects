@@ -1,0 +1,50 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: field-types
+  target:
+    ref: primary
+    issueStore:
+      owner:
+        kind: organization
+        login: example-org
+      repository: field-types-tasks
+    project:
+      owner:
+        kind: organization
+        login: example-org
+      number: 2
+  fields:
+    due-date:
+      name: Due date
+      dataType: date
+    estimate:
+      name: Estimate
+      dataType: number
+    notes:
+      name: Notes
+      dataType: text
+    status:
+      name: Status
+      dataType: singleSelect
+      values:
+        ready:
+          name: Ready
+          color: green
+          description: Ready to start.
+    areas:
+      name: Areas
+      dataType: multiSelect
+      values:
+        api:
+          name: API
+          color: purple
+          description: API-facing work.
+  sourceRefs:
+    - handbook
+  requirements:
+    features:
+      - issues
+      - project-custom-fields
+      - projects-v2
+    mutations: []
