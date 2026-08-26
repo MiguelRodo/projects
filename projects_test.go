@@ -29,4 +29,15 @@ func TestPublicAPIExports(t *testing.T) {
 	if verStr == "" {
 		t.Fatalf("expected non-empty version string")
 	}
+
+	// Model exports test
+	target := projects.TargetProject{
+		Owner:  "example-org",
+		Number: 1,
+		Title:  "Roadmap",
+	}
+	contract := projects.NewSingleProjectContract("service-a", "https://github.com/example-org/service-a.git", target)
+	if err := contract.Validate(); err != nil {
+		t.Fatalf("contract validation failed via root export: %v", err)
+	}
 }

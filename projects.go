@@ -1,8 +1,9 @@
 // Package projects provides tools, libraries, and workspace management
-// for multi-repository software development environments.
+// for multi-repository software development environments and neutral v1 contracts.
 package projects
 
 import (
+	"github.com/MiguelRodo/projects/pkg/model"
 	"github.com/MiguelRodo/projects/pkg/project"
 	"github.com/MiguelRodo/projects/pkg/version"
 )
@@ -15,6 +16,32 @@ type (
 	Workspace = project.Workspace
 	// VersionInfo holds version and build metadata.
 	VersionInfo = version.Info
+
+	// SingleProjectContract represents a single-project repository interface contract.
+	SingleProjectContract = model.SingleProjectContract
+	// MultiProjectContract represents a multi-project dispatcher interface contract.
+	MultiProjectContract = model.MultiProjectContract
+	// TargetProject identifies a target GitHub Projects v2 board.
+	TargetProject = model.TargetProject
+	// PrivacyPolicy defines privacy behavior and companion storage enablement.
+	PrivacyPolicy = model.PrivacyPolicy
+	// PrivacyMode represents privacy classification modes.
+	PrivacyMode = model.PrivacyMode
+	// FieldMapping defines a mapping between a canonical field and a GitHub Projects custom field.
+	FieldMapping = model.FieldMapping
+	// RouteRule maps a key/value condition to a target project.
+	RouteRule = model.RouteRule
+	// DispatcherConfig configures routing for multi-project topologies.
+	DispatcherConfig = model.DispatcherConfig
+)
+
+// Constants for versioning and privacy.
+const (
+	ContractVersionV1Alpha1 = model.ContractVersionV1Alpha1
+	ContractVersionV1       = model.ContractVersionV1
+
+	PrivacyModeShareableByDefault = model.PrivacyModeShareableByDefault
+	PrivacyModeFullGitHubContext  = model.PrivacyModeFullGitHubContext
 )
 
 // Common public constructors and helpers.
@@ -33,4 +60,11 @@ var (
 	GetVersionInfo = version.GetInfo
 	// VersionString returns human-readable version string.
 	VersionString = version.String
+
+	// NewSingleProjectContract creates a new single-project contract with safe defaults.
+	NewSingleProjectContract = model.NewSingleProjectContract
+	// NewMultiProjectContract creates a new multi-project contract with safe defaults.
+	NewMultiProjectContract = model.NewMultiProjectContract
+	// DefaultPrivacyPolicy returns a PrivacyPolicy with shareable_by_default.
+	DefaultPrivacyPolicy = model.DefaultPrivacyPolicy
 )
