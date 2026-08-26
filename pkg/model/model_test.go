@@ -13,16 +13,31 @@ func TestPrivacyPolicyAndUserPreference(t *testing.T) {
 	if repoPolicy.DefaultMode != PrivacyModeShareableByDefault {
 		t.Errorf("expected default mode %q, got %q", PrivacyModeShareableByDefault, repoPolicy.DefaultMode)
 	}
-	if !repoPolicy.Supports(PrivacyModeFullGitHubContext) {
-		t.Errorf("expected support for full_github_context")
+	if repoPolicy.AllowPrivateCompanion {
+		t.Errorf("expected AllowPrivateCompanion to default to false (opt-in)")
 	}
 
-	// User preference validation
+	// User preference validation without companion
 	userPref := UserPrivacyPreference{
 		EffectiveMode: PrivacyModeFullGitHubContext,
 	}
 	if err := userPref.Validate(&repoPolicy); err != nil {
 		t.Fatalf("valid user preference failed: %v", err)
+	}
+
+	// User preference attempting companion when repo policy has AllowPrivateCompanion=false
+	userPrefWithCompanion := UserPrivacyPreference{
+		EffectiveMode:       PrivacyModeShareableByDefault,
+		PrivateCompanionRef: "personal-notes-doc",
+	}
+	if err := userPrefWithCompanion.Validate(&repoPolicy); !errors.Is(err, ErrPrivateCompanionNotAllowed) {
+		t.Fatalf("expected ErrPrivateCompanionNotAllowed when repo policy disallows companion, got: %v", err)
+	}
+
+	// User preference with companion when repo policy enables it
+	repoPolicy.AllowPrivateCompanion = true
+	if err := userPrefWithCompanion.Validate(&repoPolicy); err != nil {
+		t.Fatalf("user preference with companion should succeed when enabled: %v", err)
 	}
 
 	// User preference default fallback
@@ -224,7 +239,6 @@ func TestSingleProjectContract(t *testing.T) {
 }
 
 func TestNewMultiProjectContract_NoExplicitRefRegression(t *testing.T) {
-	// Regression test for Review Note 2: NewMultiProjectContract called with target having no explicit Ref
 	store := RepositoryRef{
 		Name: "issues",
 		URL:  "https://github.com/example-org/issues.git",
@@ -241,6 +255,17 @@ func TestNewMultiProjectContract_NoExplicitRefRegression(t *testing.T) {
 	}
 	if contract.Dispatcher.DefaultTargetRef != "example-org/1" {
 		t.Errorf("expected Dispatcher.DefaultTargetRef to be 'example-org/1', got %q", contract.Dispatcher.DefaultTargetRef)
+	}
+
+	// Ref-only FindTarget lookup test
+	found, exists := contract.FindTarget("example-org/1")
+	if !exists || found == nil {
+		t.Fatalf("expected FindTarget by ref 'example-org/1' to succeed")
+	}
+
+	_, existsByTitle := contract.FindTarget("Default Board")
+	if existsByTitle {
+		t.Fatalf("FindTarget should be ref-only and not match by title")
 	}
 }
 

@@ -126,10 +126,10 @@ func NewMultiProjectContract(issueStore RepositoryRef, defaultTarget TargetProje
 	}
 }
 
-// FindTarget looks up a TargetProject by reference string.
+// FindTarget looks up a TargetProject strictly by its local Ref identifier.
 func (m *MultiProjectContract) FindTarget(ref string) (*TargetProject, bool) {
 	for i := range m.Targets {
-		if m.Targets[i].Ref == ref || m.Targets[i].Title == ref {
+		if m.Targets[i].Ref == ref {
 			return &m.Targets[i], true
 		}
 	}

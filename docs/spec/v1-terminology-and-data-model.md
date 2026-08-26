@@ -12,8 +12,8 @@ This document defines the agent-neutral vocabulary, canonical in-memory domain s
 The core objectives are:
 1. **GitHub as Shared Authority**: Repository manifests, issues, pull requests, and GitHub Projects are the canonical shared surface for task collaboration.
 2. **Neutral Nomenclature**: Terminology is strictly decoupled from specific operators, personal names, account identifiers, proprietary tools, or specific AI agent runtimes.
-3. **Decoupled Operator Extensions**: Personal agendas, private control repositories, and external companion backends (e.g. Google Drive/Docs/Sheets) are treated as optional downstream consumers without leaking into public repository contracts.
-4. **Canonical Internal Representation**: Domain models represent the normalised in-memory structures into which supported repository contracts will be parsed. Wire schema formats and routing execution algorithms will be formally specified in child issues [#13](https://github.com/MiguelRodo/projects/issues/13), [#14](https://github.com/MiguelRodo/projects/issues/14), and [#15](https://github.com/MiguelRodo/projects/issues/15).
+3. **Decoupled Operator Extensions**: Personal agendas, private control repositories, and external companion backends (e.g. user-owned documents, private stores) are treated as optional downstream consumers without leaking into public repository contracts.
+4. **Canonical Internal Representation**: Domain models represent the normalised in-memory structures into which supported repository contracts will be parsed. Wire schema formats and routing execution algorithms are formally specified in child issues [#13](https://github.com/MiguelRodo/projects/issues/13), [#14](https://github.com/MiguelRodo/projects/issues/14), and [#15](https://github.com/MiguelRodo/projects/issues/15).
 
 ---
 
@@ -38,7 +38,7 @@ The core objectives are:
 | **`RepositoryPrivacyPolicy`** | The shared repository contract's advertised privacy capabilities (`supported_modes`, `default_mode`, `allow_private_companion`). |
 | **`UserPrivacyPreference`** | An acting user's private session configuration declaring their effective privacy mode and private companion location. |
 | **`StableLinkageID`** | A non-sensitive unique identifier (UUID/slug) allowing private companion records to be associated with GitHub issues without publishing private URLs. |
-| **`CompanionRecord`** | An optional operator-owned companion record stored in user-controlled private storage (e.g. personal Google Doc, private repository, local file). |
+| **`CompanionRecord`** | An optional operator-owned companion record stored in user-controlled private storage (e.g. personal document, private repository, local file). |
 
 ---
 
@@ -49,11 +49,12 @@ A central requirement of the protocol is that **different collaborators using th
 
 1. **Shared Repository Level (`RepositoryPrivacyPolicy`)**:
    - The repository contract advertises which privacy modes it supports (`supported_modes`, e.g. `["shareable_by_default", "full_github_context"]`) and a `default_mode`.
-   - It advertises whether client companion linkage is permitted (`allow_private_companion: true`).
-   - The repository manifest **never** contains private Google Doc URLs, personal file paths, or private destination endpoints.
+   - It advertises whether client companion linkage is permitted (`allow_private_companion: true`). This is an explicit opt-in capability.
+   - The repository manifest **never** contains private document URLs, personal file paths, or private destination endpoints.
 2. **Acting-User Level (`UserPrivacyPreference`)**:
    - The individual user's private configuration (configured out-of-band in their personal operator profile or CLI flags) sets their `effective_mode`.
-   - If using `shareable_by_default`, the user's authorized agent routes sensitive context to their configured `private_companion_ref` (e.g. a personal Google Doc or private repository) using a non-sensitive `StableLinkageID`.
+   - If using `shareable_by_default` and the repository allows companion linkage, the user's authorized agent routes sensitive context to their configured `private_companion_ref` (e.g. a personal document or private repository) using a non-sensitive `StableLinkageID`.
+   - If the repository policy has `allow_private_companion: false`, the user cannot link a companion reference.
    - Another collaborator on the same repository may select `full_github_context` with no private companion destination, without modifying the shared repository contract.
 
 ### Privacy Modes
@@ -107,13 +108,13 @@ MultiProjectContract (Dispatcher)
 ### Baseline Model Validation Invariants
 The canonical Go domain model enforces the following structural rules:
 1. **Identities**: Project and repository names must be non-empty. Slugs and canonical field names must conform to lowercase kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`).
-2. **Targets**: Target project owners must be non-empty and numbers must be positive integers (> 0). If specified, `OwnerKind` must be `organization` or `user`.
+2. **Targets**: Target project owners must be non-empty and numbers must be positive integers (> 0). If specified, `OwnerKind` must be `organization` or `user`. Local `Ref` lookups are exact matches on `TargetProject.Ref`.
 3. **Field Mappings**: Canonical field names within a contract must be unique. `single_select` mappings must define at least one value mapping.
-4. **Routing**: Route rules must declare non-empty keys and target references. Duplicate route conditions (`key=value`) are rejected. All target references must resolve to declared targets in the contract.
-5. **Privacy Policy**: Default and supported privacy modes must be recognized enum values.
+4. **Routing**: Route rules must declare non-empty keys and target references. Duplicate route conditions (`key=value`) are rejected using exact structural matching. All target references must resolve to declared targets in the contract.
+5. **Privacy Policy**: Default and supported privacy modes must be recognized enum values. Private companion capability is opt-in, and companion preferences are rejected when companion linkage is not permitted.
 
 ### Deferred Wire & Routing Semantics
-Issue [#12](https://github.com/MiguelRodo/projects/issues/12) specifies the terminology and canonical domain structures. Wire-level schema formats, exact matching semantics (e.g. wildcards, precedence, regexes), and full conformance suites are deferred to the dependent issues:
+Issue [#12](https://github.com/MiguelRodo/projects/issues/12) specifies the terminology and canonical domain structures. Wire-level schema formats, exact matching semantics (e.g. wildcards, precedence, regexes, case sensitivity), and full conformance suites are deferred to the dependent issues:
 - **Issue [#13](https://github.com/MiguelRodo/projects/issues/13)**: Single-project wire schema specification & fixtures.
 - **Issue [#14](https://github.com/MiguelRodo/projects/issues/14)**: Multi-project dispatcher wire schema & routing resolution rules.
 - **Issue [#15](https://github.com/MiguelRodo/projects/issues/15)**: Privacy modes & private extension schemas.
@@ -121,12 +122,6 @@ Issue [#12](https://github.com/MiguelRodo/projects/issues/12) specifies the term
 
 ---
 
-## 7. Legacy Terms Relegation
+## 7. Legacy Adaptation & Neutrality
 
-| Legacy Operator Term | Canonical Neutral Term | Role |
-| :------------------- | :--------------------- | :--- |
-| `miguel_private` | `PrivacyModeShareableByDefault` | Configured via `RepositoryPrivacyPolicy` & user preferences |
-| `assigned_to_miguel` | Generic `RouteRule` / Assignee mapping | Standard field or route condition |
-| `MiguelRodo/issues` | `IssueStore` (`RepositoryRef`) | Explicit repository reference |
-| `Global tasks` | `TargetProject` | Configurable project title/number |
-| Personal Drive/Sheets URLs | `StableLinkageID` | Private companion destination configured out-of-band |
+Any legacy operator-specific terminology, private field aliases, or personal repository names belong strictly in private compatibility adapters or operator-level profiles. The public v1 protocol recognizes only generic, configurable domain concepts.

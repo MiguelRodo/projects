@@ -13,7 +13,7 @@ var (
 	ErrEmptyRouteTarget = errors.New("route target cannot be empty")
 	// ErrInvalidFallbackBehavior indicates an unsupported fallback behavior.
 	ErrInvalidFallbackBehavior = errors.New("invalid fallback behavior")
-	// ErrDuplicateRouteRule indicates multiple route rules define the same key-value condition.
+	// ErrDuplicateRouteRule indicates multiple route rules define the exact same key-value condition.
 	ErrDuplicateRouteRule = errors.New("duplicate route rule condition")
 )
 
@@ -59,7 +59,7 @@ type DispatcherConfig struct {
 	Routes           []RouteRule      `json:"routes" yaml:"routes"`
 }
 
-// Validate checks dispatcher configuration invariants.
+// Validate checks dispatcher configuration invariants using exact structural equality.
 func (d *DispatcherConfig) Validate() error {
 	if d.Fallback == "" {
 		d.Fallback = FallbackBehaviorDefaultTarget
@@ -81,7 +81,7 @@ func (d *DispatcherConfig) Validate() error {
 		if err := r.Validate(); err != nil {
 			return fmt.Errorf("route %d: %w", i, err)
 		}
-		conditionKey := fmt.Sprintf("%s=%s", strings.ToLower(r.Key), strings.ToLower(r.Value))
+		conditionKey := fmt.Sprintf("%s=%s", r.Key, r.Value)
 		if _, exists := seenConditions[conditionKey]; exists {
 			return fmt.Errorf("%w: %q", ErrDuplicateRouteRule, conditionKey)
 		}

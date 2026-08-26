@@ -26,14 +26,13 @@ type CapabilitySet struct {
 	Items []Capability `json:"items,omitempty" yaml:"items,omitempty"`
 }
 
-// DefaultCapabilities returns the baseline capabilities for a single-project repository.
+// DefaultCapabilities returns baseline core capabilities without opt-in extensions.
 func DefaultCapabilities() CapabilitySet {
 	return CapabilitySet{
 		Items: []Capability{
 			CapabilityReadIssues,
 			CapabilityWriteIssues,
 			CapabilityManageProjects,
-			CapabilityPrivateCompanion,
 		},
 	}
 }

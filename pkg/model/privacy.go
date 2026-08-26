@@ -26,6 +26,8 @@ var (
 	ErrInvalidPrivacyMode = errors.New("invalid privacy mode")
 	// ErrUnsupportedPrivacyMode indicates the requested privacy mode is not supported by the repository contract.
 	ErrUnsupportedPrivacyMode = errors.New("unsupported privacy mode")
+	// ErrPrivateCompanionNotAllowed indicates companion linkage was configured when disallowed by policy.
+	ErrPrivateCompanionNotAllowed = errors.New("private companion linkage is not allowed by repository policy")
 )
 
 // RepositoryPrivacyPolicy defines the privacy modes and companion capabilities supported by a shared repository.
@@ -44,7 +46,7 @@ func DefaultRepositoryPrivacyPolicy() RepositoryPrivacyPolicy {
 			PrivacyModeFullGitHubContext,
 		},
 		DefaultMode:           PrivacyModeShareableByDefault,
-		AllowPrivateCompanion: true,
+		AllowPrivateCompanion: false,
 	}
 }
 
@@ -99,8 +101,14 @@ func (u *UserPrivacyPreference) Validate(repoPolicy *RepositoryPrivacyPolicy) er
 		return err
 	}
 
-	if repoPolicy != nil && !repoPolicy.Supports(u.EffectiveMode) {
-		return fmt.Errorf("%w: repository does not support mode %q", ErrUnsupportedPrivacyMode, u.EffectiveMode)
+	if repoPolicy != nil {
+		if !repoPolicy.Supports(u.EffectiveMode) {
+			return fmt.Errorf("%w: repository does not support mode %q", ErrUnsupportedPrivacyMode, u.EffectiveMode)
+		}
+		if strings.TrimSpace(u.PrivateCompanionRef) != "" && !repoPolicy.AllowPrivateCompanion {
+			return fmt.Errorf("%w: cannot configure private companion ref %q",
+				ErrPrivateCompanionNotAllowed, u.PrivateCompanionRef)
+		}
 	}
 
 	return nil
