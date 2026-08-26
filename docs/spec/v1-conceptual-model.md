@@ -311,6 +311,35 @@ A plan proposes adding an issue to a Project based on snapshot S. Before apply, 
 
 No downstream issue may decide a deferred item implicitly. If implementation requires an answer that its named normative issue does not provide, work stops at that boundary and the normative issue is corrected first.
 
+## Normative invariant register
+
+Later specifications, fixtures and reviews MUST cite these stable requirement IDs where they exercise or refine a conceptual invariant. An ID MUST NOT be reused for a different rule.
+
+| ID | Invariant |
+| --- | --- |
+| `CM-001` | Every persisted or observed value has one identifiable authority and provenance. |
+| `CM-002` | Shared repository intent and private operator intent remain separate inputs and representations. |
+| `CM-003` | Shared files and shared task state contain no private destination, credential, local path or private source identifier. |
+| `CM-004` | Participating repository, issue store, Project owner and Project membership remain distinct roles. |
+| `CM-005` | Contract references, provider identities, stable linkage identifiers and display values remain distinct identity classes. |
+| `CM-006` | Display values do not silently act as identity or fallback selectors. |
+| `CM-007` | Provider facts, ownership and permissions are supplied explicitly or discovered; they are never guessed. |
+| `CM-008` | A mutating request resolves one explicit operation target before snapshotting or planning. |
+| `CM-009` | Parse, schema validation, normalisation, semantic validation, discovery, resolution, snapshot, planning, lowering, execution and verification retain separate contracts. |
+| `CM-010` | Normalisation returns a new canonical value and applies only version-defined transformations. |
+| `CM-011` | Semantic validation is pure and does not normalise, discover or resolve. |
+| `CM-012` | Discovery is read-only evidence and cannot become policy or desired configuration. |
+| `CM-013` | Planning is pure, deterministic and complete; apply introduces no hidden work. |
+| `CM-014` | Every executable operation identifies its exact target, owned change, expected prior state and desired after-state. |
+| `CM-015` | Execution freshly reads stale-sensitive state and refuses a mismatch or unavailable fact before mutation. |
+| `CM-016` | Mutation success requires matching provider readback; provider acceptance alone is not success. |
+| `CM-017` | Seed intent is create-once and does not continually overwrite live shared edits. |
+| `CM-018` | A private companion is optional and supplemental; shared issues remain the authoritative shared task records. |
+| `CM-019` | Public protocol artefacts do not require or privilege a particular operator, agent, private control plane or optional provider. |
+| `CM-020` | Canonical outputs are deterministic and unaffected by unordered provider responses or incidental timestamps. |
+| `CM-021` | Unknown, unavailable, unauthorised and observed-absent states remain distinguishable. |
+| `CM-022` | A stage reports missing or conflicting required knowledge instead of manufacturing a value for the next stage. |
+
 ## Conformance checklist
 
 A later specification or implementation conforms to this conceptual model only if all answers below are “yes”:
