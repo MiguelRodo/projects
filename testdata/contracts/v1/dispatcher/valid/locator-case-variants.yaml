@@ -1,0 +1,33 @@
+apiVersion: projectctl/v1
+kind: DispatcherRepository
+spec:
+  ref: locator-case
+  targets:
+    - target:
+        ref: alpha
+        issueStore:
+          owner: {kind: organization, login: Example-Org}
+          repository: Shared-Tasks
+        project:
+          owner: {kind: organization, login: Example-Org}
+          number: 51
+      fields: {}
+    - target:
+        ref: beta
+        issueStore:
+          owner: {kind: organization, login: example-org}
+          repository: shared-tasks
+        project:
+          owner: {kind: organization, login: example-org}
+          number: 52
+      fields: {}
+  routing:
+    rules:
+      - ref: literal-star
+        labelsAll: [area:*]
+        targetRef: alpha
+    fallback: {kind: target, targetRef: beta}
+  sourceRefs: []
+  requirements:
+    features: [issues, projects-v2]
+    mutations: []

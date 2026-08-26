@@ -1,0 +1,83 @@
+apiVersion: projectctl/v1
+kind: DispatcherRepository
+spec:
+  ref: shared-work
+  targets:
+    - target:
+        ref: backend
+        issueStore:
+          owner:
+            kind: organization
+            login: example-org
+          repository: shared-tasks
+        project:
+          owner:
+            kind: organization
+            login: example-org
+          number: 11
+      fields:
+        work-state:
+          name: Backend state
+          dataType: singleSelect
+          values:
+            queued:
+              name: Queued
+              color: gray
+              description: Ready for backend scheduling.
+            active:
+              name: Active
+              color: blue
+              description: Backend work is in progress.
+    - target:
+        ref: frontend
+        issueStore:
+          owner:
+            kind: organization
+            login: example-org
+          repository: shared-tasks
+        project:
+          owner:
+            kind: organization
+            login: example-org
+          number: 12
+      fields:
+        delivery-date:
+          name: Frontend delivery date
+          dataType: date
+    - target:
+        ref: triage
+        issueStore:
+          owner:
+            kind: organization
+            login: example-org
+          repository: shared-tasks
+        project:
+          owner:
+            kind: organization
+            login: example-org
+          number: 13
+      fields: {}
+  routing:
+    rules:
+      - ref: backend-route
+        labelsAll:
+          - area:backend
+        targetRef: backend
+      - ref: frontend-route
+        labelsAll:
+          - area:frontend
+        targetRef: frontend
+    fallback:
+      kind: target
+      targetRef: triage
+  sourceRefs:
+    - architecture
+  requirements:
+    features:
+      - issues
+      - project-custom-fields
+      - project-item-membership
+      - projects-v2
+    mutations:
+      - project.item.add
+      - project.item.field.write

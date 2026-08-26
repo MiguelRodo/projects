@@ -1,0 +1,17 @@
+apiVersion: projectctl/v1
+kind: DispatcherRepository
+spec:
+  ref: missing-routing
+  targets:
+    - target:
+        ref: alpha
+        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
+        project: {owner: {kind: organization, login: example-org}, number: 1}
+      fields: {}
+    - target:
+        ref: beta
+        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
+        project: {owner: {kind: organization, login: example-org}, number: 2}
+      fields: {}
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}
