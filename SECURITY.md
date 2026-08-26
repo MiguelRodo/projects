@@ -1,33 +1,22 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Supported versions
 
-We provide security updates and patches for the following versions:
+No public version has been released yet. The repository is in pre-v1 architecture and contract design.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| `v0.1.x`| :white_check_mark: |
-| `< 0.1` | :x:                |
+Security and privacy reports are still welcome, but there is currently no supported binary or contract version.
 
----
+## Reporting a vulnerability
 
-## Reporting a Vulnerability
+Do not open a public issue for an undisclosed vulnerability.
 
-If you discover a potential security vulnerability in `projects` or `projectctl`, please report it responsibly:
+Use the repository's private vulnerability reporting facility where available, or contact the maintainers privately. Include the affected revision, reproduction steps, impact and any known mitigation.
 
-1. **Do not create a public GitHub issue** for undisclosed security vulnerabilities.
-2. Please open a [GitHub Private Vulnerability Report](https://github.com/MiguelRodo/projects/security/advisories/new) or send an email to the project maintainers.
-3. Include a detailed description of the issue, reproduction steps, affected versions, and any suggested fixes or mitigations.
-4. We will acknowledge receipt of your report within 48 hours and provide a timeline for triage and remediation.
+## Security and privacy boundaries
 
----
-
-## Security & Privacy Boundary Guarantees
-
-`projects` is engineered with explicit privacy boundary guarantees:
-
-1. **No Secret Leaks**: Configuration manifests and workspace files must never require or store plaintext tokens, passwords, or credentials.
-2. **Neutrality & Privacy Separation**:
-   - Public repository manifests, examples, and fixtures must not contain private internal repository names, personal identifiers, or private cloud storage identifiers (e.g. Google Drive/Sheets IDs).
-   - Sensitive companion data or private control-plane records must remain exclusively on user-controlled private storage and reference only non-sensitive stable linkage identifiers.
-3. **Least-Privilege GitHub Access**: Tools and workflows must operate with the minimum required GitHub token scopes.
+- Shared contracts, documentation and fixtures must contain only collaborator-safe information.
+- Credentials, tokens, passwords, private keys and equivalent authentication material must never be committed.
+- Private source locations, private destinations, local workspace mappings and per-user provider configuration belong outside shared repositories.
+- Tests must not mutate live GitHub resources or private systems.
+- Provider access must use least privilege.
+- Mutating workflows must plan first, refuse stale writes and verify completed writes by readback.

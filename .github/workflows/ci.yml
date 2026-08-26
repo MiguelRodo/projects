@@ -1,57 +1,41 @@
-name: CI
+name: Baseline
 
 on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
   pull_request:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-test:
-    name: Build & Test
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.22', '1.23', '1.24']
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-          cache: true
-
-      - name: Verify Dependencies
-        run: go mod verify
-
-      - name: Run Tests with Coverage
-        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
-
-      - name: Build Binaries
-        run: |
-          go build -v ./cmd/projectctl
-          go build -v ./cmd/projects
-
-  lint:
-    name: Lint
+  repository-baseline:
+    name: Repository baseline
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 'stable'
-          cache: true
-
-      - name: Run golangci-lint
+      - name: Verify required public files
+        shell: bash
         run: |
-          curl -sSfL https://github.com/golangci/golangci-lint/releases/download/v2.13.1/golangci-lint-2.13.1-linux-amd64.tar.gz | tar -xz --strip-components=1 -C $(go env GOPATH)/bin golangci-lint-2.13.1-linux-amd64/golangci-lint
-          golangci-lint run ./...
+          set -euo pipefail
+          test -f README.md
+          test -f CONTRIBUTING.md
+          test -f SECURITY.md
+          test -f CODE_OF_CONDUCT.md
+          test -f LICENSE
+          test -f docs/architecture/v1-boundaries.md
+
+      - name: Verify pre-v1 architecture boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e cmd/projects
+          test ! -e projects.go
+
+      - name: Check whitespace
+        run: git diff --check
