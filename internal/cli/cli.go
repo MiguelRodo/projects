@@ -215,7 +215,7 @@ Flags:
 
 Examples:
   projectctl init --name my-project
-  projectctl add https://github.com/org/repo1.git
+  projectctl add https://github.com/example-org/repo1.git
   projectctl sync --pull
   projectctl status
   projectctl exec -- git fetch --all
