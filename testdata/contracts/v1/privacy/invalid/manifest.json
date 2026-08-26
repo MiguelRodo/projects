@@ -1,0 +1,110 @@
+{
+  "formatVersion": 1,
+  "fixtures": [
+    {
+      "file": "companion-boolean.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.companion-advertisement",
+      "instancePath": "/spec/privacy/companion",
+      "rule": "PV-007"
+    },
+    {
+      "file": "companion-supported-boolean.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/spec/privacy/companionSupported",
+      "rule": "PV-007"
+    },
+    {
+      "file": "companion-without-shareable.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.companion-requires-shareable-mode",
+      "instancePath": "/spec/privacy/supportedModes",
+      "rule": "PV-008"
+    },
+    {
+      "file": "default-unsupported.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.privacy-default-unsupported",
+      "instancePath": "/spec/privacy/defaultMode",
+      "rule": "PV-004"
+    },
+    {
+      "file": "duplicate-mode.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unique-items",
+      "instancePath": "/spec/privacy/supportedModes",
+      "rule": "PV-003"
+    },
+    {
+      "file": "empty-policy.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/privacy",
+      "rule": "PV-001"
+    },
+    {
+      "file": "empty-supported-modes.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.privacy-supported-modes",
+      "instancePath": "/spec/privacy/supportedModes",
+      "rule": "PV-003"
+    },
+    {
+      "file": "missing-default.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/privacy",
+      "rule": "PV-004"
+    },
+    {
+      "file": "missing-supported-modes.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/privacy",
+      "rule": "PV-003"
+    },
+    {
+      "file": "null-policy.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.null-forbidden",
+      "instancePath": "/spec/privacy",
+      "rule": "PV-001"
+    },
+    {
+      "file": "per-issue-node-id.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/spec/privacy/companion/linkage/issueNodeId",
+      "rule": "PV-012"
+    },
+    {
+      "file": "private-destination.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/spec/privacy/companion/destination",
+      "rule": "PV-009"
+    },
+    {
+      "file": "shared-effective-mode.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/spec/privacy/effectiveMode",
+      "rule": "PV-005"
+    },
+    {
+      "file": "unknown-linkage-kind.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.companion-linkage-kind",
+      "instancePath": "/spec/privacy/companion/linkage/kind",
+      "rule": "PV-012"
+    },
+    {
+      "file": "unknown-mode.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.privacy-mode",
+      "instancePath": "/spec/privacy/supportedModes/0",
+      "rule": "PV-003"
+    }
+  ]
+}

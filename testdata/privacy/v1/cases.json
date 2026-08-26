@@ -1,0 +1,393 @@
+{
+  "formatVersion": 1,
+  "contracts": {
+    "absent-policy": "testdata/contracts/v1/privacy/valid/absent-policy-single.yaml",
+    "both-with-companion": "testdata/contracts/v1/privacy/valid/both-with-companion.yaml",
+    "both-default-full": "testdata/contracts/v1/privacy/valid/both-default-full.yaml",
+    "full-only": "testdata/contracts/v1/privacy/valid/full-only.yaml",
+    "shareable-only": "testdata/contracts/v1/privacy/valid/shareable-only.yaml"
+  },
+  "cases": [
+    {
+      "id": "PV-C001",
+      "contractRef": "absent-policy",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "unavailable"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "shareable_by_default",
+        "modeSource": "repository-default",
+        "companion": {"status": "not-requested"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C002",
+      "contractRef": "shareable-only",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "shareable_by_default",
+        "modeSource": "repository-default",
+        "companion": {"status": "not-requested"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C003",
+      "contractRef": "full-only",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "forbidden"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "full_github_context",
+        "modeSource": "repository-default",
+        "companion": {"status": "not-requested"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C004",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {"state": "present", "selectedMode": "full_github_context"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "unavailable"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "full_github_context",
+        "modeSource": "operator-profile",
+        "companion": {"status": "not-requested"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C005",
+      "contractRef": "shareable-only",
+      "input": {
+        "profile": {"state": "present", "selectedMode": "full_github_context"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "privacy.mode.unsupported",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C006",
+      "contractRef": "absent-policy",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "repository-default",
+        "diagnostic": "privacy.companion.unsupported",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C007",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "known", "nodeType": "Issue", "nodeId": "I_SYNTHETIC_001"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "repository-default",
+        "diagnostic": "privacy.companion.profile-required",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C008",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "full_github_context",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "known", "nodeType": "Issue", "nodeId": "I_SYNTHETIC_001"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "full_github_context",
+        "modeSource": "operator-profile",
+        "diagnostic": "privacy.companion.mode-conflict",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C009",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "known", "nodeType": "Issue", "nodeId": "I_SYNTHETIC_001"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "companion": {
+          "status": "routed",
+          "linkage": {
+            "kind": "github_issue_node_id",
+            "authority": "github.com",
+            "issueNodeId": "I_SYNTHETIC_001"
+          }
+        },
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C010",
+      "contractRef": "shareable-only",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "known", "nodeType": "Issue", "nodeId": "I_SYNTHETIC_001"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "diagnostic": "privacy.companion.unsupported",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C011",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "diagnostic": "privacy.linkage.issue-identity.unknown",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C012",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "unavailable"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "diagnostic": "privacy.linkage.issue-identity.unavailable",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C013",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "forbidden"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "diagnostic": "privacy.linkage.issue-identity.forbidden",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C014",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "not_found"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "diagnostic": "privacy.linkage.issue-identity.not-found",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C015",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "known", "nodeType": "PullRequest", "nodeId": "PR_SYNTHETIC_001"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "diagnostic": "privacy.linkage.issue-identity.type-mismatch",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C016",
+      "contractRef": "both-with-companion",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "forbidden"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "shareable_by_default",
+        "modeSource": "repository-default",
+        "companion": {"status": "not-requested"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C017",
+      "contractRef": "both-with-companion",
+      "operatorCaseRef": "operator-a",
+      "input": {
+        "profile": {
+          "state": "present",
+          "selectedMode": "shareable_by_default",
+          "companionDestination": {"state": "configured"}
+        },
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "known", "nodeType": "Issue", "nodeId": "I_SYNTHETIC_SHARED"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "shareable_by_default",
+        "modeSource": "operator-profile",
+        "companion": {
+          "status": "routed",
+          "linkage": {
+            "kind": "github_issue_node_id",
+            "authority": "github.com",
+            "issueNodeId": "I_SYNTHETIC_SHARED"
+          }
+        },
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C018",
+      "contractRef": "both-with-companion",
+      "operatorCaseRef": "operator-b",
+      "input": {
+        "profile": {"state": "present", "selectedMode": "full_github_context"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "full_github_context",
+        "modeSource": "operator-profile",
+        "companion": {"status": "not-requested"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C019",
+      "contractRef": "full-only",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "present"},
+        "issueIdentity": {"state": "known", "nodeType": "Issue", "nodeId": "I_SYNTHETIC_001"}
+      },
+      "expected": {
+        "status": "failed",
+        "mode": "full_github_context",
+        "modeSource": "repository-default",
+        "diagnostic": "privacy.companion.mode-conflict",
+        "companion": {"status": "not-routed"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    },
+    {
+      "id": "PV-C020",
+      "contractRef": "both-default-full",
+      "input": {
+        "profile": {"state": "absent"},
+        "privateSupplement": {"state": "absent"},
+        "issueIdentity": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "resolved",
+        "mode": "full_github_context",
+        "modeSource": "repository-default",
+        "companion": {"status": "not-requested"},
+        "privateSupplementWrittenToGitHub": false
+      }
+    }
+  ]
+}

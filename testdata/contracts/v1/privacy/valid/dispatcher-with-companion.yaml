@@ -1,0 +1,25 @@
+apiVersion: projectctl/v1
+kind: DispatcherRepository
+spec:
+  ref: private-dispatcher
+  targets:
+    - target:
+        ref: alpha
+        issueStore: {owner: {kind: organization, login: example-org}, repository: private-dispatcher-tasks}
+        project: {owner: {kind: organization, login: example-org}, number: 76}
+      fields: {}
+    - target:
+        ref: beta
+        issueStore: {owner: {kind: organization, login: example-org}, repository: private-dispatcher-tasks}
+        project: {owner: {kind: organization, login: example-org}, number: 77}
+      fields: {}
+  routing:
+    rules: []
+    fallback: {kind: target, targetRef: alpha}
+  privacy:
+    supportedModes: [shareable_by_default]
+    defaultMode: shareable_by_default
+    companion:
+      linkage: {kind: github_issue_node_id}
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

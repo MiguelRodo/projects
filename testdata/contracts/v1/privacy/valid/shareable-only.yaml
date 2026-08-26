@@ -1,0 +1,14 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: shareable-only
+  target:
+    ref: primary
+    issueStore: {owner: {kind: organization, login: example-org}, repository: shareable-tasks}
+    project: {owner: {kind: organization, login: example-org}, number: 72}
+  fields: {}
+  privacy:
+    supportedModes: [shareable_by_default]
+    defaultMode: shareable_by_default
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

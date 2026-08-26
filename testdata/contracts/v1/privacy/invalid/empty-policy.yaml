@@ -1,0 +1,12 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: empty-policy
+  target:
+    ref: primary
+    issueStore: {owner: {kind: organization, login: example-org}, repository: privacy-tasks}
+    project: {owner: {kind: organization, login: example-org}, number: 81}
+  fields: {}
+  privacy: {}
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

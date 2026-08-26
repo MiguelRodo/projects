@@ -1,0 +1,15 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: shared-effective-mode
+  target:
+    ref: primary
+    issueStore: {owner: {kind: organization, login: example-org}, repository: privacy-tasks}
+    project: {owner: {kind: organization, login: example-org}, number: 81}
+  fields: {}
+  privacy:
+    supportedModes: [shareable_by_default, full_github_context]
+    defaultMode: shareable_by_default
+    effectiveMode: full_github_context
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

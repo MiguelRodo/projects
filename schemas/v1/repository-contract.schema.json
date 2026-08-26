@@ -53,6 +53,118 @@
       "maxLength": 63,
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
     },
+    "privacyMode": {
+      "enum": [
+        "full_github_context",
+        "shareable_by_default"
+      ]
+    },
+    "companionAdvertisement": {
+      "type": "object",
+      "required": [
+        "linkage"
+      ],
+      "properties": {
+        "linkage": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "github_issue_node_id"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "privacyPolicy": {
+      "type": "object",
+      "required": [
+        "supportedModes",
+        "defaultMode"
+      ],
+      "properties": {
+        "supportedModes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/privacyMode"
+          }
+        },
+        "defaultMode": {
+          "$ref": "#/$defs/privacyMode"
+        },
+        "companion": {
+          "$ref": "#/$defs/companionAdvertisement"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "defaultMode": {
+                "const": "shareable_by_default"
+              }
+            },
+            "required": [
+              "defaultMode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supportedModes": {
+                "contains": {
+                  "const": "shareable_by_default"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "defaultMode": {
+                "const": "full_github_context"
+              }
+            },
+            "required": [
+              "defaultMode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supportedModes": {
+                "contains": {
+                  "const": "full_github_context"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "companion"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supportedModes": {
+                "contains": {
+                  "const": "shareable_by_default"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "owner": {
       "type": "object",
       "required": [
@@ -479,6 +591,9 @@
         "fields": {
           "$ref": "#/$defs/fieldMap"
         },
+        "privacy": {
+          "$ref": "#/$defs/privacyPolicy"
+        },
         "sourceRefs": {
           "$ref": "#/$defs/sourceRefs"
         },
@@ -697,6 +812,9 @@
         },
         "routing": {
           "$ref": "#/$defs/routing"
+        },
+        "privacy": {
+          "$ref": "#/$defs/privacyPolicy"
         },
         "sourceRefs": {
           "$ref": "#/$defs/sourceRefs"
