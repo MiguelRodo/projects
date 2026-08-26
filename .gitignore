@@ -1,0 +1,53 @@
+# Binaries and build artifacts
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+projectctl
+projects
+
+# Test and coverage artifacts
+*.test
+*.out
+coverage.txt
+coverage.html
+coverage/
+
+# Go workspace and cache
+go.work
+go.work.sum
+.cache/
+
+# IDE and Editor files
+.idea/
+.vscode/*
+!.devcontainer/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+*.bak
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
