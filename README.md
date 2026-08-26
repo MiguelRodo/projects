@@ -47,6 +47,8 @@ The shared single-Project wire contract and schema are defined in [docs/spec/v1-
 
 The dispatcher extension and deterministic multi-Project routing semantics are defined in [docs/spec/v1-routing.md](docs/spec/v1-routing.md).
 
+The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
+
 The intended executable is `projectctl`. There is no `projects` compatibility binary and no multi-repository clone/sync workspace-manager scope.
 
 ## Contributing

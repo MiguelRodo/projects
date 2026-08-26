@@ -1,0 +1,14 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: unknown-mode
+  target:
+    ref: primary
+    issueStore: {owner: {kind: organization, login: example-org}, repository: privacy-tasks}
+    project: {owner: {kind: organization, login: example-org}, number: 81}
+  fields: {}
+  privacy:
+    supportedModes: [private_only]
+    defaultMode: private_only
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

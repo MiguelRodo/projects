@@ -1,0 +1,16 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: companion-policy
+  target:
+    ref: primary
+    issueStore: {owner: {kind: organization, login: example-org}, repository: companion-tasks}
+    project: {owner: {kind: organization, login: example-org}, number: 74}
+  fields: {}
+  privacy:
+    supportedModes: [shareable_by_default, full_github_context]
+    defaultMode: shareable_by_default
+    companion:
+      linkage: {kind: github_issue_node_id}
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

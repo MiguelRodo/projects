@@ -1,0 +1,14 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: full-only
+  target:
+    ref: primary
+    issueStore: {owner: {kind: organization, login: example-org}, repository: full-context-tasks}
+    project: {owner: {kind: organization, login: example-org}, number: 73}
+  fields: {}
+  privacy:
+    supportedModes: [full_github_context]
+    defaultMode: full_github_context
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}
