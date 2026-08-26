@@ -1,6 +1,6 @@
 {
   "name": "projectctl Development",
-  "image": "ghcr.io/miguelrodo/devcontainers-projects:v1.0.0",
+  "image": "ghcr.io/miguelrodo/devcontainers-projects:v1.1.0",
   "remoteUser": "vscode",
   "postCreateCommand": "if [ -f go.mod ]; then go mod download; fi",
   "customizations": {
