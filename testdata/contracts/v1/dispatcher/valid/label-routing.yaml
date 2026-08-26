@@ -1,0 +1,45 @@
+apiVersion: projectctl/v1
+kind: DispatcherRepository
+spec:
+  ref: shared-work
+  targets:
+    - target:
+        ref: backend
+        issueStore:
+          owner: {kind: organization, login: example-org}
+          repository: shared-tasks
+        project:
+          owner: {kind: organization, login: example-org}
+          number: 11
+      fields: {}
+    - target:
+        ref: frontend
+        issueStore:
+          owner: {kind: organization, login: example-org}
+          repository: shared-tasks
+        project:
+          owner: {kind: organization, login: example-org}
+          number: 12
+      fields: {}
+    - target:
+        ref: triage
+        issueStore:
+          owner: {kind: organization, login: example-org}
+          repository: shared-tasks
+        project:
+          owner: {kind: organization, login: example-org}
+          number: 13
+      fields: {}
+  routing:
+    rules:
+      - ref: backend-route
+        labelsAll: [area:backend]
+        targetRef: backend
+      - ref: frontend-route
+        labelsAll: [area:frontend]
+        targetRef: frontend
+    fallback: {kind: target, targetRef: triage}
+  sourceRefs: []
+  requirements:
+    features: [issues, projects-v2]
+    mutations: []

@@ -1,0 +1,20 @@
+apiVersion: projectctl/v1
+kind: DispatcherRepository
+spec:
+  ref: missing-fallback-target-ref
+  targets:
+    - target:
+        ref: alpha
+        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
+        project: {owner: {kind: organization, login: example-org}, number: 1}
+      fields: {}
+    - target:
+        ref: beta
+        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
+        project: {owner: {kind: organization, login: example-org}, number: 2}
+      fields: {}
+  routing:
+    rules: []
+    fallback: {kind: target}
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

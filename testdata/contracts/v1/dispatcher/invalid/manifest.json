@@ -1,0 +1,180 @@
+{
+  "formatVersion": 1,
+  "fixtures": [
+    {
+      "file": "bad-fallback-kind.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.route-fallback",
+      "instancePath": "/spec/routing/fallback/kind",
+      "rule": "RT-011"
+    },
+    {
+      "file": "duplicate-labels.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unique-items",
+      "instancePath": "/spec/routing/rules/0/labelsAll",
+      "rule": "RT-006"
+    },
+    {
+      "file": "empty-labels.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.route-predicate",
+      "instancePath": "/spec/routing/rules/0/labelsAll",
+      "rule": "RT-006"
+    },
+    {
+      "file": "error-fallback-target.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/spec/routing/fallback/targetRef",
+      "rule": "RT-011"
+    },
+    {
+      "file": "field-create-without-fields.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.mutation-prerequisite",
+      "instancePath": "/spec/targets",
+      "rule": "RT-018"
+    },
+    {
+      "file": "field-write-missing-membership.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.mutation-prerequisite",
+      "instancePath": "/spec/requirements/features",
+      "rule": "RT-018"
+    },
+    {
+      "file": "fields-missing-feature.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required-feature",
+      "instancePath": "/spec/requirements/features",
+      "rule": "RT-018"
+    },
+    {
+      "file": "missing-fallback.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/routing",
+      "rule": "RT-011"
+    },
+    {
+      "file": "missing-fallback-target-ref.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/routing/fallback",
+      "rule": "RT-011"
+    },
+    {
+      "file": "missing-rule-ref.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/routing/rules/0",
+      "rule": "RT-006"
+    },
+    {
+      "file": "missing-rule-target-ref.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/routing/rules/0",
+      "rule": "RT-006"
+    },
+    {
+      "file": "missing-routing.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec",
+      "rule": "RT-005"
+    },
+    {
+      "file": "missing-target-fields.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/targets/0",
+      "rule": "RT-003"
+    },
+    {
+      "file": "null-rules.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.null-forbidden",
+      "instancePath": "/spec/routing/rules",
+      "rule": "RT-006"
+    },
+    {
+      "file": "one-target.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.dispatcher-target-count",
+      "instancePath": "/spec/targets",
+      "rule": "RT-002"
+    },
+    {
+      "file": "unknown-predicate.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/spec/routing/rules/0/labelsAny",
+      "rule": "RT-006"
+    },
+    {
+      "file": "duplicate-field-selector.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-field-selector",
+      "instancePath": "/spec/targets/0/fields/second-notes",
+      "rule": "RT-003"
+    },
+    {
+      "file": "duplicate-project-selector.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-project-selector",
+      "instancePath": "/spec/targets/1/target/project",
+      "rule": "RT-004"
+    },
+    {
+      "file": "duplicate-route-predicate.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-route-predicate",
+      "instancePath": "/spec/routing/rules/1/labelsAll",
+      "rule": "RT-009"
+    },
+    {
+      "file": "duplicate-route-ref.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-route-ref",
+      "instancePath": "/spec/routing/rules/1/ref",
+      "rule": "RT-005"
+    },
+    {
+      "file": "duplicate-target-ref.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-target-ref",
+      "instancePath": "/spec/targets/1/target/ref",
+      "rule": "RT-004"
+    },
+    {
+      "file": "duplicate-value-selector.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-value-selector",
+      "instancePath": "/spec/targets/0/fields/state/values/second",
+      "rule": "RT-003"
+    },
+    {
+      "file": "mixed-issue-stores.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.mixed-issue-stores",
+      "instancePath": "/spec/targets/1/target/issueStore",
+      "rule": "RT-002"
+    },
+    {
+      "file": "unknown-fallback-target.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.unknown-fallback-target",
+      "instancePath": "/spec/routing/fallback/targetRef",
+      "rule": "RT-011"
+    },
+    {
+      "file": "unknown-route-target.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.unknown-route-target",
+      "instancePath": "/spec/routing/rules/0/targetRef",
+      "rule": "RT-006"
+    }
+  ]
+}

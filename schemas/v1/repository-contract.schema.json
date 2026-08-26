@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:projectctl:schema:repository-contract:v1",
   "title": "projectctl v1 repository contract",
-  "description": "The collaborator-safe shared contract for one participating repository and one GitHub Project.",
+  "description": "The collaborator-safe shared contract for one participating repository, one issue store and one or more GitHub Projects.",
   "type": "object",
   "required": [
     "apiVersion",
@@ -14,13 +14,38 @@
       "const": "projectctl/v1"
     },
     "kind": {
-      "const": "SingleProjectRepository"
+      "enum": [
+        "DispatcherRepository",
+        "SingleProjectRepository"
+      ]
     },
     "spec": {
-      "$ref": "#/$defs/singleProjectSpec"
+      "type": "object"
     }
   },
   "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {
+          "const": "SingleProjectRepository"
+        },
+        "spec": {
+          "$ref": "#/$defs/singleProjectSpec"
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "DispatcherRepository"
+        },
+        "spec": {
+          "$ref": "#/$defs/dispatcherSpec"
+        }
+      }
+    }
+  ],
   "$defs": {
     "contractRef": {
       "type": "string",
@@ -245,6 +270,128 @@
       },
       "additionalProperties": {
         "$ref": "#/$defs/field"
+      }
+    },
+    "labelName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "routeRule": {
+      "type": "object",
+      "required": [
+        "ref",
+        "labelsAll",
+        "targetRef"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "labelsAll": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/labelName"
+          }
+        },
+        "targetRef": {
+          "$ref": "#/$defs/contractRef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "routeFallback": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "targetRef"
+          ],
+          "properties": {
+            "kind": {
+              "const": "target"
+            },
+            "targetRef": {
+              "$ref": "#/$defs/contractRef"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "error"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "routing": {
+      "type": "object",
+      "required": [
+        "rules",
+        "fallback"
+      ],
+      "properties": {
+        "rules": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/routeRule"
+          }
+        },
+        "fallback": {
+          "$ref": "#/$defs/routeFallback"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dispatcherTarget": {
+      "type": "object",
+      "required": [
+        "target",
+        "fields"
+      ],
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "fields": {
+          "$ref": "#/$defs/fieldMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "hasDispatcherFields": {
+      "type": "object",
+      "required": [
+        "targets"
+      ],
+      "properties": {
+        "targets": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "fields"
+            ],
+            "properties": {
+              "fields": {
+                "type": "object",
+                "minProperties": 1
+              }
+            }
+          }
+        }
       }
     },
     "sourceRefs": {
@@ -523,6 +670,229 @@
                 }
               }
             }
+          }
+        }
+      ]
+    },
+    "dispatcherSpec": {
+      "type": "object",
+      "required": [
+        "ref",
+        "targets",
+        "routing",
+        "sourceRefs",
+        "requirements"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/dispatcherTarget"
+          }
+        },
+        "routing": {
+          "$ref": "#/$defs/routing"
+        },
+        "sourceRefs": {
+          "$ref": "#/$defs/sourceRefs"
+        },
+        "requirements": {
+          "$ref": "#/$defs/requirements"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/hasDispatcherFields"
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-custom-fields"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.field.option.create"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/hasDispatcherFields"
+              },
+              {
+                "properties": {
+                  "requirements": {
+                    "properties": {
+                      "features": {
+                        "contains": {
+                          "const": "project-custom-fields"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "issue.relationship.create"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "issue-relationships"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.field.create"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/hasDispatcherFields"
+              },
+              {
+                "properties": {
+                  "requirements": {
+                    "properties": {
+                      "features": {
+                        "contains": {
+                          "const": "project-custom-fields"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.item.add"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-item-membership"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.item.field.write"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/hasDispatcherFields"
+              },
+              {
+                "properties": {
+                  "requirements": {
+                    "properties": {
+                      "features": {
+                        "allOf": [
+                          {
+                            "contains": {
+                              "const": "project-custom-fields"
+                            }
+                          },
+                          {
+                            "contains": {
+                              "const": "project-item-membership"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
           }
         }
       ]
