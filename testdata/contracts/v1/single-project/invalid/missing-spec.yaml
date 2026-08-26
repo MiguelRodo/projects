@@ -1,0 +1,2 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository

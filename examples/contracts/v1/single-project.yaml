@@ -1,0 +1,71 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: example-service
+  target:
+    ref: primary
+    issueStore:
+      owner:
+        kind: organization
+        login: example-org
+      repository: example-service-tasks
+    project:
+      owner:
+        kind: organization
+        login: example-org
+      number: 7
+  fields:
+    work-state:
+      name: Work state
+      dataType: singleSelect
+      values:
+        queued:
+          name: Queued
+          color: gray
+          description: Ready to be scheduled.
+        active:
+          name: Active
+          color: blue
+          description: Work is in progress.
+        done:
+          name: Done
+          color: green
+          description: Work is complete.
+    areas:
+      name: Areas
+      dataType: multiSelect
+      values:
+        api:
+          name: API
+          color: purple
+          description: API-facing work.
+        documentation:
+          name: Documentation
+          color: yellow
+          description: Documentation work.
+    estimate:
+      name: Estimate
+      dataType: number
+    target-date:
+      name: Target date
+      dataType: date
+    notes:
+      name: Notes
+      dataType: text
+  sourceRefs:
+    - architecture
+    - handbook
+  requirements:
+    features:
+      - issue-relationships
+      - issues
+      - project-custom-fields
+      - project-item-membership
+      - projects-v2
+    mutations:
+      - issue.create
+      - issue.relationship.create
+      - project.field.create
+      - project.field.option.create
+      - project.item.add
+      - project.item.field.write

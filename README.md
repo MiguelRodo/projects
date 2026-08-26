@@ -43,6 +43,8 @@ The normative layer, package and dependency boundaries are defined in [docs/arch
 
 The normative terminology, authority, identity and processing model is defined in [docs/spec/v1-conceptual-model.md](docs/spec/v1-conceptual-model.md).
 
+The shared single-Project wire contract and schema are defined in [docs/spec/v1-single-project-contract.md](docs/spec/v1-single-project-contract.md).
+
 The intended executable is `projectctl`. There is no `projects` compatibility binary and no multi-repository clone/sync workspace-manager scope.
 
 ## Contributing

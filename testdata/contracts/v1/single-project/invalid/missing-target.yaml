@@ -1,0 +1,7 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: alpha
+  fields: {}
+  sourceRefs: []
+  requirements: {features: [issues, projects-v2], mutations: []}

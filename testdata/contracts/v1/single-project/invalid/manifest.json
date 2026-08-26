@@ -1,0 +1,362 @@
+{
+  "formatVersion": 1,
+  "fixtures": [
+    {
+      "file": "alias.yaml",
+      "stage": "yaml",
+      "diagnostic": "contract.yaml.alias-forbidden",
+      "instancePath": "",
+      "rule": "SP-002"
+    },
+    {
+      "file": "custom-tag.yaml",
+      "stage": "yaml",
+      "diagnostic": "contract.yaml.custom-tag-forbidden",
+      "instancePath": "/spec/ref",
+      "rule": "SP-002"
+    },
+    {
+      "file": "duplicate-key.yaml",
+      "stage": "yaml",
+      "diagnostic": "contract.yaml.duplicate-key",
+      "instancePath": "/kind",
+      "rule": "SP-002"
+    },
+    {
+      "file": "merge-key.yaml",
+      "stage": "yaml",
+      "diagnostic": "contract.yaml.merge-key-forbidden",
+      "instancePath": "/spec/target/project/owner",
+      "rule": "SP-002"
+    },
+    {
+      "file": "multiple-documents.yaml",
+      "stage": "yaml",
+      "diagnostic": "contract.yaml.multiple-documents",
+      "instancePath": "",
+      "rule": "SP-002"
+    },
+    {
+      "file": "non-finite-number.yaml",
+      "stage": "yaml",
+      "diagnostic": "contract.yaml.non-json-number",
+      "instancePath": "/spec/target/project/number",
+      "rule": "SP-002"
+    },
+    {
+      "file": "non-string-key.yaml",
+      "stage": "yaml",
+      "diagnostic": "contract.yaml.non-string-key",
+      "instancePath": "/spec/fields",
+      "rule": "SP-002"
+    },
+    {
+      "file": "bad-contract-ref.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.contract-ref",
+      "instancePath": "/spec/ref",
+      "rule": "SP-006"
+    },
+    {
+      "file": "duplicate-source-ref.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unique-items",
+      "instancePath": "/spec/sourceRefs",
+      "rule": "SP-018"
+    },
+    {
+      "file": "empty-field-name.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.provider-name",
+      "instancePath": "/spec/fields/notes/name",
+      "rule": "SP-012"
+    },
+    {
+      "file": "field-create-without-fields.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.mutation-prerequisite",
+      "instancePath": "/spec/fields",
+      "rule": "SP-020"
+    },
+    {
+      "file": "field-write-missing-membership.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.mutation-prerequisite",
+      "instancePath": "/spec/requirements/features",
+      "rule": "SP-020"
+    },
+    {
+      "file": "fields-missing-feature.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required-feature",
+      "instancePath": "/spec/requirements/features",
+      "rule": "SP-019"
+    },
+    {
+      "file": "iteration-field.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unsupported-field-type",
+      "instancePath": "/spec/fields/sprint/dataType",
+      "rule": "SP-017"
+    },
+    {
+      "file": "missing-api-version.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "",
+      "rule": "SP-003"
+    },
+    {
+      "file": "missing-projects-feature.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required-feature",
+      "instancePath": "/spec/requirements/features",
+      "rule": "SP-019"
+    },
+    {
+      "file": "missing-source-refs.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec",
+      "rule": "SP-005"
+    },
+    {
+      "file": "null-fields.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.null-forbidden",
+      "instancePath": "/spec/fields",
+      "rule": "SP-023"
+    },
+    {
+      "file": "project-number-zero.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.project-number",
+      "instancePath": "/spec/target/project/number",
+      "rule": "SP-010"
+    },
+    {
+      "file": "provider-id.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/spec/target/project/nodeId",
+      "rule": "SP-011"
+    },
+    {
+      "file": "relationship-missing-feature.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.mutation-prerequisite",
+      "instancePath": "/spec/requirements/features",
+      "rule": "SP-020"
+    },
+    {
+      "file": "scalar-with-values.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.values-forbidden",
+      "instancePath": "/spec/fields/notes/values",
+      "rule": "SP-012"
+    },
+    {
+      "file": "select-without-values.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.select-values-required",
+      "instancePath": "/spec/fields/status",
+      "rule": "SP-013"
+    },
+    {
+      "file": "source-location.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.source-ref",
+      "instancePath": "/spec/sourceRefs/0",
+      "rule": "SP-018"
+    },
+    {
+      "file": "unknown-root-field.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-field",
+      "instancePath": "/privateDestination",
+      "rule": "SP-023"
+    },
+    {
+      "file": "wrong-api-version.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.api-version",
+      "instancePath": "/apiVersion",
+      "rule": "SP-003"
+    },
+    {
+      "file": "wrong-kind.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.kind",
+      "instancePath": "/kind",
+      "rule": "SP-004"
+    },
+    {
+      "file": "missing-kind.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "",
+      "rule": "SP-004"
+    },
+    {
+      "file": "missing-spec.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "",
+      "rule": "SP-005"
+    },
+    {
+      "file": "missing-spec-ref.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec",
+      "rule": "SP-005"
+    },
+    {
+      "file": "missing-target.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec",
+      "rule": "SP-008"
+    },
+    {
+      "file": "missing-fields.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec",
+      "rule": "SP-005"
+    },
+    {
+      "file": "missing-requirements.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec",
+      "rule": "SP-005"
+    },
+    {
+      "file": "missing-target-ref.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target",
+      "rule": "SP-007"
+    },
+    {
+      "file": "missing-issue-store.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target",
+      "rule": "SP-008"
+    },
+    {
+      "file": "missing-project.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target",
+      "rule": "SP-008"
+    },
+    {
+      "file": "missing-issue-store-owner.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target/issueStore",
+      "rule": "SP-009"
+    },
+    {
+      "file": "missing-repository.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target/issueStore",
+      "rule": "SP-008"
+    },
+    {
+      "file": "missing-project-owner.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target/project",
+      "rule": "SP-009"
+    },
+    {
+      "file": "missing-project-number.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target/project",
+      "rule": "SP-010"
+    },
+    {
+      "file": "missing-owner-kind.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target/issueStore/owner",
+      "rule": "SP-009"
+    },
+    {
+      "file": "missing-owner-login.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/target/issueStore/owner",
+      "rule": "SP-009"
+    },
+    {
+      "file": "missing-field-name.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/fields/notes",
+      "rule": "SP-012"
+    },
+    {
+      "file": "missing-field-data-type.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/fields/notes",
+      "rule": "SP-012"
+    },
+    {
+      "file": "missing-option-name.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/fields/status/values/ready",
+      "rule": "SP-013"
+    },
+    {
+      "file": "missing-option-color.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/fields/status/values/ready",
+      "rule": "SP-016"
+    },
+    {
+      "file": "missing-option-description.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/fields/status/values/ready",
+      "rule": "SP-016"
+    },
+    {
+      "file": "missing-features.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/requirements",
+      "rule": "SP-019"
+    },
+    {
+      "file": "missing-mutations.yaml",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/requirements",
+      "rule": "SP-020"
+    },
+    {
+      "file": "duplicate-field-selector.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-field-selector",
+      "instancePath": "/spec/fields/second-notes",
+      "rule": "SP-015"
+    },
+    {
+      "file": "duplicate-value-selector.yaml",
+      "stage": "semantic",
+      "diagnostic": "contract.semantic.duplicate-value-selector",
+      "instancePath": "/spec/fields/status/values/also-ready",
+      "rule": "SP-015"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: alpha
+  target:
+    ref: primary
+    issueStore:
+      owner: {kind: organization, login: example-org}
+      repository: alpha-tasks
+    project:
+      owner: {kind: organization, login: example-org}
+      number: 1
+  fields:
+    first-notes: {name: Notes, dataType: text}
+    second-notes: {name: Notes, dataType: text}
+  sourceRefs: []
+  requirements: {features: [issues, project-custom-fields, projects-v2], mutations: []}

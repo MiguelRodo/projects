@@ -1,0 +1,531 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:projectctl:schema:repository-contract:v1",
+  "title": "projectctl v1 repository contract",
+  "description": "The collaborator-safe shared contract for one participating repository and one GitHub Project.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "spec"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "projectctl/v1"
+    },
+    "kind": {
+      "const": "SingleProjectRepository"
+    },
+    "spec": {
+      "$ref": "#/$defs/singleProjectSpec"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "contractRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "owner": {
+      "type": "object",
+      "required": [
+        "kind",
+        "login"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "organization",
+            "user"
+          ]
+        },
+        "login": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 39,
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "repositoryName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "issueStore": {
+      "type": "object",
+      "required": [
+        "owner",
+        "repository"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "repository": {
+          "$ref": "#/$defs/repositoryName"
+        }
+      },
+      "additionalProperties": false
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "owner",
+        "number"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "ref",
+        "issueStore",
+        "project"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "issueStore": {
+          "$ref": "#/$defs/issueStore"
+        },
+        "project": {
+          "$ref": "#/$defs/project"
+        }
+      },
+      "additionalProperties": false
+    },
+    "providerName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+    },
+    "optionDescription": {
+      "type": "string",
+      "maxLength": 1024,
+      "pattern": "^[^\\r\\n]*$"
+    },
+    "optionColor": {
+      "enum": [
+        "blue",
+        "gray",
+        "green",
+        "orange",
+        "pink",
+        "purple",
+        "red",
+        "yellow"
+      ]
+    },
+    "option": {
+      "type": "object",
+      "required": [
+        "name",
+        "color",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "color": {
+          "$ref": "#/$defs/optionColor"
+        },
+        "description": {
+          "$ref": "#/$defs/optionDescription"
+        }
+      },
+      "additionalProperties": false
+    },
+    "valueMap": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/option"
+      }
+    },
+    "scalarField": {
+      "type": "object",
+      "required": [
+        "name",
+        "dataType"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "dataType": {
+          "enum": [
+            "date",
+            "number",
+            "text"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "singleSelectField": {
+      "type": "object",
+      "required": [
+        "name",
+        "dataType",
+        "values"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "dataType": {
+          "const": "singleSelect"
+        },
+        "values": {
+          "$ref": "#/$defs/valueMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "multiSelectField": {
+      "type": "object",
+      "required": [
+        "name",
+        "dataType",
+        "values"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "dataType": {
+          "const": "multiSelect"
+        },
+        "values": {
+          "$ref": "#/$defs/valueMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "field": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/scalarField"
+        },
+        {
+          "$ref": "#/$defs/singleSelectField"
+        },
+        {
+          "$ref": "#/$defs/multiSelectField"
+        }
+      ]
+    },
+    "fieldMap": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/field"
+      }
+    },
+    "sourceRefs": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/contractRef"
+      }
+    },
+    "featureRequirements": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "issue-relationships",
+          "issues",
+          "project-custom-fields",
+          "project-item-membership",
+          "projects-v2"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "issues"
+          }
+        },
+        {
+          "contains": {
+            "const": "projects-v2"
+          }
+        }
+      ]
+    },
+    "mutationDeclarations": {
+      "type": "array",
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "issue.create",
+          "issue.relationship.create",
+          "project.field.create",
+          "project.field.option.create",
+          "project.item.add",
+          "project.item.field.write"
+        ]
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "required": [
+        "features",
+        "mutations"
+      ],
+      "properties": {
+        "features": {
+          "$ref": "#/$defs/featureRequirements"
+        },
+        "mutations": {
+          "$ref": "#/$defs/mutationDeclarations"
+        }
+      },
+      "additionalProperties": false
+    },
+    "singleProjectSpec": {
+      "type": "object",
+      "required": [
+        "ref",
+        "target",
+        "fields",
+        "sourceRefs",
+        "requirements"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "fields": {
+          "$ref": "#/$defs/fieldMap"
+        },
+        "sourceRefs": {
+          "$ref": "#/$defs/sourceRefs"
+        },
+        "requirements": {
+          "$ref": "#/$defs/requirements"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "minProperties": 1
+              }
+            },
+            "required": [
+              "fields"
+            ]
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-custom-fields"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.field.option.create"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "minProperties": 1
+              },
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-custom-fields"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "issue.relationship.create"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "issue-relationships"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.field.create"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "minProperties": 1
+              },
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-custom-fields"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.item.add"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-item-membership"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.item.field.write"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "minProperties": 1
+              },
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "project-custom-fields"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "project-item-membership"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

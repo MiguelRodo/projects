@@ -1,0 +1,42 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: mutation-scopes
+  target:
+    ref: primary
+    issueStore:
+      owner:
+        kind: organization
+        login: example-org
+      repository: mutation-tasks
+    project:
+      owner:
+        kind: organization
+        login: example-org
+      number: 11
+  fields:
+    state:
+      name: State
+      dataType: singleSelect
+      values:
+        open:
+          name: Open
+          color: blue
+          description: ""
+  sourceRefs:
+    - architecture
+    - handbook
+  requirements:
+    features:
+      - issue-relationships
+      - issues
+      - project-custom-fields
+      - project-item-membership
+      - projects-v2
+    mutations:
+      - issue.create
+      - issue.relationship.create
+      - project.field.create
+      - project.field.option.create
+      - project.item.add
+      - project.item.field.write
