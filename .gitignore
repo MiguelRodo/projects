@@ -6,8 +6,8 @@ dist/
 *.dll
 *.so
 *.dylib
-projectctl
-projects
+/projectctl
+/projects
 
 # Test and coverage artifacts
 *.test
