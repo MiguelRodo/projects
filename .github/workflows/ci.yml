@@ -51,7 +51,7 @@ jobs:
           go-version: 'stable'
           cache: true
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.64.8
+      - name: Install & Run golangci-lint
+        run: |
+          curl -sSfL https://github.com/golangci/golangci-lint/releases/download/v2.13.1/golangci-lint-2.13.1-linux-amd64.tar.gz | tar -xz --strip-components=1 -C $(go env GOPATH)/bin golangci-lint-2.13.1-linux-amd64/golangci-lint
+          golangci-lint run ./...
