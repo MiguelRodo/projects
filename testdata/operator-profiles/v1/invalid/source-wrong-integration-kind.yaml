@@ -1,0 +1,26 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec:
+  providers:
+    private-resources:
+      adapterRef: synthetic-resource-store
+  companionDestinations: {}
+  workspaces: {}
+  integrations:
+    alpha-agenda:
+      kind: agenda
+      providerRef: private-resources
+      resourceRef: synthetic/agenda-alpha
+      access: read_only
+  contractBindings:
+    - contract:
+        authority: github.com
+        owner:
+          kind: organization
+          login: example-org
+        repository: alpha-config
+        ref: alpha
+      sources:
+        shared: {}
+        private:
+          - alpha-agenda

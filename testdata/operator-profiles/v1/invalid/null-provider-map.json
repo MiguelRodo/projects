@@ -1,0 +1,1 @@
+{"apiVersion":"projectctl/v1","kind":"OperatorProfile","spec":{"providers":null,"companionDestinations":{},"workspaces":{},"integrations":{},"contractBindings":[{"contract":{"authority":"github.com","owner":{"kind":"user","login":"example-user"},"repository":"alpha","ref":"alpha"},"privacy":{"mode":"full_github_context"},"sources":{"shared":{},"private":[]}}]}}

@@ -1,0 +1,20 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec:
+  providers: {}
+  companionDestinations: {}
+  workspaces: {}
+  integrations: {}
+  contractBindings:
+    - contract:
+        authority: github.com
+        owner:
+          kind: user
+          login: example-user
+        repository: beta-config
+        ref: beta
+      privacy:
+        mode: shareable_by_default
+      sources:
+        shared: {}
+        private: []

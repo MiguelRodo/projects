@@ -1,0 +1,19 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec:
+  providers: {}
+  companionDestinations: {}
+  workspaces: {}
+  integrations: {}
+  contractBindings:
+    - contract:
+        authority: github.com
+        owner:
+          kind: organization
+          login: example-org
+        repository: alpha-config
+        ref: alpha
+      workspaceRef: missing-workspace
+      sources:
+        shared: {}
+        private: []

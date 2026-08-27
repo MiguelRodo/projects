@@ -1,0 +1,67 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec:
+  providers:
+    private-records:
+      adapterRef: synthetic-record-store
+      configurationRef: private-records-config
+      credentialRef: private-records-credential
+    private-resources:
+      adapterRef: synthetic-resource-store
+      configurationRef: private-resources-config
+  companionDestinations:
+    alpha-companions:
+      providerRef: private-records
+      resourceRef: synthetic/companion-container-alpha
+  workspaces:
+    alpha-workspace:
+      path:
+        kind: posix_absolute
+        value: /synthetic/work/alpha
+  integrations:
+    alpha-roadmap:
+      kind: source
+      providerRef: private-resources
+      resourceRef: synthetic/source-roadmap-alpha
+      access: read_only
+    alpha-private-notes:
+      kind: source
+      providerRef: private-resources
+      resourceRef: synthetic/source-notes-alpha
+      access: read_only
+    alpha-agenda:
+      kind: agenda
+      providerRef: private-resources
+      resourceRef: synthetic/agenda-alpha
+      access: read_only
+    alpha-registry:
+      kind: registry
+      providerRef: private-resources
+      resourceRef: synthetic/registry-alpha
+      access: read_only
+    alpha-cache:
+      kind: cache
+      providerRef: private-resources
+      resourceRef: synthetic/cache-alpha
+      access: pull_only
+  contractBindings:
+    - contract:
+        authority: github.com
+        owner:
+          kind: organization
+          login: example-org
+        repository: alpha-config
+        ref: alpha
+      privacy:
+        mode: shareable_by_default
+        companionDestinationRef: alpha-companions
+      workspaceRef: alpha-workspace
+      sources:
+        shared:
+          roadmap: alpha-roadmap
+        private:
+          - alpha-private-notes
+      extensions:
+        agendaRef: alpha-agenda
+        registryRef: alpha-registry
+        cacheRef: alpha-cache

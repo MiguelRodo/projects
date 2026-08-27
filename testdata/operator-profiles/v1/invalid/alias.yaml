@@ -1,0 +1,9 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec: &profile
+  providers: {}
+  companionDestinations: {}
+  workspaces: {}
+  integrations: {}
+  contractBindings: []
+copy: *profile

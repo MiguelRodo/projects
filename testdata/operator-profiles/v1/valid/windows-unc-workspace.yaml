@@ -1,0 +1,23 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec:
+  providers: {}
+  companionDestinations: {}
+  workspaces:
+    gamma-workspace:
+      path:
+        kind: windows_unc_absolute
+        value: '\\synthetic-server\synthetic-share\gamma'
+  integrations: {}
+  contractBindings:
+    - contract:
+        authority: github.com
+        owner:
+          kind: organization
+          login: example-org
+        repository: gamma-config
+        ref: gamma
+      workspaceRef: gamma-workspace
+      sources:
+        shared: {}
+        private: []

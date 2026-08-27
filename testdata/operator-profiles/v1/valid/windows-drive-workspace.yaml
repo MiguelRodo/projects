@@ -1,0 +1,23 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec:
+  providers: {}
+  companionDestinations: {}
+  workspaces:
+    beta-workspace:
+      path:
+        kind: windows_drive_absolute
+        value: 'C:\synthetic\work\beta'
+  integrations: {}
+  contractBindings:
+    - contract:
+        authority: github.com
+        owner:
+          kind: user
+          login: example-user
+        repository: beta-config
+        ref: beta
+      workspaceRef: beta-workspace
+      sources:
+        shared: {}
+        private: []
