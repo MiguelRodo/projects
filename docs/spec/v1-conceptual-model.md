@@ -2,7 +2,7 @@
 
 Status: **normative pre-v1 specification**
 
-Issue: #12
+Issue: #12; architecture clarification: #46
 
 This document fixes the vocabulary, authority model, identity model and processing boundaries used by every v1 contract and implementation. Later specifications may choose wire representations and exact algorithms only within these boundaries.
 
@@ -10,11 +10,12 @@ The keywords **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT** and **MAY** are 
 
 ## Purpose
 
-The system allows a participating repository to describe collaborator-safe project administration intent while each acting operator keeps their own private configuration outside that repository. A portable core validates those inputs, observes provider state, plans explicit changes and verifies any applied mutation.
+The system allows a participating repository to describe collaborator-safe project administration intent while each acting operator keeps their own private configuration outside that repository. The same protocol supports automated setup and ordinary project interaction. A portable reference implementation or another conforming execution adapter validates those inputs, observes provider state, plans explicit changes and verifies any applied mutation.
 
 The model is designed so that:
 
 - ordinary collaborators can understand and use the shared GitHub surface without an operator's private systems;
+- capable agents can operate through direct provider tools without a local custom binary;
 - two operators can use the same repository with different private preferences;
 - provider facts are discovered rather than guessed;
 - display-name changes do not silently change identity;
@@ -35,6 +36,10 @@ This document does not define YAML or JSON field names, routing match syntax, de
 | **Collaborator** | Any person or agent that works through the shared repository and provider surfaces. | Someone who must have access to another operator's private profile. |
 | **Provider** | An external system that stores or exposes repositories, issues, Projects or optional companion data. GitHub is the first shared-task provider. | A source of desired policy merely because it exposes current state. |
 | **Provider adapter** | Code that translates provider-neutral reads and operations to one provider API. | A location for canonical business rules, defaults or routing policy. |
+| **Portable client** | The `projectctl` reference implementation used by local operators, shell-capable agents and CI for setup, administration and ordinary interaction. | The public protocol itself or a mandatory hop for every agent. |
+| **Environment-specific execution adapter** | A component that applies an authorised request using the capabilities of its environment while preserving the frozen protocol semantics. | A source of defaults, routes, privacy choices or extra mutation authority. |
+| **Direct provider adapter** | An execution adapter, commonly an agent with suitable provider tools, that reads and writes the provider without invoking the portable client. | A weaker safety mode or permission to bypass planning and readback. |
+| **Execution bridge** | An optional explicitly configured workflow or service that accepts a bounded request and invokes a conforming implementation. | A hidden control plane or protocol prerequisite. |
 | **Operator control plane** | An optional private system that helps one operator organise profiles, sources, attention or integrations. | A shared task authority or prerequisite for collaborators. |
 
 An agent has only the authority delegated by its operator and acting principal. The protocol MUST NOT grant an agent additional authority based on its product name or implementation.
@@ -78,6 +83,7 @@ A multi-Project declaration describes possible targets. Each mutating request MU
 | **Operation** | One typed executable change lowered from an approved plan, with a target, owned fields, expected prior state and desired after-state. | An unbounded callback or arbitrary provider request. |
 | **Verification result** | Structured evidence produced by reading back an attempted operation and comparing the observation with its desired after-state. | The provider's mutation response alone. |
 | **Verification report** | The ordered aggregate of operation outcomes, readback evidence, skips, refusals and failures for one request. | A success claim without observed evidence. |
+| **Derived agent guidance** | A concise deterministic projection of validated protocol meaning and explicit runtime facts for an agent audience. | A configuration authority, private profile or replacement specification. |
 
 The shared repository contract and private operator profile are separate canonical inputs. Normalisation MUST NOT merge them into a single persisted object or erase which authority supplied a value.
 
@@ -116,6 +122,7 @@ Authority answers “which source is allowed to decide this value?”. Ownership
 | Selected operation target | Resolution result for the current request | Plan and report | CLI display order or first provider search result |
 | Proposed change | Plan computed from canonical desired state and a snapshot | Typed operations | Executor improvisation |
 | Mutation success | Matching provider readback | Verification result and report | HTTP/GraphQL acceptance, absence of an error or optimistic local state |
+| Agent guidance | Validated contracts plus explicit runtime capability facts | Deterministic audience-specific projection | Prompt wording, agent brand or renderer defaults |
 
 ### Conflict rules
 
@@ -193,7 +200,7 @@ One shared issue may have zero or more operator-specific private companion recor
 
 ## Processing pipeline
 
-Each stage has one responsibility and a typed boundary. Later stages MUST NOT repair or silently reinterpret earlier-stage failures.
+Each stage has one responsibility and a typed boundary. Later stages MUST NOT repair or silently reinterpret earlier-stage failures. A portable client and a direct provider adapter MAY package stages differently, but both MUST preserve the same inputs, outputs, authority and failure meaning. CLI serialisation is not a required intermediate protocol for another adapter.
 
 | Stage | Input | Output | Owns | MUST NOT |
 | --- | --- | --- | --- | --- |
@@ -227,7 +234,7 @@ A requested operation owns only the fields and relationships explicitly identifi
 
 Every mutating workflow MUST:
 
-1. expose a complete dry-run plan before writes;
+1. produce a complete plan before writes;
 2. identify the exact target and owned change set;
 3. carry expected prior state or expected absence;
 4. re-read stale-sensitive state immediately before each write;
@@ -237,6 +244,8 @@ Every mutating workflow MUST:
 8. read back each accepted write;
 9. compare desired and observed after-state;
 10. report unverified or mismatched state as failure.
+
+The non-interactive portable client exposes the plan as the default dry run and requires explicit apply selection. An interactive agent MAY execute within an explicit current operator request without asking for a redundant CLI-style confirmation. That authorisation does not remove planning, ambiguity refusal, stale checks, owned-field limits or readback verification.
 
 Seed and bootstrap definitions are create-once intent. Once a shared issue or equivalent live record exists, its ordinary human or bot edits are live shared state. A bootstrap workflow MUST NOT continually restore the original seed text.
 
@@ -295,6 +304,10 @@ A plan proposes adding an issue to a Project based on snapshot S. Before apply, 
 - Mutations change only owned fields, fail closed on stale/unknown state and require matching readback.
 - Shared issues remain the authoritative shared task records; private companions are optional and supplemental.
 - Public protocol artefacts remain operator-neutral and agent-neutral.
+- The shared protocol, not CLI JSON or one implementation, is the interoperability contract.
+- The portable client, direct provider adapters and optional bridges are interchangeable execution paths only when they preserve the same semantics.
+- Derived agent guidance adds no authority and remains traceable to validated inputs.
+- Automated setup and ordinary project interaction are both first-class product outcomes.
 
 ### Deferred to specialised issues
 
@@ -303,8 +316,14 @@ A plan proposes adding an issue to a Project based on snapshot S. Before apply, 
 | #13 | Shared v1 file location, encoding, version discriminator, single-Project schema, field presence and base fixtures |
 | #14 | Dispatcher/multi-Project wire additions, routing key syntax, equality, case behaviour, wildcard rules, precedence, fallback and ambiguity outcomes |
 | #15 | Shared privacy advertisement modes and repository-safe stable linkage representation |
+| #46 | Protocol, portable-client, execution-adapter and interactive-authorisation boundary |
 | #32 | Private operator-profile wire format, storage expectations, effective choice, private destination and companion-provider contract |
+| #47 | Label, routing-label and label-based sub-project declarations |
+| #48 | Semantic project dimensions and provider bindings |
+| #49 | Automated setup and manual-action outcomes |
+| #50 | Ordinary task-interaction semantics and granular mutation scopes |
 | #34 | Version vocabulary, absent/null/empty/zero semantics, all defaults, normalisation, unknown-version and migration behaviour |
+| #51 | Concise derived agent-guidance projection and renderer contract |
 | #16 | Frozen v1 conformance corpus, semantic decision rows and expected diagnostics |
 | #31 | Supported legacy inventory and exact compatibility/migration fixtures |
 | #26 | Final structured report schema and CLI exit codes |
@@ -339,6 +358,11 @@ Later specifications, fixtures and reviews MUST cite these stable requirement ID
 | `CM-020` | Canonical outputs are deterministic and unaffected by unordered provider responses or incidental timestamps. |
 | `CM-021` | Unknown, unavailable, unauthorised and observed-absent states remain distinguishable. |
 | `CM-022` | A stage reports missing or conflicting required knowledge instead of manufacturing a value for the next stage. |
+| `CM-023` | The shared protocol is the interoperability contract; no conforming agent is required to invoke the portable client or consume CLI JSON. |
+| `CM-024` | Portable clients, direct provider adapters and execution bridges preserve identical authority, target, ownership, stale-state and verification semantics. |
+| `CM-025` | Derived agent guidance is deterministic, traceable and non-authoritative. |
+| `CM-026` | Explicit interactive operator authorisation may select apply without a redundant CLI confirmation, but never weakens planning, ambiguity refusal, stale protection or readback. |
+| `CM-027` | Automated setup and ordinary shared-task interaction remain first-class product outcomes across supported topologies. |
 
 ## Conformance checklist
 
@@ -356,6 +380,9 @@ A later specification or implementation conforms to this conceptual model only i
 - Can stale or unavailable state prevent a write?
 - Is successful mutation reported only after matching readback?
 - Can a collaborator operate on shared state without access to any private profile or companion provider?
+- Can a capable agent perform the same conforming operation through provider tools without invoking the portable client?
+- Does concise agent guidance trace every value to validated protocol input or explicit runtime fact?
+- Are automated setup and ordinary issue/Project interaction both represented in the conformance surface?
 - Can two operators use different private choices without changing shared files?
 - Are deferred wire and algorithm choices left to their owning issue?
 
