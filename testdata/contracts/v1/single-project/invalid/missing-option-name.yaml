@@ -13,4 +13,8 @@ spec:
       values:
         ready: {color: green, description: Ready to start.}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, project-custom-fields, projects-v2], mutations: []}

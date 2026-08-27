@@ -11,4 +11,8 @@ spec:
     supportedModes: [shareable_by_default]
     defaultMode: full_github_context
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

@@ -1,0 +1,35 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: central-alpha
+  target:
+    ref: primary
+    issueStore:
+      owner: {kind: organization, login: example-org}
+      repository: central-tasks
+    project:
+      owner: {kind: organization, login: example-org}
+      number: 82
+  fields: {}
+  labels:
+    declarations:
+      route-alpha:
+        name: project:alpha
+        color: 1f6feb
+        description: Routes this issue to the Alpha overall Project.
+        role: {kind: project_route, targetRef: primary}
+      route-alpha-alias:
+        name: project:alpha
+        color: 2da44e
+        description: A forbidden second declaration for the same label selector.
+        role: {kind: project_route, targetRef: primary}
+      subproject-analysis:
+        name: subproject:analysis
+        color: 8250df
+        description: Analysis work inside Alpha.
+        role: {kind: subproject, targetRef: primary}
+    projectRouting: {kind: required_label}
+  sourceRefs: []
+  requirements:
+    features: [issue-labels, issues, projects-v2]
+    mutations: []

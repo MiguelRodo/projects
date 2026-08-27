@@ -13,4 +13,8 @@ spec:
     companion:
       linkage: {kind: issue_url}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

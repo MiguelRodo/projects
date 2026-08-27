@@ -1,0 +1,25 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: repository-work
+  target:
+    ref: primary
+    issueStore:
+      owner: {kind: organization, login: example-org}
+      repository: central-tasks
+    project:
+      owner: {kind: organization, login: example-org}
+      number: 81
+  fields: {}
+  labels:
+    declarations:
+      subproject-api:
+        name: subproject:api
+        color: 8250df
+        description: API work inside the overall Project.
+        role: {kind: subproject, targetRef: primary}
+    projectRouting: {kind: repository_scope}
+  sourceRefs: []
+  requirements:
+    features: [issue-labels, issues, projects-v2]
+    mutations: []

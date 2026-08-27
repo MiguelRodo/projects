@@ -3,18 +3,64 @@ kind: DispatcherRepository
 spec:
   ref: duplicate-project
   targets:
-    - target:
-        ref: alpha
-        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
-        project: {owner: {kind: organization, login: Example-Org}, number: 7}
-      fields: {}
-    - target:
-        ref: beta
-        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
-        project: {owner: {kind: organization, login: example-org}, number: 7}
-      fields: {}
+  - target:
+      ref: alpha
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: Example-Org
+        number: 7
+    fields: {}
+  - target:
+      ref: beta
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 7
+    fields: {}
   routing:
-    rules: []
-    fallback: {kind: target, targetRef: alpha}
+    rules:
+    - ref: route-1
+      labelRef: route-1
+      targetRef: alpha
+    - ref: route-2
+      labelRef: route-2
+      targetRef: beta
+    fallback:
+      kind: error
   sourceRefs: []
-  requirements: {features: [issues, projects-v2], mutations: []}
+  requirements:
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
+    mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target alpha.
+        role:
+          kind: project_route
+          targetRef: alpha
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target beta.
+        role:
+          kind: project_route
+          targetRef: beta
+    projectRouting:
+      kind: required_label

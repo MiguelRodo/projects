@@ -15,4 +15,8 @@ spec:
         kind: github_issue_node_id
         issueNodeId: I_SYNTHETIC_001
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

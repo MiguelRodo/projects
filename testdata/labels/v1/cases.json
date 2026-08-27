@@ -1,0 +1,333 @@
+{
+  "formatVersion": 1,
+  "contracts": {
+    "repository-scope": "testdata/contracts/v1/labels/valid/repository-scope-single.yaml",
+    "central-single": "testdata/contracts/v1/labels/valid/central-single-required.yaml",
+    "dispatcher": "testdata/contracts/v1/labels/valid/dispatcher-routes-subprojects.yaml"
+  },
+  "cases": [
+    {
+      "id": "LB-C001",
+      "contractRef": "repository-scope",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "repository-work"}},
+        "labels": {"state": "known", "values": []}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "primary",
+        "source": "repository_scope",
+        "routeLabelRef": null,
+        "classification": {"state": "known", "subprojectRef": null, "generalLabelRefs": [], "undeclaredNames": []}
+      }
+    },
+    {
+      "id": "LB-C002",
+      "contractRef": "repository-scope",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "repository-work"}},
+        "labels": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "primary",
+        "source": "repository_scope",
+        "routeLabelRef": null,
+        "classification": {"state": "unknown"}
+      }
+    },
+    {
+      "id": "LB-C003",
+      "contractRef": "repository-scope",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "repository-work"}},
+        "labels": {"state": "known", "values": ["triage", "blocked", "subproject:api"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "primary",
+        "source": "repository_scope",
+        "routeLabelRef": null,
+        "classification": {
+          "state": "known",
+          "subprojectRef": "subproject-api",
+          "generalLabelRefs": ["blocked"],
+          "undeclaredNames": ["triage"]
+        }
+      }
+    },
+    {
+      "id": "LB-C004",
+      "contractRef": "central-single",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:alpha"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "primary",
+        "source": "rule",
+        "routeLabelRef": "route-alpha",
+        "classification": {"state": "known", "subprojectRef": null, "generalLabelRefs": [], "undeclaredNames": []}
+      }
+    },
+    {
+      "id": "LB-C005",
+      "contractRef": "central-single",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": []}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.project-label.missing"}
+    },
+    {
+      "id": "LB-C006",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:backend"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "backend",
+        "source": "rule",
+        "routeLabelRef": "route-backend",
+        "classification": {"state": "known", "subprojectRef": null, "generalLabelRefs": [], "undeclaredNames": []}
+      }
+    },
+    {
+      "id": "LB-C007",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["subproject:ui", "project:frontend"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "frontend",
+        "source": "rule",
+        "routeLabelRef": "route-frontend",
+        "classification": {"state": "known", "subprojectRef": "subproject-ui", "generalLabelRefs": [], "undeclaredNames": []}
+      }
+    },
+    {
+      "id": "LB-C008",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:frontend", "project:backend"]}
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "routing.ambiguous",
+        "routeLabelRefs": ["route-backend", "route-frontend"],
+        "targetRefs": ["backend", "frontend"]
+      }
+    },
+    {
+      "id": "LB-C009",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "unknown"}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.labels.unknown"}
+    },
+    {
+      "id": "LB-C010",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "unavailable"}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.labels.unavailable"}
+    },
+    {
+      "id": "LB-C011",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "forbidden"}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.labels.forbidden"}
+    },
+    {
+      "id": "LB-C012",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["Project:Backend"]}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.project-label.missing"}
+    },
+    {
+      "id": "LB-C013",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["blocked"]}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.project-label.missing"}
+    },
+    {
+      "id": "LB-C014",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["subproject:api"]}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.project-label.missing"}
+    },
+    {
+      "id": "LB-C015",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["blocked", "project:backend"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "backend",
+        "source": "rule",
+        "routeLabelRef": "route-backend",
+        "classification": {"state": "known", "subprojectRef": null, "generalLabelRefs": ["blocked"], "undeclaredNames": []}
+      }
+    },
+    {
+      "id": "LB-C016",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:backend", "subproject:api"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "backend",
+        "source": "rule",
+        "routeLabelRef": "route-backend",
+        "classification": {"state": "known", "subprojectRef": "subproject-api", "generalLabelRefs": [], "undeclaredNames": []}
+      }
+    },
+    {
+      "id": "LB-C017",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["subproject:database", "project:backend", "subproject:api"]}
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "labels.subproject.multiple",
+        "subprojectRefs": ["subproject-api", "subproject-database"]
+      }
+    },
+    {
+      "id": "LB-C018",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["subproject:ui", "project:backend"]}
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "labels.subproject.target-mismatch",
+        "subprojectRefs": ["subproject-ui"]
+      }
+    },
+    {
+      "id": "LB-C019",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "explicit", "targetRef": "frontend"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "frontend",
+        "source": "explicit",
+        "routeLabelRef": null,
+        "classification": {"state": "unknown"}
+      }
+    },
+    {
+      "id": "LB-C020",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "explicit", "targetRef": "missing"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:backend"]}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.target.unknown"}
+    },
+    {
+      "id": "LB-C021",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "wrong-store"}},
+        "labels": {"state": "known", "values": ["project:backend"]}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.issue-store.mismatch"}
+    },
+    {
+      "id": "LB-C022",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "unknown"},
+        "labels": {"state": "known", "values": ["project:backend"]}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.issue-store.unknown"}
+    },
+    {
+      "id": "LB-C023",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "EXAMPLE-ORG"}, "repository": "CENTRAL-TASKS"}},
+        "labels": {"state": "known", "values": ["triage", "project:backend", "blocked"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "backend",
+        "source": "rule",
+        "routeLabelRef": "route-backend",
+        "classification": {
+          "state": "known",
+          "subprojectRef": null,
+          "generalLabelRefs": ["blocked"],
+          "undeclaredNames": ["triage"]
+        }
+      }
+    },
+    {
+      "id": "LB-C024",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:legacy"]}
+      },
+      "expected": {"status": "failed", "diagnostic": "routing.project-label.missing"}
+    }
+  ]
+}

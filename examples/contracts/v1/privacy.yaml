@@ -24,6 +24,10 @@ spec:
       linkage:
         kind: github_issue_node_id
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements:
     features:
       - issues

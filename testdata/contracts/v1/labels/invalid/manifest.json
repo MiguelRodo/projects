@@ -1,0 +1,20 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {"id": "LB-I001", "file": "missing-labels.json", "stage": "schema", "diagnostic": "contract.schema.required"},
+    {"id": "LB-I002", "file": "bad-color.json", "stage": "schema", "diagnostic": "contract.schema.label-color"},
+    {"id": "LB-I003", "file": "uppercase-color.json", "stage": "schema", "diagnostic": "contract.schema.label-color"},
+    {"id": "LB-I004", "file": "description-too-long.json", "stage": "schema", "diagnostic": "contract.schema.label-description"},
+    {"id": "LB-I005", "file": "unknown-role.json", "stage": "schema", "diagnostic": "contract.schema.label-role"},
+    {"id": "LB-I006", "file": "general-with-target.json", "stage": "schema", "diagnostic": "contract.schema.label-role"},
+    {"id": "LB-I007", "file": "project-route-missing-target.json", "stage": "schema", "diagnostic": "contract.schema.required"},
+    {"id": "LB-I008", "file": "leading-space-name.json", "stage": "schema", "diagnostic": "contract.schema.label-name"},
+    {"id": "LB-I009", "file": "declarations-missing-feature.json", "stage": "schema", "diagnostic": "contract.schema.label-feature-required"},
+    {"id": "LB-I010", "file": "mutation-missing-feature.json", "stage": "schema", "diagnostic": "contract.schema.label-feature-required"},
+    {"id": "LB-I011", "file": "mutation-no-declarations.json", "stage": "schema", "diagnostic": "contract.schema.label-declaration-required"},
+    {"id": "LB-I012", "file": "required-label-empty.json", "stage": "schema", "diagnostic": "contract.schema.label-declaration-required"},
+    {"id": "LB-I013", "file": "dispatcher-repository-scope.json", "stage": "schema", "diagnostic": "contract.schema.dispatcher-routing-mode"},
+    {"id": "LB-I014", "file": "dispatcher-target-fallback.json", "stage": "schema", "diagnostic": "contract.schema.route-fallback"},
+    {"id": "LB-I015", "file": "raw-labels-all.json", "stage": "schema", "diagnostic": "contract.schema.route-rule"}
+  ]
+}

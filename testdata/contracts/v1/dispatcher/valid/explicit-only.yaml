@@ -3,28 +3,64 @@ kind: DispatcherRepository
 spec:
   ref: explicit-work
   targets:
-    - target:
-        ref: first
-        issueStore:
-          owner: {kind: user, login: example-user}
-          repository: explicit-tasks
-        project:
-          owner: {kind: user, login: example-user}
-          number: 31
-      fields: {}
-    - target:
-        ref: second
-        issueStore:
-          owner: {kind: user, login: example-user}
-          repository: explicit-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 32
-      fields: {}
+  - target:
+      ref: first
+      issueStore:
+        owner:
+          kind: user
+          login: example-user
+        repository: explicit-tasks
+      project:
+        owner:
+          kind: user
+          login: example-user
+        number: 31
+    fields: {}
+  - target:
+      ref: second
+      issueStore:
+        owner:
+          kind: user
+          login: example-user
+        repository: explicit-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 32
+    fields: {}
   routing:
-    rules: []
-    fallback: {kind: error}
+    rules:
+    - ref: route-1
+      labelRef: route-1
+      targetRef: first
+    - ref: route-2
+      labelRef: route-2
+      targetRef: second
+    fallback:
+      kind: error
   sourceRefs: []
   requirements:
-    features: [issues, projects-v2]
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
     mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target first.
+        role:
+          kind: project_route
+          targetRef: first
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target second.
+        role:
+          kind: project_route
+          targetRef: second
+    projectRouting:
+      kind: required_label

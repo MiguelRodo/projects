@@ -1,0 +1,272 @@
+{
+  "formatVersion": 1,
+  "contracts": {
+    "repository-scope-mutable": "testdata/contracts/v1/labels/valid/repository-scope-single.yaml",
+    "central-read-only": "testdata/contracts/v1/labels/valid/central-single-required.yaml",
+    "dispatcher-mutable": "testdata/contracts/v1/labels/valid/dispatcher-routes-subprojects.yaml"
+  },
+  "cases": [
+    {
+      "id": "LT-C001",
+      "contractRef": "central-read-only",
+      "before": {"state": "known", "values": ["project:alpha"]},
+      "change": {"addRefs": [], "removeRefs": []},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": [],
+        "effectiveRemoveRefs": [],
+        "afterNames": ["project:alpha"],
+        "targetRef": "primary",
+        "subprojectRef": null,
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C002",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": []},
+      "change": {"addRefs": ["route-backend"], "removeRefs": []},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": ["route-backend"],
+        "effectiveRemoveRefs": [],
+        "afterNames": ["project:backend"],
+        "targetRef": "backend",
+        "subprojectRef": null,
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C003",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": ["route-frontend"], "removeRefs": []},
+      "expected": {
+        "status": "failed",
+        "diagnostic": "routing.ambiguous",
+        "routeLabelRefs": ["route-backend", "route-frontend"],
+        "targetRefs": ["backend", "frontend"]
+      }
+    },
+    {
+      "id": "LT-C004",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": [], "removeRefs": ["route-backend"]},
+      "expected": {"status": "failed", "diagnostic": "routing.project-label.missing"}
+    },
+    {
+      "id": "LT-C005",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": ["route-frontend"], "removeRefs": ["route-backend"]},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": ["route-frontend"],
+        "effectiveRemoveRefs": ["route-backend"],
+        "afterNames": ["project:frontend"],
+        "targetRef": "frontend",
+        "subprojectRef": null,
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C006",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": ["subproject-api"], "removeRefs": []},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": ["subproject-api"],
+        "effectiveRemoveRefs": [],
+        "afterNames": ["project:backend", "subproject:api"],
+        "targetRef": "backend",
+        "subprojectRef": "subproject-api",
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C007",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend", "subproject:api"]},
+      "change": {"addRefs": ["subproject-database"], "removeRefs": []},
+      "expected": {
+        "status": "failed",
+        "diagnostic": "labels.subproject.multiple",
+        "subprojectRefs": ["subproject-api", "subproject-database"]
+      }
+    },
+    {
+      "id": "LT-C008",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend", "subproject:api"]},
+      "change": {"addRefs": ["subproject-database"], "removeRefs": ["subproject-api"]},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": ["subproject-database"],
+        "effectiveRemoveRefs": ["subproject-api"],
+        "afterNames": ["project:backend", "subproject:database"],
+        "targetRef": "backend",
+        "subprojectRef": "subproject-database",
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C009",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": ["subproject-ui"], "removeRefs": []},
+      "expected": {
+        "status": "failed",
+        "diagnostic": "labels.subproject.target-mismatch",
+        "subprojectRefs": ["subproject-ui"]
+      }
+    },
+    {
+      "id": "LT-C010",
+      "contractRef": "repository-scope-mutable",
+      "before": {"state": "known", "values": ["triage"]},
+      "change": {"addRefs": ["blocked", "subproject-api"], "removeRefs": []},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": ["blocked", "subproject-api"],
+        "effectiveRemoveRefs": [],
+        "afterNames": ["blocked", "subproject:api", "triage"],
+        "targetRef": "primary",
+        "subprojectRef": "subproject-api",
+        "generalLabelRefs": ["blocked"]
+      }
+    },
+    {
+      "id": "LT-C011",
+      "contractRef": "repository-scope-mutable",
+      "before": {"state": "known", "values": ["blocked", "triage"]},
+      "change": {"addRefs": [], "removeRefs": ["blocked"]},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": [],
+        "effectiveRemoveRefs": ["blocked"],
+        "afterNames": ["triage"],
+        "targetRef": "primary",
+        "subprojectRef": null,
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C012",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "unknown"},
+      "change": {"addRefs": ["route-backend"], "removeRefs": []},
+      "expected": {"status": "failed", "diagnostic": "labels.before-state.unknown"}
+    },
+    {
+      "id": "LT-C013",
+      "contractRef": "central-read-only",
+      "before": {"state": "known", "values": ["project:alpha", "subproject:analysis"]},
+      "change": {"addRefs": [], "removeRefs": ["subproject-analysis"]},
+      "expected": {"status": "failed", "diagnostic": "labels.mutation.remove-forbidden"}
+    },
+    {
+      "id": "LT-C014",
+      "contractRef": "central-read-only",
+      "before": {"state": "known", "values": ["project:alpha"]},
+      "change": {"addRefs": ["subproject-analysis"], "removeRefs": []},
+      "expected": {"status": "failed", "diagnostic": "labels.mutation.add-forbidden"}
+    },
+    {
+      "id": "LT-C015",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": ["missing-label"], "removeRefs": []},
+      "expected": {
+        "status": "failed",
+        "diagnostic": "labels.change.unknown-ref",
+        "labelRefs": ["missing-label"]
+      }
+    },
+    {
+      "id": "LT-C016",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": ["blocked"], "removeRefs": ["blocked"]},
+      "expected": {
+        "status": "failed",
+        "diagnostic": "labels.change.conflict",
+        "labelRefs": ["blocked"]
+      }
+    },
+    {
+      "id": "LT-C017",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend"]},
+      "change": {"addRefs": ["route-backend"], "removeRefs": ["blocked"]},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": [],
+        "effectiveRemoveRefs": [],
+        "afterNames": ["project:backend"],
+        "targetRef": "backend",
+        "subprojectRef": null,
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C018",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend", "subproject:api"]},
+      "change": {
+        "addRefs": ["route-frontend", "subproject-ui"],
+        "removeRefs": ["route-backend", "subproject-api"]
+      },
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": ["route-frontend", "subproject-ui"],
+        "effectiveRemoveRefs": ["route-backend", "subproject-api"],
+        "afterNames": ["project:frontend", "subproject:ui"],
+        "targetRef": "frontend",
+        "subprojectRef": "subproject-ui",
+        "generalLabelRefs": []
+      }
+    },
+    {
+      "id": "LT-C019",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "known", "values": ["project:backend", "subproject:api"]},
+      "change": {"addRefs": ["route-frontend"], "removeRefs": ["route-backend"]},
+      "expected": {
+        "status": "failed",
+        "diagnostic": "labels.subproject.target-mismatch",
+        "subprojectRefs": ["subproject-api"]
+      }
+    },
+    {
+      "id": "LT-C020",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "unavailable"},
+      "change": {"addRefs": [], "removeRefs": []},
+      "expected": {"status": "failed", "diagnostic": "labels.before-state.unavailable"}
+    },
+    {
+      "id": "LT-C021",
+      "contractRef": "dispatcher-mutable",
+      "before": {"state": "forbidden"},
+      "change": {"addRefs": [], "removeRefs": []},
+      "expected": {"status": "failed", "diagnostic": "labels.before-state.forbidden"}
+    },
+    {
+      "id": "LT-C022",
+      "contractRef": "central-read-only",
+      "before": {"state": "known", "values": ["project:alpha"]},
+      "change": {"addRefs": ["route-alpha"], "removeRefs": ["subproject-analysis"]},
+      "expected": {
+        "status": "valid",
+        "effectiveAddRefs": [],
+        "effectiveRemoveRefs": [],
+        "afterNames": ["project:alpha"],
+        "targetRef": "primary",
+        "subprojectRef": null,
+        "generalLabelRefs": []
+      }
+    }
+  ]
+}

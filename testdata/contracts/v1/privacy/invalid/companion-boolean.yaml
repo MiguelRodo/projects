@@ -12,4 +12,8 @@ spec:
     defaultMode: shareable_by_default
     companion: true
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

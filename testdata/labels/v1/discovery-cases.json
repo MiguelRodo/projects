@@ -1,0 +1,139 @@
+{
+  "formatVersion": 1,
+  "contracts": {
+    "central-read-only": "testdata/contracts/v1/labels/valid/central-single-required.yaml",
+    "dispatcher-mutable": "testdata/contracts/v1/labels/valid/dispatcher-routes-subprojects.yaml"
+  },
+  "cases": [
+    {
+      "id": "LD-C001",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {
+        "state": "known",
+        "values": [
+          {"id": "LA_kwDO1", "name": "project:backend", "color": "1f6feb", "description": "Routes this issue to Backend."}
+        ]
+      },
+      "expected": {"status": "adopted", "providerId": "LA_kwDO1", "attributesMatch": true}
+    },
+    {
+      "id": "LD-C002",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {
+        "state": "known",
+        "values": [
+          {"id": "LA_kwDO2", "name": "project:backend", "color": "ffffff", "description": "Existing collaborator wording"}
+        ]
+      },
+      "expected": {"status": "adopted", "providerId": "LA_kwDO2", "attributesMatch": false}
+    },
+    {
+      "id": "LD-C003",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {"state": "known", "values": []},
+      "expected": {"status": "missing", "createAuthorised": true}
+    },
+    {
+      "id": "LD-C004",
+      "contractRef": "central-read-only",
+      "labelRef": "route-alpha",
+      "catalogue": {"state": "known", "values": []},
+      "expected": {"status": "missing", "createAuthorised": false}
+    },
+    {
+      "id": "LD-C005",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {
+        "state": "known",
+        "values": [
+          {"id": "LA_kwDO3", "name": "Project:Backend", "color": "1f6feb", "description": "Case-only collision"}
+        ]
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "label.discovery.case-conflict",
+        "conflictingNames": ["Project:Backend"]
+      }
+    },
+    {
+      "id": "LD-C006",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {
+        "state": "known",
+        "values": [
+          {"id": "LA_kwDO4", "name": "project:backend", "color": "1f6feb", "description": "First duplicate"},
+          {"id": "LA_kwDO5", "name": "project:backend", "color": "1f6feb", "description": "Second duplicate"}
+        ]
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "label.discovery.ambiguous",
+        "providerIds": ["LA_kwDO4", "LA_kwDO5"]
+      }
+    },
+    {
+      "id": "LD-C007",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {"state": "unknown"},
+      "expected": {"status": "failed", "diagnostic": "label.catalog.unknown"}
+    },
+    {
+      "id": "LD-C008",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {"state": "unavailable"},
+      "expected": {"status": "failed", "diagnostic": "label.catalog.unavailable"}
+    },
+    {
+      "id": "LD-C009",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {"state": "forbidden"},
+      "expected": {"status": "failed", "diagnostic": "label.catalog.forbidden"}
+    },
+    {
+      "id": "LD-C010",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "route-backend",
+      "catalogue": {
+        "state": "known",
+        "values": [
+          {"id": "LA_kwDO6", "name": "Project:Backend", "color": "ffffff", "description": "Case-only neighbour"},
+          {"id": "LA_kwDO7", "name": "project:backend", "color": "1f6feb", "description": "Routes this issue to Backend."}
+        ]
+      },
+      "expected": {"status": "adopted", "providerId": "LA_kwDO7", "attributesMatch": true}
+    },
+    {
+      "id": "LD-C011",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "blocked",
+      "catalogue": {
+        "state": "known",
+        "values": [
+          {"id": "LA_kwDO8", "name": "blocked", "color": "d1242f", "description": "Work cannot proceed."},
+          {"id": "LA_kwDO9", "name": "project:unmanaged", "color": "cccccc", "description": null}
+        ]
+      },
+      "expected": {"status": "adopted", "providerId": "LA_kwDO8", "attributesMatch": true}
+    },
+    {
+      "id": "LD-C012",
+      "contractRef": "dispatcher-mutable",
+      "labelRef": "subproject-api",
+      "catalogue": {
+        "state": "known",
+        "values": [
+          {"id": "LA_kwDO10", "name": "subproject:api", "color": "8250df", "description": "API work inside Backend."}
+        ]
+      },
+      "expected": {"status": "adopted", "providerId": "LA_kwDO10", "attributesMatch": true}
+    }
+  ]
+}

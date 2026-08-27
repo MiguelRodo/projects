@@ -18,4 +18,8 @@ spec:
         ready: {name: Ready, color: green, description: Ready to start.}
         also-ready: {name: Ready, color: blue, description: Duplicate selector.}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, project-custom-fields, projects-v2], mutations: []}

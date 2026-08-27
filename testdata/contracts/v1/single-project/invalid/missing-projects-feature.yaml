@@ -12,4 +12,8 @@ spec:
       number: 1
   fields: {}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, issue-relationships], mutations: []}

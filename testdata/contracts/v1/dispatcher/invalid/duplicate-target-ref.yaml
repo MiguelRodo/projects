@@ -3,18 +3,64 @@ kind: DispatcherRepository
 spec:
   ref: duplicate-target-ref
   targets:
-    - target:
-        ref: duplicate
-        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
-        project: {owner: {kind: organization, login: example-org}, number: 1}
-      fields: {}
-    - target:
-        ref: duplicate
-        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
-        project: {owner: {kind: organization, login: example-org}, number: 2}
-      fields: {}
+  - target:
+      ref: duplicate
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 1
+    fields: {}
+  - target:
+      ref: duplicate
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 2
+    fields: {}
   routing:
-    rules: []
-    fallback: {kind: target, targetRef: duplicate}
+    rules:
+    - ref: route-1
+      labelRef: route-1
+      targetRef: duplicate
+    - ref: route-2
+      labelRef: route-2
+      targetRef: duplicate
+    fallback:
+      kind: error
   sourceRefs: []
-  requirements: {features: [issues, projects-v2], mutations: []}
+  requirements:
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
+    mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target duplicate.
+        role:
+          kind: project_route
+          targetRef: duplicate
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target duplicate.
+        role:
+          kind: project_route
+          targetRef: duplicate
+    projectRouting:
+      kind: required_label

@@ -54,6 +54,8 @@ The shared single-Project wire contract and schema are defined in [docs/spec/v1-
 
 The dispatcher extension and deterministic multi-Project routing semantics are defined in [docs/spec/v1-routing.md](docs/spec/v1-routing.md).
 
+Collaborator-safe labels, overall-Project routing labels and optional label-based sub-projects are defined in [docs/spec/v1-labels-and-subprojects.md](docs/spec/v1-labels-and-subprojects.md).
+
 The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
 
 The private operator-profile wire format, provider-neutral bindings and companion-provider contract are defined in [docs/spec/v1-operator-profile.md](docs/spec/v1-operator-profile.md).
