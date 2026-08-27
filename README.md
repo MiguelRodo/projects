@@ -1,6 +1,6 @@
 # `projects` / `projectctl`
 
-`projects` is the public home of a portable, agent-neutral protocol and Go administration core for GitHub issues and GitHub Projects.
+`projects` is the public home of a portable, agent-neutral protocol for automated GitHub project setup and consistent ordinary interaction, plus a Go administration core and `projectctl` reference client.
 
 ## Status
 
@@ -12,26 +12,33 @@ The authoritative roadmap and execution order are in [issue #1](../../issues/1).
 
 ## Product boundary
 
-| Layer | Purpose |
+| Interface or layer | Purpose |
 | --- | --- |
-| Shared repository contract | Collaborator-safe, versioned project topology and mappings |
+| Shared protocol | Collaborator-safe, versioned project topology, structure, mappings and interaction semantics |
 | Private operator profile | Per-user privacy choices, private destinations, local mappings and optional provider configuration |
+| Derived agent guidance | Concise deterministic project instructions derived from validated contracts |
+| Environment-specific execution adapter | Direct provider tools, the portable client or an explicit optional bridge |
 | Portable Go core | Parsing, normalisation, validation, resolution, planning, execution and reporting |
 | Provider adapters | GitHub first, with optional private or external providers behind interfaces |
-| `projectctl` | Thin non-interactive CLI over the reusable core |
+| `projectctl` | Portable reference implementation and setup/administration client over the reusable core |
 | Future application | Graphical interface over the same core after v1 is proven |
 
-GitHub issues and GitHub Projects are the authoritative shared task surface. Private control planes are optional consumers and must never become a prerequisite for ordinary collaborators.
+GitHub issues and GitHub Projects are the authoritative shared task surface. Private control planes are optional consumers and must never become a prerequisite for ordinary collaborators. `projectctl` may be comprehensive, but it is not a mandatory runtime dependency for an agent that can apply the same protocol safely through provider tools.
+
+The primary v1 product outcomes are:
+
+1. automate creation or adoption of the declared repository/Project structure as far as provider APIs allow, with unsupported manual actions reported explicitly; and
+2. let capable agents and operators read and manage ordinary project work consistently across collaborator/private, single/multi-Project and central/repository-backed scenarios.
 
 ## Participation paths
 
 ### Collaborator or external agent
 
-Work through normal GitHub issues and pull requests. No private operator configuration or external provider access is required.
+Work through normal GitHub issues and pull requests. A capable agent may use suitable GitHub/provider tools directly from the shared contract and concise generated guidance. No private operator configuration, external provider access or local binary is required.
 
 ### Repository maintainer
 
-Adopt or bootstrap a repository using the shared contract and `projectctl`, review plans before writes, and verify resulting GitHub state.
+Adopt or bootstrap a repository using the shared contract and `projectctl`, review plans before writes, and verify resulting GitHub state. Provider surfaces without a supported automation API are returned as explicit manual actions rather than false successes.
 
 ### Full-system operator
 
@@ -49,7 +56,7 @@ The dispatcher extension and deterministic multi-Project routing semantics are d
 
 The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
 
-The intended executable is `projectctl`. There is no `projects` compatibility binary and no multi-repository clone/sync workspace-manager scope.
+The intended executable is `projectctl`. There is no `projects` compatibility binary and no multi-repository clone/sync workspace-manager scope. Direct-provider agents and optional execution bridges remain separate adapters over the same protocol.
 
 ## Contributing
 
