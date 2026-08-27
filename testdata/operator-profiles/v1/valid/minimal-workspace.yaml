@@ -1,0 +1,23 @@
+apiVersion: projectctl/v1
+kind: OperatorProfile
+spec:
+  providers: {}
+  companionDestinations: {}
+  workspaces:
+    alpha-workspace:
+      path:
+        kind: posix_absolute
+        value: /synthetic/work/alpha
+  integrations: {}
+  contractBindings:
+    - contract:
+        authority: github.com
+        owner:
+          kind: organization
+          login: example-org
+        repository: alpha-config
+        ref: alpha
+      workspaceRef: alpha-workspace
+      sources:
+        shared: {}
+        private: []

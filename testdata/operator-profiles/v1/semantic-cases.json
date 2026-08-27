@@ -1,0 +1,69 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {
+      "id": "OP-S001",
+      "file": "invalid/duplicate-contract-binding.yaml",
+      "expectedDiagnostic": "profile.semantic.duplicate-contract-binding"
+    },
+    {
+      "id": "OP-S002",
+      "file": "invalid/unknown-destination-ref.yaml",
+      "expectedDiagnostic": "profile.semantic.unknown-destination-ref"
+    },
+    {
+      "id": "OP-S003",
+      "file": "invalid/destination-unknown-provider.yaml",
+      "expectedDiagnostic": "profile.semantic.unknown-provider-ref"
+    },
+    {
+      "id": "OP-S004",
+      "file": "invalid/integration-unknown-provider.yaml",
+      "expectedDiagnostic": "profile.semantic.unknown-provider-ref"
+    },
+    {
+      "id": "OP-S005",
+      "file": "invalid/unknown-workspace-ref.yaml",
+      "expectedDiagnostic": "profile.semantic.unknown-workspace-ref"
+    },
+    {
+      "id": "OP-S006",
+      "file": "invalid/unknown-integration-ref.yaml",
+      "expectedDiagnostic": "profile.semantic.unknown-integration-ref"
+    },
+    {
+      "id": "OP-S007",
+      "file": "invalid/source-wrong-integration-kind.yaml",
+      "expectedDiagnostic": "profile.semantic.integration-kind"
+    },
+    {
+      "id": "OP-S008",
+      "file": "invalid/agenda-wrong-integration-kind.yaml",
+      "expectedDiagnostic": "profile.semantic.integration-kind"
+    },
+    {
+      "id": "OP-S009",
+      "file": "invalid/local-path-dot-segment.yaml",
+      "expectedDiagnostic": "profile.semantic.local-path-segment"
+    },
+    {
+      "id": "OP-S010",
+      "file": "invalid/unknown-shared-source-hook.yaml",
+      "sharedContract": {
+        "participatingRepository": {
+          "authority": "github.com",
+          "owner": {"kind": "organization", "login": "example-org"},
+          "repository": "alpha-config"
+        },
+        "ref": "alpha",
+        "sourceRefs": ["roadmap"]
+      },
+      "expectedDiagnostic": "profile.contract.source-ref-unknown"
+    },
+    {
+      "id": "OP-S011",
+      "file": "invalid/local-path-root.yaml",
+      "expectedDiagnostic": "profile.semantic.local-path-root"
+    }
+  ]
+}

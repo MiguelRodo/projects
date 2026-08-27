@@ -1,0 +1,27 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {"id": "OP-I001", "file": "wrong-api-version.json", "stage": "schema", "diagnostic": "profile.schema.api-version"},
+    {"id": "OP-I002", "file": "wrong-kind.json", "stage": "schema", "diagnostic": "profile.schema.kind"},
+    {"id": "OP-I003", "file": "missing-providers.json", "stage": "schema", "diagnostic": "profile.schema.required"},
+    {"id": "OP-I004", "file": "null-provider-map.json", "stage": "schema", "diagnostic": "profile.schema.type"},
+    {"id": "OP-I005", "file": "unknown-root-field.json", "stage": "schema", "diagnostic": "profile.schema.unknown-field"},
+    {"id": "OP-I006", "file": "empty-contract-bindings.json", "stage": "schema", "diagnostic": "profile.schema.min-items"},
+    {"id": "OP-I007", "file": "invalid-provider-key.json", "stage": "schema", "diagnostic": "profile.schema.contract-ref"},
+    {"id": "OP-I008", "file": "inline-credential.json", "stage": "schema", "diagnostic": "profile.schema.unknown-field"},
+    {"id": "OP-I009", "file": "full-mode-with-destination.json", "stage": "schema", "diagnostic": "profile.schema.privacy-destination-mode"},
+    {"id": "OP-I010", "file": "relative-path.json", "stage": "schema", "diagnostic": "profile.schema.local-path"},
+    {"id": "OP-I011", "file": "cache-read-only.json", "stage": "schema", "diagnostic": "profile.schema.integration-access"},
+    {"id": "OP-I012", "file": "source-pull-only.json", "stage": "schema", "diagnostic": "profile.schema.integration-access"},
+    {"id": "OP-I013", "file": "empty-binding.json", "stage": "schema", "diagnostic": "profile.schema.empty-binding"},
+    {"id": "OP-I014", "file": "non-github-authority.json", "stage": "schema", "diagnostic": "profile.schema.authority"},
+    {"id": "OP-I015", "file": "missing-sources.json", "stage": "schema", "diagnostic": "profile.schema.required"},
+    {"id": "OP-I016", "file": "duplicate-private-source.json", "stage": "schema", "diagnostic": "profile.schema.unique-items"},
+    {"id": "OP-I017", "file": "opaque-ref-leading-space.json", "stage": "schema", "diagnostic": "profile.schema.provider-resource-ref"},
+    {"id": "OP-I018", "file": "unknown-mode.json", "stage": "schema", "diagnostic": "profile.schema.privacy-mode"},
+    {"id": "OP-I019", "file": "empty-extensions.json", "stage": "schema", "diagnostic": "profile.schema.min-properties"},
+    {"id": "OP-I020", "file": "duplicate-key.yaml", "stage": "parse", "diagnostic": "profile.syntax.duplicate-key"},
+    {"id": "OP-I021", "file": "alias.yaml", "stage": "parse", "diagnostic": "profile.syntax.alias"},
+    {"id": "OP-I022", "file": "tag.yaml", "stage": "parse", "diagnostic": "profile.syntax.tag"}
+  ]
+}

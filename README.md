@@ -56,6 +56,8 @@ The dispatcher extension and deterministic multi-Project routing semantics are d
 
 The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
 
+The private operator-profile wire format, provider-neutral bindings and companion-provider contract are defined in [docs/spec/v1-operator-profile.md](docs/spec/v1-operator-profile.md).
+
 The intended executable is `projectctl`. There is no `projects` compatibility binary and no multi-repository clone/sync workspace-manager scope. Direct-provider agents and optional execution bridges remain separate adapters over the same protocol.
 
 ## Contributing
