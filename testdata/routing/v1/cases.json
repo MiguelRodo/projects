@@ -1,718 +1,251 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "contracts": {
-    "error-fallback": "testdata/contracts/v1/dispatcher/valid/error-fallback.yaml",
-    "explicit-only": "testdata/contracts/v1/dispatcher/valid/explicit-only.yaml",
-    "label-routing": "testdata/contracts/v1/dispatcher/valid/label-routing.yaml",
-    "locator-case": "testdata/contracts/v1/dispatcher/valid/locator-case-variants.yaml",
-    "permuted-routing": "testdata/contracts/v1/dispatcher/valid/permuted-routing.yaml",
-    "same-target-overlap": "testdata/contracts/v1/dispatcher/valid/same-target-overlap.yaml",
-    "single-project": "testdata/contracts/v1/single-project/valid/minimal-read-only.yaml"
+    "repository-scope": "testdata/contracts/v1/labels/valid/repository-scope-single.yaml",
+    "central-single": "testdata/contracts/v1/labels/valid/central-single-required.yaml",
+    "dispatcher": "testdata/contracts/v1/labels/valid/dispatcher-routes-subprojects.yaml"
   },
   "cases": [
     {
       "id": "RT-C001",
-      "contractRef": "label-routing",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:backend"]}
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:backend"]}
       },
       "expected": {
         "status": "resolved",
         "targetRef": "backend",
         "source": "rule",
+        "routeLabelRef": "route-backend",
         "trace": {
           "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["backend-route", "frontend-route"],
-          "matchedRuleRefs": ["backend-route"],
-          "fallbackUsed": false
+          "evaluatedRouteLabelRefs": ["route-backend", "route-frontend"],
+          "matchedRouteLabelRefs": ["route-backend"],
+          "matchedTargetRefs": ["backend"]
         }
       }
     },
     {
       "id": "RT-C002",
-      "contractRef": "label-routing",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {
-          "state": "known",
-          "values": ["priority:high", "area:backend", "status:ready"]
-        }
-      },
-      "expected": {
-        "status": "resolved",
-        "targetRef": "backend",
-        "source": "rule",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["backend-route", "frontend-route"],
-          "matchedRuleRefs": ["backend-route"],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C003",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:frontend"]}
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["blocked", "project:frontend", "triage"]}
       },
       "expected": {
         "status": "resolved",
         "targetRef": "frontend",
         "source": "rule",
+        "routeLabelRef": "route-frontend",
         "trace": {
           "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["backend-route", "frontend-route"],
-          "matchedRuleRefs": ["frontend-route"],
-          "fallbackUsed": false
+          "evaluatedRouteLabelRefs": ["route-backend", "route-frontend"],
+          "matchedRouteLabelRefs": ["route-frontend"],
+          "matchedTargetRefs": ["frontend"]
+        }
+      }
+    },
+    {
+      "id": "RT-C003",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": []}
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "routing.project-label.missing",
+        "trace": {
+          "issueStoreGate": "matched",
+          "evaluatedRouteLabelRefs": ["route-backend", "route-frontend"],
+          "matchedRouteLabelRefs": [],
+          "matchedTargetRefs": []
         }
       }
     },
     {
       "id": "RT-C004",
-      "contractRef": "label-routing",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": []}
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:frontend", "project:backend"]}
       },
       "expected": {
-        "status": "resolved",
-        "targetRef": "triage",
-        "source": "fallback",
+        "status": "failed",
+        "diagnostic": "routing.ambiguous",
         "trace": {
           "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["backend-route", "frontend-route"],
-          "matchedRuleRefs": [],
-          "fallbackUsed": true
+          "evaluatedRouteLabelRefs": ["route-backend", "route-frontend"],
+          "matchedRouteLabelRefs": ["route-backend", "route-frontend"],
+          "matchedTargetRefs": ["backend", "frontend"]
         }
       }
     },
     {
       "id": "RT-C005",
-      "contractRef": "label-routing",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["Area:Backend"]}
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["Project:Backend"]}
       },
       "expected": {
-        "status": "resolved",
-        "targetRef": "triage",
-        "source": "fallback",
+        "status": "failed",
+        "diagnostic": "routing.project-label.missing",
         "trace": {
           "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["backend-route", "frontend-route"],
-          "matchedRuleRefs": [],
-          "fallbackUsed": true
+          "evaluatedRouteLabelRefs": ["route-backend", "route-frontend"],
+          "matchedRouteLabelRefs": [],
+          "matchedTargetRefs": []
         }
       }
     },
     {
       "id": "RT-C006",
-      "contractRef": "label-routing",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "EXAMPLE-ORG"},
-            "repository": "SHARED-TASKS"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:backend"]}
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "EXAMPLE-ORG"}, "repository": "CENTRAL-TASKS"}},
+        "labels": {"state": "known", "values": ["project:backend"]}
       },
       "expected": {
         "status": "resolved",
         "targetRef": "backend",
         "source": "rule",
+        "routeLabelRef": "route-backend",
         "trace": {
           "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["backend-route", "frontend-route"],
-          "matchedRuleRefs": ["backend-route"],
-          "fallbackUsed": false
+          "evaluatedRouteLabelRefs": ["route-backend", "route-frontend"],
+          "matchedRouteLabelRefs": ["route-backend"],
+          "matchedTargetRefs": ["backend"]
         }
       }
     },
     {
       "id": "RT-C007",
-      "contractRef": "locator-case",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:*"]}
-      },
-      "expected": {
-        "status": "resolved",
-        "targetRef": "alpha",
-        "source": "rule",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["literal-star"],
-          "matchedRuleRefs": ["literal-star"],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C008",
-      "contractRef": "locator-case",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:backend"]}
-      },
-      "expected": {
-        "status": "resolved",
-        "targetRef": "beta",
-        "source": "fallback",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["literal-star"],
-          "matchedRuleRefs": [],
-          "fallbackUsed": true
-        }
-      }
-    },
-    {
-      "id": "RT-C009",
-      "contractRef": "error-fallback",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "strict-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:other"]}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.no-match",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["api-route", "web-route"],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C010",
-      "contractRef": "error-fallback",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "strict-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:api"]}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.no-match",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["api-route", "web-route"],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C011",
-      "contractRef": "error-fallback",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "strict-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["tier:service", "area:api"]}
-      },
-      "expected": {
-        "status": "resolved",
-        "targetRef": "api",
-        "source": "rule",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["api-route", "web-route"],
-          "matchedRuleRefs": ["api-route"],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C012",
-      "contractRef": "error-fallback",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "strict-tasks"
-          }
-        },
-        "labels": {
-          "state": "known",
-          "values": ["area:web", "area:api", "tier:service"]
-        }
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.ambiguous",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["api-route", "web-route"],
-          "matchedRuleRefs": ["api-route", "web-route"],
-          "matchedTargetRefs": ["api", "web"],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C013",
-      "contractRef": "same-target-overlap",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "overlap-tasks"
-          }
-        },
-        "labels": {
-          "state": "known",
-          "values": ["priority:urgent", "area:delivery"]
-        }
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.ambiguous",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["delivery-area", "urgent-work"],
-          "matchedRuleRefs": ["delivery-area", "urgent-work"],
-          "matchedTargetRefs": ["delivery", "delivery"],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C014",
-      "contractRef": "permuted-routing",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:backend"]}
-      },
-      "expected": {
-        "status": "resolved",
-        "targetRef": "backend",
-        "source": "rule",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": ["backend-route", "frontend-route"],
-          "matchedRuleRefs": ["backend-route"],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C015",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
         "labels": {"state": "unknown"}
       },
       "expected": {
         "status": "failed",
         "diagnostic": "routing.labels.unknown",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
+        "trace": {"issueStoreGate": "matched", "evaluatedRouteLabelRefs": [], "matchedRouteLabelRefs": [], "matchedTargetRefs": []}
       }
     },
     {
-      "id": "RT-C016",
-      "contractRef": "label-routing",
+      "id": "RT-C008",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
         "labels": {"state": "unavailable"}
       },
       "expected": {
         "status": "failed",
         "diagnostic": "routing.labels.unavailable",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
+        "trace": {"issueStoreGate": "matched", "evaluatedRouteLabelRefs": [], "matchedRouteLabelRefs": [], "matchedTargetRefs": []}
       }
     },
     {
-      "id": "RT-C017",
-      "contractRef": "label-routing",
+      "id": "RT-C009",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
         "labels": {"state": "forbidden"}
       },
       "expected": {
         "status": "failed",
         "diagnostic": "routing.labels.forbidden",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
+        "trace": {"issueStoreGate": "matched", "evaluatedRouteLabelRefs": [], "matchedRouteLabelRefs": [], "matchedTargetRefs": []}
       }
     },
     {
-      "id": "RT-C018",
-      "contractRef": "label-routing",
+      "id": "RT-C010",
+      "contractRef": "dispatcher",
       "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {"state": "unknown"},
-        "labels": {"state": "known", "values": ["area:backend"]}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.issue-store.unknown",
-        "trace": {
-          "issueStoreGate": "unknown",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C019",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {"state": "unavailable"},
-        "labels": {"state": "known", "values": ["area:backend"]}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.issue-store.unavailable",
-        "trace": {
-          "issueStoreGate": "unavailable",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C020",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {"state": "forbidden"},
-        "labels": {"state": "known", "values": ["area:backend"]}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.issue-store.forbidden",
-        "trace": {
-          "issueStoreGate": "forbidden",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C021",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "other-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": ["area:backend"]}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.issue-store.mismatch",
-        "trace": {
-          "issueStoreGate": "mismatch",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C022",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "explicit", "targetRef": "backend"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "forbidden"}
-      },
-      "expected": {
-        "status": "resolved",
-        "targetRef": "backend",
-        "source": "explicit",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C023",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "explicit", "targetRef": "missing"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "shared-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": []}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.target.unknown",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C024",
-      "contractRef": "label-routing",
-      "input": {
-        "selection": {"kind": "explicit", "targetRef": "missing"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "other-tasks"
-          }
-        },
+        "selection": {"kind": "explicit", "targetRef": "frontend"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
         "labels": {"state": "unknown"}
       },
       "expected": {
-        "status": "failed",
-        "diagnostic": "routing.issue-store.mismatch",
-        "trace": {
-          "issueStoreGate": "mismatch",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C025",
-      "contractRef": "explicit-only",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "user", "login": "example-user"},
-            "repository": "explicit-tasks"
-          }
-        },
-        "labels": {"state": "unavailable"}
-      },
-      "expected": {
-        "status": "failed",
-        "diagnostic": "routing.no-match",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C026",
-      "contractRef": "single-project",
-      "input": {
-        "selection": {"kind": "automatic"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "EXAMPLE-ORG"},
-            "repository": "ALPHA-TASKS"
-          }
-        },
-        "labels": {"state": "unavailable"}
-      },
-      "expected": {
         "status": "resolved",
-        "targetRef": "primary",
-        "source": "singleton",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
-      }
-    },
-    {
-      "id": "RT-C027",
-      "contractRef": "single-project",
-      "input": {
-        "selection": {"kind": "explicit", "targetRef": "primary"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "alpha-tasks"
-          }
-        },
-        "labels": {"state": "forbidden"}
-      },
-      "expected": {
-        "status": "resolved",
-        "targetRef": "primary",
+        "targetRef": "frontend",
         "source": "explicit",
-        "trace": {
-          "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
-        }
+        "routeLabelRef": null,
+        "trace": {"issueStoreGate": "matched", "evaluatedRouteLabelRefs": [], "matchedRouteLabelRefs": [], "matchedTargetRefs": []}
       }
     },
     {
-      "id": "RT-C028",
-      "contractRef": "single-project",
+      "id": "RT-C011",
+      "contractRef": "dispatcher",
       "input": {
         "selection": {"kind": "explicit", "targetRef": "missing"},
-        "issueStore": {
-          "state": "known",
-          "value": {
-            "owner": {"kind": "organization", "login": "example-org"},
-            "repository": "alpha-tasks"
-          }
-        },
-        "labels": {"state": "known", "values": []}
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:backend"]}
       },
       "expected": {
         "status": "failed",
         "diagnostic": "routing.target.unknown",
+        "trace": {"issueStoreGate": "matched", "evaluatedRouteLabelRefs": [], "matchedRouteLabelRefs": [], "matchedTargetRefs": []}
+      }
+    },
+    {
+      "id": "RT-C012",
+      "contractRef": "dispatcher",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "wrong-store"}},
+        "labels": {"state": "known", "values": ["project:backend"]}
+      },
+      "expected": {
+        "status": "failed",
+        "diagnostic": "routing.issue-store.mismatch",
+        "trace": {"issueStoreGate": "mismatched", "evaluatedRouteLabelRefs": [], "matchedRouteLabelRefs": [], "matchedTargetRefs": []}
+      }
+    },
+    {
+      "id": "RT-C013",
+      "contractRef": "repository-scope",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "repository-work"}},
+        "labels": {"state": "unknown"}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "primary",
+        "source": "repository_scope",
+        "routeLabelRef": null,
+        "trace": {"issueStoreGate": "matched", "evaluatedRouteLabelRefs": [], "matchedRouteLabelRefs": [], "matchedTargetRefs": []}
+      }
+    },
+    {
+      "id": "RT-C014",
+      "contractRef": "central-single",
+      "input": {
+        "selection": {"kind": "automatic"},
+        "issueStore": {"state": "known", "value": {"owner": {"kind": "organization", "login": "example-org"}, "repository": "central-tasks"}},
+        "labels": {"state": "known", "values": ["project:alpha"]}
+      },
+      "expected": {
+        "status": "resolved",
+        "targetRef": "primary",
+        "source": "rule",
+        "routeLabelRef": "route-alpha",
         "trace": {
           "issueStoreGate": "matched",
-          "evaluatedRuleRefs": [],
-          "matchedRuleRefs": [],
-          "fallbackUsed": false
+          "evaluatedRouteLabelRefs": ["route-alpha"],
+          "matchedRouteLabelRefs": ["route-alpha"],
+          "matchedTargetRefs": ["primary"]
         }
       }
     }

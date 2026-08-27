@@ -1,0 +1,65 @@
+apiVersion: projectctl/v1
+kind: DispatcherRepository
+spec:
+  ref: routed-work
+  targets:
+    - target:
+        ref: backend
+        issueStore:
+          owner: {kind: organization, login: example-org}
+          repository: central-tasks
+        project:
+          owner: {kind: organization, login: example-org}
+          number: 83
+      fields: {}
+    - target:
+        ref: frontend
+        issueStore:
+          owner: {kind: organization, login: example-org}
+          repository: central-tasks
+        project:
+          owner: {kind: organization, login: example-org}
+          number: 84
+      fields: {}
+  routing:
+    rules:
+      - {ref: backend-route, labelRef: route-backend, targetRef: backend}
+      - {ref: frontend-route, labelRef: route-frontend, targetRef: frontend}
+    fallback: {kind: error}
+  labels:
+    declarations:
+      route-backend:
+        name: project:backend
+        color: 1f6feb
+        description: Routes this issue to Backend.
+        role: {kind: project_route, targetRef: backend}
+      route-frontend:
+        name: project:frontend
+        color: 1f6feb
+        description: Routes this issue to Frontend.
+        role: {kind: project_route, targetRef: frontend}
+      subproject-api:
+        name: subproject:api
+        color: 8250df
+        description: API work inside Backend.
+        role: {kind: subproject, targetRef: backend}
+      subproject-database:
+        name: subproject:database
+        color: 8250df
+        description: Database work inside Backend.
+        role: {kind: subproject, targetRef: backend}
+      subproject-ui:
+        name: subproject:ui
+        color: 8250df
+        description: UI work inside Frontend.
+        role: {kind: subproject, targetRef: frontend}
+      blocked:
+        name: blocked
+        color: d1242f
+        description: Work cannot proceed.
+        role: {kind: general}
+    projectRouting: {kind: required_label}
+  sourceRefs: []
+  requirements:
+    features: [issue-labels, issues, projects-v2]
+    mutations: [issue.label.add, issue.label.remove, repository.label.create]

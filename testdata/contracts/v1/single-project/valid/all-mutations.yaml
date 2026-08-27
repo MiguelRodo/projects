@@ -26,17 +26,35 @@ spec:
   sourceRefs:
     - architecture
     - handbook
+  labels:
+    declarations:
+      subproject-api:
+        name: subproject:api
+        color: 8250df
+        description: API work inside the overall Project.
+        role: {kind: subproject, targetRef: primary}
+      blocked:
+        name: blocked
+        color: d1242f
+        description: Work cannot proceed.
+        role: {kind: general}
+    projectRouting:
+      kind: repository_scope
   requirements:
     features:
       - issue-relationships
+      - issue-labels
       - issues
       - project-custom-fields
       - project-item-membership
       - projects-v2
     mutations:
       - issue.create
+      - issue.label.add
+      - issue.label.remove
       - issue.relationship.create
       - project.field.create
       - project.field.option.create
       - project.item.add
       - project.item.field.write
+      - repository.label.create

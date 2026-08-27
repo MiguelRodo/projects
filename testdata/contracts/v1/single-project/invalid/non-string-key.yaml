@@ -13,4 +13,8 @@ spec:
   fields:
     1: {name: Estimate, dataType: number}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, project-custom-fields, projects-v2], mutations: []}

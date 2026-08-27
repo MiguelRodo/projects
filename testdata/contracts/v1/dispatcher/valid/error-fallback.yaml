@@ -3,34 +3,64 @@ kind: DispatcherRepository
 spec:
   ref: strict-routing
   targets:
-    - target:
-        ref: api
-        issueStore:
-          owner: {kind: organization, login: example-org}
-          repository: strict-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 21
-      fields: {}
-    - target:
-        ref: web
-        issueStore:
-          owner: {kind: organization, login: example-org}
-          repository: strict-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 22
-      fields: {}
+  - target:
+      ref: api
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: strict-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 21
+    fields: {}
+  - target:
+      ref: web
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: strict-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 22
+    fields: {}
   routing:
     rules:
-      - ref: api-route
-        labelsAll: [area:api, tier:service]
-        targetRef: api
-      - ref: web-route
-        labelsAll: [area:web]
-        targetRef: web
-    fallback: {kind: error}
+    - ref: route-1
+      labelRef: route-1
+      targetRef: api
+    - ref: route-2
+      labelRef: route-2
+      targetRef: web
+    fallback:
+      kind: error
   sourceRefs: []
   requirements:
-    features: [issues, projects-v2]
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
     mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target api.
+        role:
+          kind: project_route
+          targetRef: api
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target web.
+        role:
+          kind: project_route
+          targetRef: web
+    projectRouting:
+      kind: required_label

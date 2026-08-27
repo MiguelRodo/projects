@@ -42,6 +42,10 @@ spec:
           description: API-facing work.
   sourceRefs:
     - handbook
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements:
     features:
       - issues

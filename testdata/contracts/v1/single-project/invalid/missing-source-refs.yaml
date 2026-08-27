@@ -11,4 +11,8 @@ spec:
       owner: {kind: organization, login: example-org}
       number: 1
   fields: {}
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

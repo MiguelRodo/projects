@@ -13,4 +13,8 @@ spec:
   fields:
     sprint: {name: Sprint, dataType: iteration}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, project-custom-fields, projects-v2], mutations: []}

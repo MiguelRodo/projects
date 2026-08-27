@@ -1,0 +1,95 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {
+      "id": "LB-S001",
+      "file": "invalid/duplicate-label-selector.yaml",
+      "diagnostic": "contract.semantic.duplicate-label-selector",
+      "instancePath": "/spec/labels/declarations/route-alpha-alias/name",
+      "rule": "LB-002"
+    },
+    {
+      "id": "LB-S002",
+      "file": "invalid/label-case-collision.yaml",
+      "diagnostic": "contract.semantic.label-case-collision",
+      "instancePath": "/spec/labels/declarations/route-alpha-case-variant/name",
+      "rule": "LB-014"
+    },
+    {
+      "id": "LB-S003",
+      "file": "invalid/unknown-label-target.yaml",
+      "diagnostic": "contract.semantic.unknown-label-target",
+      "instancePath": "/spec/labels/declarations/route-alpha/role/targetRef",
+      "rule": "LB-005"
+    },
+    {
+      "id": "LB-S004",
+      "file": "invalid/project-route-forbidden.yaml",
+      "diagnostic": "contract.semantic.project-route-forbidden",
+      "instancePath": "/spec/labels/declarations/route-primary/role",
+      "rule": "LB-006"
+    },
+    {
+      "id": "LB-S005",
+      "file": "invalid/project-route-count.yaml",
+      "diagnostic": "contract.semantic.project-route-count",
+      "instancePath": "/spec/labels/declarations",
+      "rule": "LB-007"
+    },
+    {
+      "id": "LB-S006",
+      "file": "invalid/unknown-route-label.yaml",
+      "diagnostic": "contract.semantic.unknown-route-label",
+      "instancePath": "/spec/routing/rules/0/labelRef",
+      "rule": "LB-008"
+    },
+    {
+      "id": "LB-S007",
+      "file": "invalid/route-label-role.yaml",
+      "diagnostic": "contract.semantic.route-label-role",
+      "instancePath": "/spec/routing/rules/0/labelRef",
+      "rule": "LB-008"
+    },
+    {
+      "id": "LB-S008",
+      "file": "invalid/route-target-mismatch.yaml",
+      "diagnostic": "contract.semantic.route-target-mismatch",
+      "instancePath": "/spec/routing/rules/0/targetRef",
+      "rule": "LB-008"
+    },
+    {
+      "id": "LB-S009",
+      "file": "invalid/duplicate-route-label.yaml",
+      "diagnostic": "contract.semantic.duplicate-route-label",
+      "instancePath": "/spec/routing/rules/1/labelRef",
+      "rule": "LB-008"
+    },
+    {
+      "id": "LB-S010",
+      "file": "invalid/central-repository-scope.yaml",
+      "context": {
+        "participatingRepository": {
+          "owner": {"kind": "organization", "login": "example-org"},
+          "repository": "repository-work"
+        }
+      },
+      "diagnostic": "contract.context.central-issue-store-requires-project-route",
+      "instancePath": "/spec/labels/projectRouting/kind",
+      "rule": "LB-006"
+    },
+    {
+      "id": "LB-S011",
+      "file": "invalid/duplicate-route-target.yaml",
+      "diagnostic": "contract.semantic.duplicate-route-target",
+      "instancePath": "/spec/routing/rules/1/targetRef",
+      "rule": "LB-008"
+    },
+    {
+      "id": "LB-S012",
+      "file": "invalid/incomplete-route-map.yaml",
+      "diagnostic": "contract.semantic.incomplete-route-map",
+      "instancePath": "/spec/routing",
+      "rule": "LB-008"
+    }
+  ]
+}

@@ -55,6 +55,10 @@ spec:
   sourceRefs:
     - architecture
     - handbook
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements:
     features:
       - issue-relationships

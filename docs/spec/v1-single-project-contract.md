@@ -27,6 +27,7 @@ The keywords **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT** and **MAY** are 
 | Unknown keys | Rejected at every object boundary |
 | Null | Rejected everywhere |
 | Defaults | None in this base schema |
+| Labels | Explicit declarations and an explicit Project-routing mode |
 | Mutations | Exhaustive opt-in scopes; omission of a scope forbids that write |
 | Safety | Dry-run, stale checks, owned-field writes and readback are unconditional and not configurable |
 
@@ -54,15 +55,20 @@ spec:
         login: example-org
       number: 7
   fields: {}
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   sourceRefs: []
   requirements:
     features:
+      - issue-labels
       - issues
       - projects-v2
     mutations: []
 ```
 
-No key in this example is defaulted. Every shown container is required, including an empty `fields`, `sourceRefs` or `mutations` collection.
+No key in this example is defaulted. Every shown container is required, including an empty `fields`, `labels.declarations`, `sourceRefs` or `mutations` collection. Label declarations and routing modes are defined by [v1 labels and sub-projects](v1-labels-and-subprojects.md).
 
 ### `spec.ref`
 
@@ -106,6 +112,7 @@ Reference namespaces are deliberately scoped:
 | `spec.target.ref` | Targets inside this contract; singleton in this kind |
 | Each key in `spec.fields` | Fields inside the target Project |
 | Each key in a field's `values` | Values inside that field only |
+| Each key in `spec.labels.declarations` | Labels inside this contract |
 | Each item in `spec.sourceRefs` | Repository-safe source references exposed to integrations |
 
 The same spelling in two different namespaces does not create a relationship. Map keys provide uniqueness for field and value references; duplicate YAML keys are rejected before schema validation.
@@ -177,7 +184,7 @@ The v1 schema supports the custom-field types that have fixed scalar or fixed op
 | `singleSelect` | One value reference resolves to one option |
 | `multiSelect` | A set of distinct value references resolves to options |
 
-Iteration fields are intentionally rejected. Their rolling schedule, iteration identifiers and update semantics are live configuration, not a fixed value map. Supporting them requires a later contract version with explicit discovery, comparison and mutation rules. Built-in fields such as title, assignees, labels, milestone and repository are also not custom-field mappings. They remain issue or provider state and MUST NOT be written through `project.item.field.write`.
+Iteration fields are intentionally rejected. Their rolling schedule, iteration identifiers and update semantics are live configuration, not a fixed value map. Supporting them requires a later contract version with explicit discovery, comparison and mutation rules. Built-in fields such as title, assignees, labels, milestone and repository are not custom-field mappings. Declared issue-label membership uses the separate label scopes and MUST NOT be written through `project.item.field.write`.
 
 ### Exact provider selection
 
@@ -222,6 +229,7 @@ Every contract requires `issues` and `projects-v2`. Other values are opt-in requ
 | `project-custom-fields` | Declared custom fields and options can be discovered |
 | `project-item-membership` | Issue membership in the Project can be discovered |
 | `issue-relationships` | Supported issue relationships can be discovered |
+| `issue-labels` | Complete repository label catalogues and issue-label membership can be discovered |
 
 A feature declaration is a requirement to probe, not evidence that the acting principal has it. Capability and permission remain observed runtime facts. Missing, forbidden, unavailable and unsupported results remain distinct.
 
@@ -235,12 +243,15 @@ The mutation set is an exhaustive allowlist for plans made under this contract:
 | --- | --- |
 | `issue.create` | Create a new issue in the exact issue store from separately validated intent |
 | `issue.relationship.create` | Create one supported relationship between explicitly resolved issues |
+| `repository.label.create` | Create one missing declared label with its exact create-time attributes |
+| `issue.label.add` | Add one exact declared label to one resolved issue |
+| `issue.label.remove` | Remove one exact declared label from one resolved issue |
 | `project.field.create` | Create one missing declared custom field with its declared select options |
 | `project.field.option.create` | Add one missing declared option while preserving every observed existing option identity and value |
 | `project.item.add` | Add one explicitly resolved issue to the exact Project |
 | `project.item.field.write` | Set or explicitly clear one declared custom-field value on one resolved Project item |
 
-No v1 mutation authorises deleting resources, removing Project membership, renaming or replacing fields, rewriting existing issue title/body, editing option colour/description, or updating built-in fields through the Projects API.
+No v1 mutation authorises deleting resources, removing Project membership, renaming or replacing fields, rewriting existing issue title/body, updating or deleting repository labels, using a set-all-labels endpoint, editing option colour/description, or updating built-in fields through the Projects API.
 
 An absent mutation scope forbids planning or execution of that write. An empty mutation array is a valid read-only contract. Mutation scopes apply only to the declared target and declared mappings; they do not grant organisation-wide authority.
 
@@ -250,6 +261,10 @@ The following prerequisites are schema invariants:
 | --- | --- |
 | Non-empty `fields` | Feature `project-custom-fields` |
 | `issue.relationship.create` | Feature `issue-relationships` |
+| Any non-empty label declaration set | Feature `issue-labels` |
+| `repository.label.create` | Non-empty label declarations and feature `issue-labels` |
+| `issue.label.add` | Non-empty label declarations and feature `issue-labels` |
+| `issue.label.remove` | Non-empty label declarations and feature `issue-labels` |
 | `project.field.create` | Non-empty `fields` and feature `project-custom-fields` |
 | `project.field.option.create` | Non-empty `fields` and feature `project-custom-fields` |
 | `project.item.add` | Feature `project-item-membership` |
@@ -282,6 +297,8 @@ There are no implicit values in this base document.
 | `spec.ref`, `target` | Required | Rejected | Empty reference rejected |
 | Owners, repository and Project number | Required | Rejected | Empty strings and number zero rejected |
 | `fields` | Required | Rejected | Empty map valid and means no custom-field mappings |
+| `labels.declarations` | Required | Rejected | Empty map valid only when the selected routing mode permits it |
+| `labels.projectRouting` | Required | Rejected | Exactly one explicit routing mode |
 | Field `name`, `dataType` | Required | Rejected | Empty string rejected |
 | Select `values` | Required for select, forbidden otherwise | Rejected | Empty map rejected |
 | Option `name`, `color`, `description` | Required | Rejected | Only `description` may be the empty string |
@@ -354,20 +371,21 @@ Fixtures are minimal. A validator MAY report additional low-level details, but i
 | `SP-022` | Dry-run, stale protection, owned-field writes and readback verification remain mandatory regardless of declarations. |
 | `SP-023` | Null and unknown keys are rejected everywhere. |
 | `SP-024` | Mapping order and set-member declaration order carry no semantic meaning; #34 owns canonical output ordering. |
+| `SP-025` | Label declarations use their own reference namespace and explicit role. |
+| `SP-026` | Issue-label writes use narrow create, add and remove scopes, never Project field writes or set-all replacement. |
 
 ## Explicitly deferred
 
-This specification does not decide:
+This base specification is extended, without hidden defaults, by:
 
-- dispatcher targets, predicates, route order, fallback or ambiguity, owned by #14;
-- shared privacy modes and the private-companion linkage hook, owned by #15;
-- private destinations, local paths and effective operator choices, owned by #32;
-- loader compatibility, canonical defaults, migrations and tool-version vocabulary, owned by #34;
-- the final cross-contract conformance corpus, owned by #16;
-- Go wire types, parsing APIs or canonical domain types, owned by #18 and #33;
-- provider discovery queries, IDs, permissions or capability result types, owned by later implementation issues.
+- dispatcher topology and selection in [v1 routing](v1-routing.md);
+- label roles, route-label cardinality and sub-projects in [v1 labels and sub-projects](v1-labels-and-subprojects.md);
+- shared privacy advertisement in [v1 shared privacy](v1-shared-privacy.md);
+- private destinations, local paths and effective choices in [v1 operator profile](v1-operator-profile.md).
 
-No downstream issue may add a fallback selector, hidden mutation scope or safety toggle to fill one of these gaps.
+Still deferred are loader compatibility, canonical output, migrations and tool-version vocabulary (#34); final cross-contract conformance fixtures (#16); Go wire and canonical types (#18 and #33); and provider discovery, planning and execution APIs.
+
+No downstream issue may add a fallback selector, hidden mutation scope or safety toggle to fill a deferred gap.
 
 ## Conformance checklist
 
@@ -378,6 +396,7 @@ A v1 single-Project document conforms only if:
 - its two semantic selector-uniqueness rules pass;
 - it carries no provider IDs, private values or local paths;
 - all field and value matching can be performed exactly within the declared target;
+- its label declarations, roles and routing mode satisfy the label specification;
 - all required feature and mutation prerequisites are explicit;
 - a read-only document can use an empty mutation set;
 - no document value can disable mandatory planning, stale checking or verification.

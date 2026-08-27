@@ -388,35 +388,30 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 50,
-      "pattern": "^[^\\r\\n]+$"
+      "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
     },
-    "routeRule": {
+    "labelColor": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{6}$"
+    },
+    "labelDescription": {
+      "type": "string",
+      "maxLength": 100,
+      "pattern": "^[^\\r\\n]*$"
+    },
+    "generalLabelRole": {
       "type": "object",
       "required": [
-        "ref",
-        "labelsAll",
-        "targetRef"
+        "kind"
       ],
       "properties": {
-        "ref": {
-          "$ref": "#/$defs/contractRef"
-        },
-        "labelsAll": {
-          "type": "array",
-          "minItems": 1,
-          "maxItems": 64,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/$defs/labelName"
-          }
-        },
-        "targetRef": {
-          "$ref": "#/$defs/contractRef"
+        "kind": {
+          "const": "general"
         }
       },
       "additionalProperties": false
     },
-    "routeFallback": {
+    "targetLabelRole": {
       "oneOf": [
         {
           "type": "object",
@@ -426,10 +421,83 @@
           ],
           "properties": {
             "kind": {
-              "const": "target"
+              "const": "project_route"
             },
             "targetRef": {
               "$ref": "#/$defs/contractRef"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "targetRef"
+          ],
+          "properties": {
+            "kind": {
+              "const": "subproject"
+            },
+            "targetRef": {
+              "$ref": "#/$defs/contractRef"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "label": {
+      "type": "object",
+      "required": [
+        "name",
+        "color",
+        "description",
+        "role"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/labelName"
+        },
+        "color": {
+          "$ref": "#/$defs/labelColor"
+        },
+        "description": {
+          "$ref": "#/$defs/labelDescription"
+        },
+        "role": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/generalLabelRole"
+            },
+            {
+              "$ref": "#/$defs/targetLabelRole"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "labelMap": {
+      "type": "object",
+      "maxProperties": 128,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/label"
+      }
+    },
+    "projectRouting": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "repository_scope"
             }
           },
           "additionalProperties": false
@@ -441,12 +509,84 @@
           ],
           "properties": {
             "kind": {
-              "const": "error"
+              "const": "required_label"
             }
           },
           "additionalProperties": false
         }
       ]
+    },
+    "labels": {
+      "type": "object",
+      "required": [
+        "declarations",
+        "projectRouting"
+      ],
+      "properties": {
+        "declarations": {
+          "$ref": "#/$defs/labelMap"
+        },
+        "projectRouting": {
+          "$ref": "#/$defs/projectRouting"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dispatcherLabels": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/labels"
+        },
+        {
+          "properties": {
+            "declarations": {
+              "minProperties": 2
+            },
+            "projectRouting": {
+              "properties": {
+                "kind": {
+                  "const": "required_label"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "routeRule": {
+      "type": "object",
+      "required": [
+        "ref",
+        "labelRef",
+        "targetRef"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "labelRef": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "targetRef": {
+          "$ref": "#/$defs/contractRef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "routeFallback": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "const": "error"
+        }
+      },
+      "additionalProperties": false
     },
     "routing": {
       "type": "object",
@@ -457,7 +597,9 @@
       "properties": {
         "rules": {
           "type": "array",
+          "minItems": 2,
           "maxItems": 64,
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/routeRule"
           }
@@ -517,11 +659,12 @@
     "featureRequirements": {
       "type": "array",
       "minItems": 2,
-      "maxItems": 5,
+      "maxItems": 6,
       "uniqueItems": true,
       "items": {
         "enum": [
           "issue-relationships",
+          "issue-labels",
           "issues",
           "project-custom-fields",
           "project-item-membership",
@@ -543,16 +686,19 @@
     },
     "mutationDeclarations": {
       "type": "array",
-      "maxItems": 6,
+      "maxItems": 9,
       "uniqueItems": true,
       "items": {
         "enum": [
           "issue.create",
+          "issue.label.add",
+          "issue.label.remove",
           "issue.relationship.create",
           "project.field.create",
           "project.field.option.create",
           "project.item.add",
-          "project.item.field.write"
+          "project.item.field.write",
+          "repository.label.create"
         ]
       }
     },
@@ -572,12 +718,146 @@
       },
       "additionalProperties": false
     },
+    "hasLabelDeclarations": {
+      "type": "object",
+      "required": [
+        "labels"
+      ],
+      "properties": {
+        "labels": {
+          "type": "object",
+          "required": [
+            "declarations"
+          ],
+          "properties": {
+            "declarations": {
+              "type": "object",
+              "minProperties": 1
+            }
+          }
+        }
+      }
+    },
+    "hasRequiredProjectRouting": {
+      "type": "object",
+      "required": [
+        "labels"
+      ],
+      "properties": {
+        "labels": {
+          "type": "object",
+          "required": [
+            "projectRouting"
+          ],
+          "properties": {
+            "projectRouting": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "required_label"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "labelPrerequisites": {
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/hasLabelDeclarations"
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "issue-labels"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/hasRequiredProjectRouting"
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/hasLabelDeclarations"
+              },
+              {
+                "properties": {
+                  "requirements": {
+                    "properties": {
+                      "features": {
+                        "contains": {
+                          "const": "issue-labels"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "enum": [
+                        "issue.label.add",
+                        "issue.label.remove",
+                        "repository.label.create"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/hasLabelDeclarations"
+              },
+              {
+                "properties": {
+                  "requirements": {
+                    "properties": {
+                      "features": {
+                        "contains": {
+                          "const": "issue-labels"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
     "singleProjectSpec": {
       "type": "object",
       "required": [
         "ref",
         "target",
         "fields",
+        "labels",
         "sourceRefs",
         "requirements"
       ],
@@ -591,6 +871,9 @@
         "fields": {
           "$ref": "#/$defs/fieldMap"
         },
+        "labels": {
+          "$ref": "#/$defs/labels"
+        },
         "privacy": {
           "$ref": "#/$defs/privacyPolicy"
         },
@@ -603,6 +886,9 @@
       },
       "additionalProperties": false,
       "allOf": [
+        {
+          "$ref": "#/$defs/labelPrerequisites"
+        },
         {
           "if": {
             "properties": {
@@ -795,6 +1081,7 @@
         "ref",
         "targets",
         "routing",
+        "labels",
         "sourceRefs",
         "requirements"
       ],
@@ -813,6 +1100,9 @@
         "routing": {
           "$ref": "#/$defs/routing"
         },
+        "labels": {
+          "$ref": "#/$defs/dispatcherLabels"
+        },
         "privacy": {
           "$ref": "#/$defs/privacyPolicy"
         },
@@ -825,6 +1115,9 @@
       },
       "additionalProperties": false,
       "allOf": [
+        {
+          "$ref": "#/$defs/labelPrerequisites"
+        },
         {
           "if": {
             "$ref": "#/$defs/hasDispatcherFields"

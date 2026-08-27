@@ -14,4 +14,8 @@ spec:
   sourceRefs:
     - ref: handbook
       location: /private/handbook
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

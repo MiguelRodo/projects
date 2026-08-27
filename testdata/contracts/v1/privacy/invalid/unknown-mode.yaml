@@ -11,4 +11,8 @@ spec:
     supportedModes: [private_only]
     defaultMode: private_only
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

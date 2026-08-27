@@ -3,34 +3,64 @@ kind: DispatcherRepository
 spec:
   ref: same-target-overlap
   targets:
-    - target:
-        ref: delivery
-        issueStore:
-          owner: {kind: organization, login: example-org}
-          repository: overlap-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 61
-      fields: {}
-    - target:
-        ref: triage
-        issueStore:
-          owner: {kind: organization, login: example-org}
-          repository: overlap-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 62
-      fields: {}
+  - target:
+      ref: delivery
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: overlap-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 61
+    fields: {}
+  - target:
+      ref: triage
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: overlap-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 62
+    fields: {}
   routing:
     rules:
-      - ref: delivery-area
-        labelsAll: [area:delivery]
-        targetRef: delivery
-      - ref: urgent-work
-        labelsAll: [priority:urgent]
-        targetRef: delivery
-    fallback: {kind: target, targetRef: triage}
+    - ref: route-1
+      labelRef: route-1
+      targetRef: delivery
+    - ref: route-2
+      labelRef: route-2
+      targetRef: triage
+    fallback:
+      kind: error
   sourceRefs: []
   requirements:
-    features: [issues, projects-v2]
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
     mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target delivery.
+        role:
+          kind: project_route
+          targetRef: delivery
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target triage.
+        role:
+          kind: project_route
+          targetRef: triage
+    projectRouting:
+      kind: required_label

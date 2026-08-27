@@ -3,13 +3,44 @@ kind: DispatcherRepository
 spec:
   ref: one-target
   targets:
-    - target:
-        ref: only
-        issueStore: {owner: {kind: organization, login: example-org}, repository: shared-tasks}
-        project: {owner: {kind: organization, login: example-org}, number: 1}
-      fields: {}
+  - target:
+      ref: only
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 1
+    fields: {}
   routing:
-    rules: []
-    fallback: {kind: target, targetRef: only}
+    rules:
+    - ref: route-1
+      labelRef: route-1
+      targetRef: only
+    - ref: route-1-again
+      labelRef: route-1
+      targetRef: only
+    fallback:
+      kind: error
   sourceRefs: []
-  requirements: {features: [issues, projects-v2], mutations: []}
+  requirements:
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
+    mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target only.
+        role:
+          kind: project_route
+          targetRef: only
+    projectRouting:
+      kind: required_label

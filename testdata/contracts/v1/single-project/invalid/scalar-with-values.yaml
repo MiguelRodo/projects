@@ -17,4 +17,8 @@ spec:
       values:
         extra: {name: Extra, color: blue, description: Not valid for text.}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, project-custom-fields, projects-v2], mutations: []}

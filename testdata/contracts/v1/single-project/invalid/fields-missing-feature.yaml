@@ -13,4 +13,8 @@ spec:
   fields:
     notes: {name: Notes, dataType: text}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

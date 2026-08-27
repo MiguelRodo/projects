@@ -14,4 +14,8 @@ spec:
       linkage: {kind: github_issue_node_id}
       destination: private-provider://account/records
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

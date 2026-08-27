@@ -7,4 +7,8 @@ spec:
     project: {owner: {kind: organization, login: example-org}, number: 1}
   fields: {}
   sourceRefs: []
+  labels:
+    declarations: {}
+    projectRouting:
+      kind: repository_scope
   requirements: {features: [issues, projects-v2], mutations: []}

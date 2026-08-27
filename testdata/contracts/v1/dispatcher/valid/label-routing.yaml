@@ -3,43 +3,87 @@ kind: DispatcherRepository
 spec:
   ref: shared-work
   targets:
-    - target:
-        ref: backend
-        issueStore:
-          owner: {kind: organization, login: example-org}
-          repository: shared-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 11
-      fields: {}
-    - target:
-        ref: frontend
-        issueStore:
-          owner: {kind: organization, login: example-org}
-          repository: shared-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 12
-      fields: {}
-    - target:
-        ref: triage
-        issueStore:
-          owner: {kind: organization, login: example-org}
-          repository: shared-tasks
-        project:
-          owner: {kind: organization, login: example-org}
-          number: 13
-      fields: {}
+  - target:
+      ref: backend
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 11
+    fields: {}
+  - target:
+      ref: frontend
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 12
+    fields: {}
+  - target:
+      ref: triage
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: shared-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 13
+    fields: {}
   routing:
     rules:
-      - ref: backend-route
-        labelsAll: [area:backend]
-        targetRef: backend
-      - ref: frontend-route
-        labelsAll: [area:frontend]
-        targetRef: frontend
-    fallback: {kind: target, targetRef: triage}
+    - ref: route-1
+      labelRef: route-1
+      targetRef: backend
+    - ref: route-2
+      labelRef: route-2
+      targetRef: frontend
+    - ref: route-3
+      labelRef: route-3
+      targetRef: triage
+    fallback:
+      kind: error
   sourceRefs: []
   requirements:
-    features: [issues, projects-v2]
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
     mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target backend.
+        role:
+          kind: project_route
+          targetRef: backend
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target frontend.
+        role:
+          kind: project_route
+          targetRef: frontend
+      route-3:
+        name: project:route-3
+        color: 1f6feb
+        description: Routes issues to target triage.
+        role:
+          kind: project_route
+          targetRef: triage
+    projectRouting:
+      kind: required_label

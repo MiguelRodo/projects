@@ -3,23 +3,71 @@ kind: DispatcherRepository
 spec:
   ref: private-dispatcher
   targets:
-    - target:
-        ref: alpha
-        issueStore: {owner: {kind: organization, login: example-org}, repository: private-dispatcher-tasks}
-        project: {owner: {kind: organization, login: example-org}, number: 76}
-      fields: {}
-    - target:
-        ref: beta
-        issueStore: {owner: {kind: organization, login: example-org}, repository: private-dispatcher-tasks}
-        project: {owner: {kind: organization, login: example-org}, number: 77}
-      fields: {}
+  - target:
+      ref: alpha
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: private-dispatcher-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 76
+    fields: {}
+  - target:
+      ref: beta
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: private-dispatcher-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        number: 77
+    fields: {}
   routing:
-    rules: []
-    fallback: {kind: target, targetRef: alpha}
+    rules:
+    - ref: route-1
+      labelRef: route-1
+      targetRef: alpha
+    - ref: route-2
+      labelRef: route-2
+      targetRef: beta
+    fallback:
+      kind: error
   privacy:
-    supportedModes: [shareable_by_default]
+    supportedModes:
+    - shareable_by_default
     defaultMode: shareable_by_default
     companion:
-      linkage: {kind: github_issue_node_id}
+      linkage:
+        kind: github_issue_node_id
   sourceRefs: []
-  requirements: {features: [issues, projects-v2], mutations: []}
+  requirements:
+    features:
+    - issues
+    - projects-v2
+    - issue-labels
+    mutations: []
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target alpha.
+        role:
+          kind: project_route
+          targetRef: alpha
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target beta.
+        role:
+          kind: project_route
+          targetRef: beta
+    projectRouting:
+      kind: required_label

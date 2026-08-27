@@ -1,0 +1,38 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: repository-work
+  target:
+    ref: primary
+    issueStore:
+      owner: {kind: organization, login: example-org}
+      repository: repository-work
+    project:
+      owner: {kind: organization, login: example-org}
+      number: 81
+  fields: {}
+  labels:
+    declarations:
+      route-primary:
+        name: project:primary
+        color: 1f6feb
+        description: A repository-scoped contract must not declare a route label.
+        role: {kind: project_route, targetRef: primary}
+      subproject-api:
+        name: subproject:api
+        color: 8250df
+        description: API work inside the overall Project.
+        role: {kind: subproject, targetRef: primary}
+      blocked:
+        name: blocked
+        color: d1242f
+        description: Work cannot proceed.
+        role: {kind: general}
+    projectRouting: {kind: repository_scope}
+  sourceRefs: []
+  requirements:
+    features: [issue-labels, issues, projects-v2]
+    mutations:
+      - issue.label.add
+      - issue.label.remove
+      - repository.label.create
