@@ -1,0 +1,19 @@
+{
+  "apiVersion": "projectctl/v1",
+  "kind": "SetupReport",
+  "mode": "bootstrap",
+  "contractRef": "sample-setup",
+  "overallState": "already_conformant",
+  "items": [
+    {
+      "itemKey": "target/primary/project",
+      "surface": "project",
+      "targetRef": "primary",
+      "outcome": "already_conformant",
+      "blocking": false,
+      "verification": "provider_readback",
+      "diagnostic": "setup.project.already-conformant"
+    }
+  ],
+  "manualActions": []
+}

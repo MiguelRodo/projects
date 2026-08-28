@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:projectctl:schema:setup-blueprint:v1",
+  "title": "projectctl v1 Project setup blueprint",
+  "description": "One-off validated intent for creating new Projects and materialising an exact repository contract.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "spec"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "projectctl/v1"
+    },
+    "kind": {
+      "enum": [
+        "DispatcherSetupBlueprint",
+        "SingleProjectSetupBlueprint"
+      ]
+    },
+    "spec": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {
+          "const": "SingleProjectSetupBlueprint"
+        },
+        "spec": {
+          "$ref": "#/$defs/singleBlueprintSpec"
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "DispatcherSetupBlueprint"
+        },
+        "spec": {
+          "$ref": "#/$defs/dispatcherBlueprintSpec"
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "contract": {
+      "$ref": "urn:projectctl:schema:repository-contract:v1"
+    },
+    "projectCreate": {
+      "type": "object",
+      "required": [
+        "owner",
+        "title",
+        "shortDescription",
+        "visibility"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/owner"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+        },
+        "shortDescription": {
+          "type": "string",
+          "maxLength": 256,
+          "pattern": "^[^\\r\\n]*$"
+        },
+        "visibility": {
+          "enum": [
+            "private",
+            "public"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "targetBlueprint": {
+      "type": "object",
+      "required": [
+        "ref",
+        "issueStore",
+        "project"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "issueStore": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/issueStore"
+        },
+        "project": {
+          "$ref": "#/$defs/projectCreate"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dispatcherTargetBlueprint": {
+      "type": "object",
+      "required": [
+        "target",
+        "fields",
+        "dimensionBindings"
+      ],
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/targetBlueprint"
+        },
+        "fields": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/fieldMap"
+        },
+        "dimensionBindings": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/dimensionBindings"
+        }
+      },
+      "additionalProperties": false
+    },
+    "singleBlueprintSpec": {
+      "type": "object",
+      "required": [
+        "ref",
+        "target",
+        "fields",
+        "dimensions",
+        "dimensionBindings",
+        "labels",
+        "setup",
+        "sourceRefs",
+        "requirements"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "target": {
+          "$ref": "#/$defs/targetBlueprint"
+        },
+        "fields": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/fieldMap"
+        },
+        "dimensions": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/dimensionDefinitions"
+        },
+        "dimensionBindings": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/dimensionBindings"
+        },
+        "labels": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/labels"
+        },
+        "privacy": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/privacyPolicy"
+        },
+        "setup": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/setup"
+        },
+        "sourceRefs": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/sourceRefs"
+        },
+        "requirements": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/requirements"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/labelPrerequisites"
+        },
+        {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/setupPrerequisites"
+        },
+        {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/singleDimensionPrerequisites"
+        }
+      ]
+    },
+    "dispatcherBlueprintSpec": {
+      "type": "object",
+      "required": [
+        "ref",
+        "targets",
+        "dimensions",
+        "routing",
+        "labels",
+        "setup",
+        "sourceRefs",
+        "requirements"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/dispatcherTargetBlueprint"
+          }
+        },
+        "dimensions": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/dimensionDefinitions"
+        },
+        "routing": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/routing"
+        },
+        "labels": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/dispatcherLabels"
+        },
+        "privacy": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/privacyPolicy"
+        },
+        "setup": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/setup"
+        },
+        "sourceRefs": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/sourceRefs"
+        },
+        "requirements": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/requirements"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/labelPrerequisites"
+        },
+        {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/setupPrerequisites"
+        },
+        {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/dispatcherDimensionPrerequisites"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "apiVersion": "projectctl/v1",
+  "kind": "SetupSnapshot",
+  "contractRef": "sample-setup",
+  "capturedAt": "2026-08-28T06:00:00Z",
+  "resources": [
+    {
+      "itemKey": "target/primary/project",
+      "surface": "project",
+      "targetRef": "primary",
+      "state": "forbidden",
+      "diagnostic": "setup.project.forbidden"
+    },
+    {
+      "itemKey": "target/primary/view/backlog",
+      "surface": "project_view",
+      "targetRef": "primary",
+      "resourceRef": "backlog",
+      "state": "unavailable",
+      "diagnostic": "setup.view.unavailable"
+    },
+    {
+      "itemKey": "target/primary/workflow/add-open-issues",
+      "surface": "project_workflow",
+      "targetRef": "primary",
+      "resourceRef": "add-open-issues",
+      "state": "unsupported",
+      "diagnostic": "setup.workflow.unsupported"
+    }
+  ]
+}

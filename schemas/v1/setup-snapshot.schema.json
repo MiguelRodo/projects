@@ -1,0 +1,722 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:projectctl:schema:setup-snapshot:v1",
+  "title": "projectctl v1 setup snapshot",
+  "description": "A deterministic bounded observation of provider resources relevant to one setup request.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "contractRef",
+    "capturedAt",
+    "resources"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "projectctl/v1"
+    },
+    "kind": {
+      "const": "SetupSnapshot"
+    },
+    "contractRef": {
+      "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+    },
+    "capturedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resources": {
+      "type": "array",
+      "maxItems": 2048,
+      "items": {
+        "$ref": "#/$defs/resourceFact"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "resourceState": {
+      "enum": [
+        "ambiguous",
+        "forbidden",
+        "known",
+        "missing",
+        "unavailable",
+        "unknown",
+        "unsupported"
+      ]
+    },
+    "surface": {
+      "enum": [
+        "agent_guidance",
+        "contract_publication",
+        "dimension_value",
+        "issue_field",
+        "issue_field_attachment",
+        "issue_label_membership",
+        "issue_relationship",
+        "issue_type",
+        "label",
+        "project",
+        "project_field",
+        "project_membership",
+        "project_option",
+        "project_view",
+        "project_workflow",
+        "repository_link",
+        "seed_issue"
+      ]
+    },
+    "itemKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[a-z0-9][a-z0-9./_-]*$"
+    },
+    "providerIdentity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "projectFacts": {
+      "type": "object",
+      "required": [
+        "owner",
+        "number",
+        "title",
+        "visibility",
+        "closed"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/owner"
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "visibility": {
+          "enum": [
+            "private",
+            "public"
+          ]
+        },
+        "closed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "repositoryLinkFacts": {
+      "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/repositoryLocator"
+    },
+    "labelFacts": {
+      "type": "object",
+      "required": [
+        "name",
+        "color",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/labelName"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{6}$"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      },
+      "additionalProperties": false
+    },
+    "fieldFacts": {
+      "type": "object",
+      "required": [
+        "name",
+        "dataType",
+        "optionNames"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+        },
+        "dataType": {
+          "enum": [
+            "date",
+            "multiSelect",
+            "number",
+            "singleSelect",
+            "text"
+          ]
+        },
+        "optionNames": {
+          "type": "array",
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "issueTypeFacts": {
+      "type": "object",
+      "required": [
+        "name",
+        "enabled"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "issueFieldFacts": {
+      "type": "object",
+      "required": [
+        "name",
+        "dataType",
+        "optionNames"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+        },
+        "dataType": {
+          "const": "singleSelect"
+        },
+        "optionNames": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "optionFacts": {
+      "type": "object",
+      "required": [
+        "name",
+        "color",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+        },
+        "color": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/optionColor"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      },
+      "additionalProperties": false
+    },
+    "viewFacts": {
+      "type": "object",
+      "required": [
+        "name",
+        "layout",
+        "filter",
+        "visibleFieldIdentities",
+        "sortBy",
+        "groupByIdentities",
+        "verticalGroupByIdentities"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+        },
+        "layout": {
+          "enum": [
+            "board",
+            "roadmap",
+            "table"
+          ]
+        },
+        "filter": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "visibleFieldIdentities": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/providerIdentity"
+          }
+        },
+        "sortBy": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": [
+              "fieldIdentity",
+              "direction"
+            ],
+            "properties": {
+              "fieldIdentity": {
+                "$ref": "#/$defs/providerIdentity"
+              },
+              "direction": {
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "groupByIdentities": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/providerIdentity"
+          }
+        },
+        "verticalGroupByIdentities": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/providerIdentity"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "workflowFacts": {
+      "type": "object",
+      "required": [
+        "name",
+        "enabled"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/providerName"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "seedFacts": {
+      "type": "object",
+      "required": [
+        "issueNumber",
+        "marker",
+        "isPullRequest"
+      ],
+      "properties": {
+        "issueNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "marker": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^<!-- projectctl-seed:v1:[a-z0-9-]+:[a-z0-9-]+ -->$"
+        },
+        "isPullRequest": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "membershipFacts": {
+      "type": "object",
+      "required": [
+        "present"
+      ],
+      "properties": {
+        "present": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "attachmentFacts": {
+      "$ref": "#/$defs/membershipFacts"
+    },
+    "dimensionValueFacts": {
+      "type": "object",
+      "required": [
+        "dimensionRef",
+        "valueState"
+      ],
+      "properties": {
+        "dimensionRef": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "valueState": {
+          "enum": [
+            "set",
+            "unmapped",
+            "unset"
+          ]
+        },
+        "canonicalValue": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "valueState": {
+                "const": "set"
+              }
+            },
+            "required": [
+              "valueState"
+            ]
+          },
+          "then": {
+            "required": [
+              "canonicalValue"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "canonicalValue"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "relationshipFacts": {
+      "type": "object",
+      "required": [
+        "childIdentity",
+        "parentIdentity"
+      ],
+      "properties": {
+        "childIdentity": {
+          "$ref": "#/$defs/providerIdentity"
+        },
+        "parentIdentity": {
+          "$ref": "#/$defs/providerIdentity"
+        }
+      },
+      "additionalProperties": false
+    },
+    "publicationFacts": {
+      "type": "object",
+      "required": [
+        "contractPath",
+        "commitOid"
+      ],
+      "properties": {
+        "contractPath": {
+          "const": ".projectctl/project.yaml"
+        },
+        "commitOid": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "guidanceFacts": {
+      "type": "object",
+      "required": [
+        "inputDigest",
+        "outputs"
+      ],
+      "properties": {
+        "inputDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "contentDigest"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$",
+                "not": {
+                  "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+                }
+              },
+              "contentDigest": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "knownFacts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/guidanceFacts"
+        },
+        {
+          "$ref": "#/$defs/projectFacts"
+        },
+        {
+          "$ref": "#/$defs/repositoryLinkFacts"
+        },
+        {
+          "$ref": "#/$defs/labelFacts"
+        },
+        {
+          "$ref": "#/$defs/fieldFacts"
+        },
+        {
+          "$ref": "#/$defs/optionFacts"
+        },
+        {
+          "$ref": "#/$defs/issueTypeFacts"
+        },
+        {
+          "$ref": "#/$defs/issueFieldFacts"
+        },
+        {
+          "$ref": "#/$defs/viewFacts"
+        },
+        {
+          "$ref": "#/$defs/workflowFacts"
+        },
+        {
+          "$ref": "#/$defs/seedFacts"
+        },
+        {
+          "$ref": "#/$defs/membershipFacts"
+        },
+        {
+          "$ref": "#/$defs/attachmentFacts"
+        },
+        {
+          "$ref": "#/$defs/dimensionValueFacts"
+        },
+        {
+          "$ref": "#/$defs/relationshipFacts"
+        },
+        {
+          "$ref": "#/$defs/publicationFacts"
+        }
+      ]
+    },
+    "resourceFact": {
+      "type": "object",
+      "required": [
+        "itemKey",
+        "surface",
+        "state"
+      ],
+      "properties": {
+        "itemKey": {
+          "$ref": "#/$defs/itemKey"
+        },
+        "surface": {
+          "$ref": "#/$defs/surface"
+        },
+        "targetRef": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "resourceRef": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "state": {
+          "$ref": "#/$defs/resourceState"
+        },
+        "providerIdentity": {
+          "$ref": "#/$defs/providerIdentity"
+        },
+        "facts": {
+          "$ref": "#/$defs/knownFacts"
+        },
+        "diagnostic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "known"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "required": [
+              "providerIdentity",
+              "facts"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "providerIdentity"
+                  ]
+                },
+                {
+                  "required": [
+                    "facts"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "surface": {"const": "agent_guidance"},
+                "facts": {"$ref": "#/$defs/guidanceFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "contract_publication"},
+                "facts": {"$ref": "#/$defs/publicationFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "dimension_value"},
+                "facts": {"$ref": "#/$defs/dimensionValueFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "issue_field"},
+                "facts": {"$ref": "#/$defs/issueFieldFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "issue_field_attachment"},
+                "facts": {"$ref": "#/$defs/attachmentFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "issue_label_membership"},
+                "facts": {"$ref": "#/$defs/membershipFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "issue_relationship"},
+                "facts": {"$ref": "#/$defs/relationshipFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "issue_type"},
+                "facts": {"$ref": "#/$defs/issueTypeFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "label"},
+                "facts": {"$ref": "#/$defs/labelFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "project"},
+                "facts": {"$ref": "#/$defs/projectFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "project_field"},
+                "facts": {"$ref": "#/$defs/fieldFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "project_membership"},
+                "facts": {"$ref": "#/$defs/membershipFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "project_option"},
+                "facts": {"$ref": "#/$defs/optionFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "project_view"},
+                "facts": {"$ref": "#/$defs/viewFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "project_workflow"},
+                "facts": {"$ref": "#/$defs/workflowFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "repository_link"},
+                "facts": {"$ref": "#/$defs/repositoryLinkFacts"}
+              }
+            },
+            {
+              "properties": {
+                "surface": {"const": "seed_issue"},
+                "facts": {"$ref": "#/$defs/seedFacts"}
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

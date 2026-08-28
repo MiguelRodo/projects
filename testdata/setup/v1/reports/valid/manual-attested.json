@@ -1,0 +1,36 @@
+{
+  "apiVersion": "projectctl/v1",
+  "kind": "SetupReport",
+  "mode": "bootstrap",
+  "contractRef": "sample-setup",
+  "overallState": "complete_with_manual_attestations",
+  "items": [
+    {
+      "itemKey": "target/primary/workflow/add-open-issues",
+      "surface": "project_workflow",
+      "targetRef": "primary",
+      "resourceRef": "add-open-issues",
+      "outcome": "manual_action_acknowledged",
+      "blocking": false,
+      "verification": "operator_attestation",
+      "diagnostic": "setup.workflow.manual-acknowledged"
+    }
+  ],
+  "manualActions": [
+    {
+      "actionId": "configure-add-open-issues",
+      "itemKey": "target/primary/workflow/add-open-issues",
+      "surface": "project_workflow",
+      "targetRef": "primary",
+      "reason": "configuration_unobservable",
+      "summary": "Configure the declared auto-add workflow.",
+      "steps": ["Configure and enable the exact declared workflow."],
+      "acknowledged": true,
+      "attestation": {
+        "attestedAt": "2026-08-28T05:00:00Z",
+        "statement": "I performed every step in the declared workflow checklist."
+      },
+      "providerVerified": false
+    }
+  ]
+}

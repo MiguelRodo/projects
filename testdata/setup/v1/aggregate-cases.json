@@ -1,0 +1,17 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {"id": "SU-A001", "mode": "bootstrap", "itemOutcomes": ["already_conformant"], "manualActions": [], "expected": "already_conformant"},
+    {"id": "SU-A002", "mode": "bootstrap", "itemOutcomes": ["already_conformant", "planned_create"], "manualActions": [], "expected": "changes_planned"},
+    {"id": "SU-A003", "mode": "bootstrap", "itemOutcomes": ["already_conformant", "applied_verified"], "manualActions": [], "expected": "applied_verified"},
+    {"id": "SU-A004", "mode": "bootstrap", "itemOutcomes": ["applied_verified", "manual_action_required"], "manualActions": [{"acknowledged": false}], "expected": "incomplete_manual"},
+    {"id": "SU-A005", "mode": "bootstrap", "itemOutcomes": ["already_conformant", "manual_action_acknowledged"], "manualActions": [{"acknowledged": true}], "expected": "complete_with_manual_attestations"},
+    {"id": "SU-A006", "mode": "adopt", "itemOutcomes": ["contract_patch_required"], "manualActions": [{"acknowledged": false}], "expected": "incomplete_manual"},
+    {"id": "SU-A007", "mode": "bootstrap", "itemOutcomes": ["planned_create", "conflict"], "manualActions": [], "expected": "blocked"},
+    {"id": "SU-A008", "mode": "bootstrap", "itemOutcomes": ["manual_action_required", "forbidden"], "manualActions": [{"acknowledged": false}], "expected": "blocked"},
+    {"id": "SU-A009", "mode": "initialise", "itemOutcomes": ["applied_verified", "contract_patch_required"], "manualActions": [{"acknowledged": false}], "expected": "incomplete_manual"},
+    {"id": "SU-A010", "mode": "bootstrap", "itemOutcomes": ["preserved_compatible"], "manualActions": [], "expected": "already_conformant"},
+    {"id": "SU-A011", "mode": "bootstrap", "itemOutcomes": ["unavailable"], "manualActions": [], "expected": "blocked"},
+    {"id": "SU-A012", "mode": "bootstrap", "itemOutcomes": ["scope_forbidden"], "manualActions": [], "expected": "blocked"}
+  ]
+}

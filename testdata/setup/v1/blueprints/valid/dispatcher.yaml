@@ -1,0 +1,132 @@
+apiVersion: projectctl/v1
+kind: DispatcherSetupBlueprint
+spec:
+  ref: mapped-work
+  targets:
+  - target:
+      ref: delivery
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: mapped-tasks
+      project:
+        owner:
+          kind: organization
+          login: example-org
+        title: Delivery work
+        shortDescription: Delivery planning.
+        visibility: private
+    fields:
+      state:
+        name: Work state
+        dataType: singleSelect
+        values:
+          active:
+            name: Active
+            color: blue
+            description: Delivery is active.
+    dimensionBindings: {}
+  - target:
+      ref: research
+      issueStore:
+        owner:
+          kind: organization
+          login: example-org
+        repository: mapped-tasks
+      project:
+        owner:
+          kind: user
+          login: example-user
+        title: Research work
+        shortDescription: Research planning.
+        visibility: private
+    fields:
+      state:
+        name: Work state
+        dataType: singleSelect
+        values:
+          active:
+            name: Active
+            color: purple
+            description: Research is active.
+      evidence:
+        name: Evidence
+        dataType: text
+    dimensionBindings: {}
+  dimensions: {}
+  routing:
+    rules:
+    - ref: route-1
+      labelRef: route-1
+      targetRef: delivery
+    - ref: route-2
+      labelRef: route-2
+      targetRef: research
+    fallback:
+      kind: error
+  setup:
+    targets:
+      delivery:
+        repositoryLinks:
+        - owner: {kind: organization, login: example-org}
+          repository: mapped-tasks
+        views:
+          delivery-board:
+            name: Delivery board
+            layout: board
+            filter: "is:issue is:open"
+            visibleFields:
+            - {kind: builtin, name: title}
+            sortBy: []
+            groupBy: []
+            verticalGroupBy:
+            - {kind: field, ref: state}
+        workflows:
+          delivery-auto-add:
+            kind: auto_add
+            name: Auto-add delivery issues
+            enabled: true
+            repositories:
+            - owner: {kind: organization, login: example-org}
+              repository: mapped-tasks
+            filter: "is:issue is:open label:project:route-1"
+      research:
+        repositoryLinks: []
+        views: {}
+        workflows: {}
+    seeds: {}
+  sourceRefs:
+  - handbook
+  requirements:
+    features:
+    - issues
+    - project-custom-fields
+    - project-item-membership
+    - project-repository-links
+    - project-views
+    - project-workflows
+    - projects-v2
+    - issue-labels
+    mutations:
+    - project.item.field.write
+    - project.repository.link
+    - project.view.create
+  labels:
+    declarations:
+      route-1:
+        name: project:route-1
+        color: 1f6feb
+        description: Routes issues to target delivery.
+        role:
+          kind: project_route
+          targetRef: delivery
+      route-2:
+        name: project:route-2
+        color: 1f6feb
+        description: Routes issues to target research.
+        role:
+          kind: project_route
+          targetRef: research
+    projectRouting:
+      kind: required_label

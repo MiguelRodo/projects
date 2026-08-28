@@ -231,7 +231,7 @@ The authority is the explicit organisation owner of the target issue store. Disc
 
 GitHub's [Issue Fields REST API](https://docs.github.com/en/rest/orgs/issue-fields) exposes organisation fields and options. Updating a field's options replaces the supplied option collection and can destroy identity if existing IDs are omitted. #48 therefore authorises value writes only, not definition changes.
 
-An Issue Field value remains issue-owned even when it is displayed in a Project. GitHub exposes Project issue-field configurations and values separately from Project custom-field values through the [Projects GraphQL API](https://docs.github.com/en/graphql/reference/projects). Attaching a missing Issue Field to a Project is a setup outcome owned by #49, not an item-value write.
+An Issue Field value remains issue-owned even when it is displayed in a Project. GitHub exposes Project issue-field configurations and values separately from Project custom-field values through the [Projects GraphQL API](https://docs.github.com/en/graphql/reference/projects). [V1 setup outcomes](v1-setup-outcomes.md) authorises attaching a declared existing Issue Field to an exact Project under `project.issue-field.attach`. Creating or updating the organisation-wide field definition remains an explicit administrator action, not an item-value write.
 
 ## Built-in Project Status binding
 

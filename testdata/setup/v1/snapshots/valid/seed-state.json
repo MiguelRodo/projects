@@ -1,0 +1,38 @@
+{
+  "apiVersion": "projectctl/v1",
+  "kind": "SetupSnapshot",
+  "contractRef": "sample-setup",
+  "capturedAt": "2026-08-28T06:30:00Z",
+  "resources": [
+    {
+      "itemKey": "seed/first-task/label/course-materials",
+      "surface": "issue_label_membership",
+      "targetRef": "primary",
+      "resourceRef": "course-materials",
+      "state": "missing",
+      "diagnostic": "setup.seed-label.missing"
+    },
+    {
+      "itemKey": "seed/first-task/dimension/priority",
+      "surface": "dimension_value",
+      "targetRef": "primary",
+      "resourceRef": "priority",
+      "state": "known",
+      "providerIdentity": "synthetic-seed-priority-value",
+      "facts": {
+        "dimensionRef": "priority",
+        "valueState": "set",
+        "canonicalValue": "p2"
+      },
+      "diagnostic": "setup.seed-dimension.known"
+    },
+    {
+      "itemKey": "seed/first-task/membership",
+      "surface": "project_membership",
+      "targetRef": "primary",
+      "resourceRef": "first-task",
+      "state": "missing",
+      "diagnostic": "setup.membership.missing"
+    }
+  ]
+}
