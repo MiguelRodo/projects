@@ -13,6 +13,8 @@ spec:
     companion:
       linkage: {kind: github_issue_node_id}
       destination: private-provider://account/records
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

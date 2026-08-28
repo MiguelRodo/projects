@@ -11,6 +11,8 @@ spec:
     supportedModes: [full_github_context]
     defaultMode: full_github_context
   sourceRefs: []
+  dimensions: {}
+  dimensionBindings: {}
   labels:
     declarations: {}
     projectRouting:

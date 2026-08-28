@@ -16,6 +16,7 @@ spec:
           login: example-org
         number: 13
     fields: {}
+    dimensionBindings: {}
   - target:
       ref: frontend
       issueStore:
@@ -29,6 +30,7 @@ spec:
           login: example-org
         number: 12
     fields: {}
+    dimensionBindings: {}
   - target:
       ref: backend
       issueStore:
@@ -42,6 +44,8 @@ spec:
           login: example-org
         number: 11
     fields: {}
+    dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
     - ref: route-1

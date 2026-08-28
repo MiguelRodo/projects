@@ -12,6 +12,8 @@ spec:
     defaultMode: full_github_context
     companion:
       linkage: {kind: github_issue_node_id}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

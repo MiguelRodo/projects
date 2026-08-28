@@ -16,6 +16,7 @@ spec:
           login: example-user
         number: 31
     fields: {}
+    dimensionBindings: {}
   - target:
       ref: second
       issueStore:
@@ -29,6 +30,8 @@ spec:
           login: example-org
         number: 32
     fields: {}
+    dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
     - ref: route-1

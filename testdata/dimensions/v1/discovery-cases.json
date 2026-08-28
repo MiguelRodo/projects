@@ -1,0 +1,95 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {
+      "id": "DM-D001",
+      "bindingKind": "project_field",
+      "input": {"catalogState": "known", "fieldSelector": {"name": "Class", "dataType": "singleSelect"}, "matches": [{"id": "PF_class", "name": "Class", "dataType": "singleSelect"}], "optionMatches": {"Task": ["PO_task"], "Bug": ["PO_bug"]}},
+      "expected": {"status": "resolved", "fieldId": "PF_class", "valueIds": {"task": "PO_task", "bug": "PO_bug"}}
+    },
+    {
+      "id": "DM-D002",
+      "bindingKind": "project_field",
+      "input": {"catalogState": "known", "fieldSelector": {"name": "Class", "dataType": "singleSelect"}, "matches": []},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.missing", "subject": "field"}
+    },
+    {
+      "id": "DM-D003",
+      "bindingKind": "project_field",
+      "input": {"catalogState": "known", "fieldSelector": {"name": "Class", "dataType": "singleSelect"}, "matches": [{"id": "PF_1"}, {"id": "PF_2"}]},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.ambiguous", "providerIds": ["PF_1", "PF_2"]}
+    },
+    {
+      "id": "DM-D004",
+      "bindingKind": "issue_type",
+      "input": {"catalogState": "known", "issueStoreOwner": {"kind": "organization", "login": "example-org"}, "matches": [{"id": "IT_task", "name": "Task", "enabled": true}]},
+      "expected": {"status": "resolved", "valueIds": {"task": "IT_task"}}
+    },
+    {
+      "id": "DM-D005",
+      "bindingKind": "issue_type",
+      "input": {"catalogState": "known", "issueStoreOwner": {"kind": "organization", "login": "example-org"}, "matches": [{"id": "IT_task", "name": "Task", "enabled": false}]},
+      "expected": {"status": "failed", "diagnostic": "dimension.issue-type.disabled", "providerId": "IT_task"}
+    },
+    {
+      "id": "DM-D006",
+      "bindingKind": "issue_field",
+      "input": {"catalogState": "known", "fieldMatches": [{"id": "IF_priority", "name": "Priority", "dataType": "singleSelect"}], "projectAttachmentIds": ["IF_priority"], "optionMatches": {"Urgent": ["IFO_urgent"], "High": ["IFO_high"], "Medium": ["IFO_medium"], "Low": ["IFO_low"]}},
+      "expected": {"status": "resolved", "fieldId": "IF_priority", "valueIds": {"p0": ["IFO_urgent"], "p1": ["IFO_high"], "p2": ["IFO_medium", "IFO_low"]}, "writeValueIds": {"p0": "IFO_urgent", "p1": "IFO_high", "p2": "IFO_medium"}}
+    },
+    {
+      "id": "DM-D007",
+      "bindingKind": "issue_field",
+      "input": {"catalogState": "known", "fieldMatches": [{"id": "IF_priority", "name": "Priority", "dataType": "singleSelect"}], "projectAttachmentIds": []},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.missing", "subject": "project-attachment", "providerId": "IF_priority"}
+    },
+    {
+      "id": "DM-D008",
+      "bindingKind": "issue_field",
+      "input": {"catalogState": "unsupported"},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.unsupported"}
+    },
+    {
+      "id": "DM-D009",
+      "bindingKind": "issue_type",
+      "input": {"catalogState": "forbidden"},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.forbidden"}
+    },
+    {
+      "id": "DM-D010",
+      "bindingKind": "project_status",
+      "input": {"catalogState": "known", "matches": [{"id": "PS_status", "name": "Status", "providerKind": "builtin-status"}], "optionMatches": {"Todo": ["PS_todo"], "In progress": ["PS_progress"], "In Progress": [], "Done": ["PS_done"]}},
+      "expected": {"status": "resolved", "fieldId": "PS_status", "valueIds": {"todo": "PS_todo", "in-progress": "PS_progress", "done": "PS_done"}}
+    },
+    {
+      "id": "DM-D011",
+      "bindingKind": "project_status",
+      "input": {"catalogState": "known", "matches": [{"id": "PF_status", "name": "Status", "providerKind": "custom-single-select"}]},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.missing", "subject": "builtin-status"}
+    },
+    {
+      "id": "DM-D012",
+      "bindingKind": "project_field",
+      "input": {"catalogState": "unknown"},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.unknown"}
+    },
+    {
+      "id": "DM-D013",
+      "bindingKind": "project_field",
+      "input": {"catalogState": "unavailable"},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.unavailable"}
+    },
+    {
+      "id": "DM-D014",
+      "bindingKind": "issue_field",
+      "input": {"catalogState": "known", "fieldMatches": [{"id": "IF_priority", "name": "Priority", "dataType": "singleSelect"}], "projectAttachmentIds": ["IF_priority"], "optionMatches": {"Urgent": ["IFO_urgent"], "High": [], "Medium": ["IFO_medium"], "Low": ["IFO_low"]}},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.missing", "subject": "value", "canonicalValueRef": "p1", "selector": "High"}
+    },
+    {
+      "id": "DM-D015",
+      "bindingKind": "project_status",
+      "input": {"catalogState": "known", "matches": [{"id": "PS_status", "providerKind": "builtin-status"}], "optionMatches": {"Todo": ["PS_todo"], "In progress": ["PS_progress_1", "PS_progress_2"], "In Progress": [], "Done": ["PS_done"]}},
+      "expected": {"status": "failed", "diagnostic": "dimension.configuration.ambiguous", "canonicalValueRef": "in-progress", "providerIds": ["PS_progress_1", "PS_progress_2"]}
+    }
+  ]
+}

@@ -6,5 +6,7 @@ spec:
     issueStore: {owner: {kind: organization, login: example-org}, repository: alpha-tasks}
     project: {owner: {kind: organization, login: example-org}, number: 1}
   fields: {}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   requirements: {features: [issues, projects-v2], mutations: []}

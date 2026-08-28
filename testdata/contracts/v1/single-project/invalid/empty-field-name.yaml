@@ -12,6 +12,8 @@ spec:
       number: 1
   fields:
     notes: {name: "", dataType: text}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

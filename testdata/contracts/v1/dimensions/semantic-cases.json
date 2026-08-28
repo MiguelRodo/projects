@@ -1,0 +1,145 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {
+      "id": "DM-S001",
+      "file": "invalid/semantic-missing-binding.json",
+      "diagnostic": "contract.semantic.missing-dimension-binding",
+      "instancePath": "/spec/dimensionBindings",
+      "rule": "DM-002"
+    },
+    {
+      "id": "DM-S002",
+      "file": "invalid/semantic-undeclared-binding.json",
+      "diagnostic": "contract.semantic.undeclared-dimension-binding",
+      "instancePath": "/spec/dimensionBindings/class",
+      "rule": "DM-002"
+    },
+    {
+      "id": "DM-S003",
+      "file": "invalid/semantic-unknown-field.json",
+      "diagnostic": "contract.semantic.unknown-dimension-field",
+      "instancePath": "/spec/dimensionBindings/class/fieldRef",
+      "rule": "DM-008"
+    },
+    {
+      "id": "DM-S004",
+      "file": "invalid/semantic-field-type.json",
+      "diagnostic": "contract.semantic.dimension-field-type",
+      "instancePath": "/spec/dimensionBindings/class/fieldRef",
+      "rule": "DM-008"
+    },
+    {
+      "id": "DM-S005",
+      "file": "invalid/semantic-value-map-keys.json",
+      "diagnostic": "contract.semantic.dimension-value-map",
+      "instancePath": "/spec/dimensionBindings/class/values",
+      "rule": "DM-004"
+    },
+    {
+      "id": "DM-S006",
+      "file": "invalid/semantic-unknown-value-ref.json",
+      "diagnostic": "contract.semantic.unknown-dimension-value-ref",
+      "instancePath": "/spec/dimensionBindings/class/values/task/readValueRefs/0",
+      "rule": "DM-003"
+    },
+    {
+      "id": "DM-S007",
+      "file": "invalid/semantic-unreadable-write.json",
+      "diagnostic": "contract.semantic.unreadable-write-value",
+      "instancePath": "/spec/dimensionBindings/class/values/task/writeValueRef",
+      "rule": "DM-011"
+    },
+    {
+      "id": "DM-S008",
+      "file": "invalid/semantic-overlapping-project-map.json",
+      "diagnostic": "contract.semantic.overlapping-project-value-map",
+      "instancePath": "/spec/dimensionBindings/class/values/bug/readValueRefs/0",
+      "rule": "DM-012"
+    },
+    {
+      "id": "DM-S009",
+      "file": "invalid/semantic-incomplete-project-map.json",
+      "diagnostic": "contract.semantic.incomplete-project-value-map",
+      "instancePath": "/spec/dimensionBindings/class/values",
+      "rule": "DM-012"
+    },
+    {
+      "id": "DM-S010",
+      "file": "invalid/semantic-duplicate-authority.json",
+      "diagnostic": "contract.semantic.duplicate-dimension-authority",
+      "instancePath": "/spec/dimensionBindings/priority/fieldRef",
+      "rule": "DM-009"
+    },
+    {
+      "id": "DM-S011",
+      "file": "invalid/semantic-native-user-store.json",
+      "diagnostic": "contract.semantic.native-binding-requires-organization",
+      "instancePath": "/spec/dimensionBindings/class/kind",
+      "rule": "DM-016"
+    },
+    {
+      "id": "DM-S012",
+      "file": "invalid/semantic-overlapping-native-map.json",
+      "diagnostic": "contract.semantic.overlapping-native-value-map",
+      "instancePath": "/spec/dimensionBindings/priority/values/p2/readNames/2",
+      "rule": "DM-012"
+    },
+    {
+      "id": "DM-S013",
+      "file": "invalid/semantic-unreadable-native-write.json",
+      "diagnostic": "contract.semantic.unreadable-write-value",
+      "instancePath": "/spec/dimensionBindings/priority/values/p2/writeName",
+      "rule": "DM-011"
+    },
+    {
+      "id": "DM-S014",
+      "file": "invalid/semantic-native-map-keys.json",
+      "diagnostic": "contract.semantic.dimension-value-map",
+      "instancePath": "/spec/dimensionBindings/class/values",
+      "rule": "DM-004"
+    },
+    {
+      "id": "DM-S015",
+      "file": "invalid/semantic-dispatcher-missing-binding.json",
+      "diagnostic": "contract.semantic.missing-dimension-binding",
+      "instancePath": "/spec/targets/1/dimensionBindings",
+      "rule": "DM-002"
+    },
+    {
+      "id": "DM-S016",
+      "file": "invalid/semantic-dispatcher-extra-binding.json",
+      "diagnostic": "contract.semantic.undeclared-dimension-binding",
+      "instancePath": "/spec/targets/0/dimensionBindings/status",
+      "rule": "DM-002"
+    },
+    {
+      "id": "DM-S017",
+      "file": "invalid/semantic-workstream-map.json",
+      "diagnostic": "contract.semantic.dimension-value-map",
+      "instancePath": "/spec/dimensionBindings/workstream/values",
+      "rule": "DM-007"
+    },
+    {
+      "id": "DM-S018",
+      "file": "invalid/semantic-issue-type-overlap.json",
+      "diagnostic": "contract.semantic.overlapping-native-value-map",
+      "instancePath": "/spec/dimensionBindings/class/values/bug/readNames/0",
+      "rule": "DM-012"
+    },
+    {
+      "id": "DM-S019",
+      "file": "invalid/semantic-parent-missing-feature.json",
+      "diagnostic": "contract.semantic.missing-dimension-feature",
+      "instancePath": "/spec/requirements/features",
+      "rule": "DM-016"
+    },
+    {
+      "id": "DM-S020",
+      "file": "invalid/semantic-progress-missing-feature.json",
+      "diagnostic": "contract.semantic.missing-dimension-feature",
+      "instancePath": "/spec/requirements/features",
+      "rule": "DM-015"
+    }
+  ]
+}

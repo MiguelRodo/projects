@@ -1,0 +1,161 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {
+      "id": "DM-I001",
+      "file": "missing-dimensions.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required"
+    },
+    {
+      "id": "DM-I002",
+      "file": "missing-bindings.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required"
+    },
+    {
+      "id": "DM-I003",
+      "file": "unknown-dimension.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.dimension"
+    },
+    {
+      "id": "DM-I004",
+      "file": "bad-class-value.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.class-value"
+    },
+    {
+      "id": "DM-I005",
+      "file": "priority-missing-value.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.priority-values"
+    },
+    {
+      "id": "DM-I006",
+      "file": "status-extra-value.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.status-values"
+    },
+    {
+      "id": "DM-I007",
+      "file": "empty-workstreams.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.workstream-values"
+    },
+    {
+      "id": "DM-I008",
+      "file": "class-issue-field.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.dimension-binding"
+    },
+    {
+      "id": "DM-I009",
+      "file": "priority-issue-type.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.dimension-binding"
+    },
+    {
+      "id": "DM-I010",
+      "file": "status-project-field.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.dimension-binding"
+    },
+    {
+      "id": "DM-I011",
+      "file": "due-date-with-values.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.dimension-binding"
+    },
+    {
+      "id": "DM-I012",
+      "file": "missing-read-names.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required"
+    },
+    {
+      "id": "DM-I013",
+      "file": "null-write-name.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.provider-name"
+    },
+    {
+      "id": "DM-I014",
+      "file": "missing-field-ref.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required"
+    },
+    {
+      "id": "DM-I015",
+      "file": "issue-field-wrong-type.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.issue-field-type"
+    },
+    {
+      "id": "DM-I016",
+      "file": "unknown-binding-property.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.unknown-property"
+    },
+    {
+      "id": "DM-I017",
+      "file": "null-bindings.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.object"
+    },
+    {
+      "id": "DM-I018",
+      "file": "workstream-missing-description.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.required"
+    },
+    {
+      "id": "DM-I019",
+      "file": "empty-read-names.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.native-value-map"
+    },
+    {
+      "id": "DM-I020",
+      "file": "null-dimensions.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.object"
+    },
+    {
+      "id": "DM-I021",
+      "file": "issue-type-missing-feature.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.issue-type-feature-required"
+    },
+    {
+      "id": "DM-I022",
+      "file": "issue-field-missing-feature.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.issue-field-feature-required"
+    },
+    {
+      "id": "DM-I023",
+      "file": "issue-type-scope-without-binding.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.issue-type-binding-required"
+    },
+    {
+      "id": "DM-I024",
+      "file": "issue-field-scope-without-binding.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.issue-field-binding-required"
+    },
+    {
+      "id": "DM-I025",
+      "file": "project-write-without-surface.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.project-write-surface-required"
+    },
+    {
+      "id": "DM-I026",
+      "file": "status-write-missing-membership.json",
+      "stage": "schema",
+      "diagnostic": "contract.schema.project-membership-feature-required"
+    }
+  ]
+}

@@ -13,6 +13,8 @@ spec:
   fields:
     first-notes: {name: Notes, dataType: text}
     second-notes: {name: Notes, dataType: text}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

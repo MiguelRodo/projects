@@ -10,6 +10,8 @@ spec:
   privacy:
     supportedModes: [private_only]
     defaultMode: private_only
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

@@ -6,6 +6,8 @@ spec:
     ref: primary
     issueStore: {owner: {kind: organization, login: example-org}, repository: alpha-tasks}
   fields: {}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

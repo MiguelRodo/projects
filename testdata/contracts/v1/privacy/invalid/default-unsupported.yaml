@@ -10,6 +10,8 @@ spec:
   privacy:
     supportedModes: [shareable_by_default]
     defaultMode: full_github_context
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

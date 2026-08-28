@@ -16,6 +16,8 @@ spec:
       number: 1
   fields: {}
   sourceRefs: []
+  dimensions: {}
+  dimensionBindings: {}
   labels:
     declarations: {}
     projectRouting:

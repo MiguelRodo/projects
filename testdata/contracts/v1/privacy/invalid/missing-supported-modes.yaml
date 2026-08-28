@@ -9,6 +9,8 @@ spec:
   fields: {}
   privacy:
     defaultMode: shareable_by_default
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

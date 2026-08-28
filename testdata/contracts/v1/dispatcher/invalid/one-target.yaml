@@ -16,6 +16,8 @@ spec:
           login: example-org
         number: 1
     fields: {}
+    dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
     - ref: route-1

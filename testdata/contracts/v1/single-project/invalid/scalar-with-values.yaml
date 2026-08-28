@@ -16,6 +16,8 @@ spec:
       dataType: text
       values:
         extra: {name: Extra, color: blue, description: Not valid for text.}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

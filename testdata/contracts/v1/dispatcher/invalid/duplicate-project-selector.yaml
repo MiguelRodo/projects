@@ -16,6 +16,7 @@ spec:
           login: Example-Org
         number: 7
     fields: {}
+    dimensionBindings: {}
   - target:
       ref: beta
       issueStore:
@@ -29,6 +30,8 @@ spec:
           login: example-org
         number: 7
     fields: {}
+    dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
     - ref: route-1

@@ -15,6 +15,54 @@ spec:
         login: example-org
       number: 7
   fields:
+    class:
+      name: Class
+      dataType: singleSelect
+      values:
+        task:
+          name: Task
+          color: gray
+          description: A specific piece of work.
+        bug:
+          name: Bug
+          color: red
+          description: An unexpected fault or incorrect behaviour.
+        enhancement:
+          name: Enhancement
+          color: green
+          description: An improvement to existing work.
+        epic:
+          name: Epic
+          color: yellow
+          description: A substantial outcome made up of child issues.
+    priority:
+      name: Priority
+      dataType: singleSelect
+      values:
+        p0:
+          name: P0
+          color: red
+          description: Urgent or deadline-critical.
+        p1:
+          name: P1
+          color: orange
+          description: Planned and important.
+        p2:
+          name: P2
+          color: blue
+          description: Useful but not currently urgent.
+    workstream:
+      name: Workstream
+      dataType: singleSelect
+      values:
+        api:
+          name: API
+          color: purple
+          description: API-facing work.
+        documentation:
+          name: Documentation
+          color: blue
+          description: Durable project guidance.
     work-state:
       name: Work state
       dataType: singleSelect
@@ -55,6 +103,59 @@ spec:
   sourceRefs:
     - architecture
     - handbook
+  dimensions:
+    class:
+      values: [task, bug, enhancement, epic]
+    priority:
+      values: [p0, p1, p2]
+    status:
+      values: [todo, in-progress, done]
+    workstream:
+      values:
+        api:
+          name: API
+          description: API-facing work.
+        documentation:
+          name: Documentation
+          description: Durable project guidance.
+    due-date: {}
+    assignees: {}
+    parent: {}
+    sub-issues-progress: {}
+  dimensionBindings:
+    class:
+      kind: project_field
+      fieldRef: class
+      values:
+        task: {readValueRefs: [task], writeValueRef: task}
+        bug: {readValueRefs: [bug], writeValueRef: bug}
+        enhancement: {readValueRefs: [enhancement], writeValueRef: enhancement}
+        epic: {readValueRefs: [epic], writeValueRef: epic}
+    priority:
+      kind: project_field
+      fieldRef: priority
+      values:
+        p0: {readValueRefs: [p0], writeValueRef: p0}
+        p1: {readValueRefs: [p1], writeValueRef: p1}
+        p2: {readValueRefs: [p2], writeValueRef: p2}
+    status:
+      kind: project_status
+      values:
+        todo: {readNames: [Todo], writeName: Todo}
+        in-progress: {readNames: [In progress, In Progress], writeName: In progress}
+        done: {readNames: [Done], writeName: Done}
+    workstream:
+      kind: project_field
+      fieldRef: workstream
+      values:
+        api: {readValueRefs: [api], writeValueRef: api}
+        documentation: {readValueRefs: [documentation], writeValueRef: documentation}
+    due-date:
+      kind: project_field
+      fieldRef: target-date
+    assignees: {kind: issue_assignees}
+    parent: {kind: issue_parent}
+    sub-issues-progress: {kind: project_sub_issues_progress}
   labels:
     declarations: {}
     projectRouting:

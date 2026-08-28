@@ -28,6 +28,7 @@ spec:
             name: Active
             color: blue
             description: Backend work is in progress.
+    dimensionBindings: {}
   - target:
       ref: frontend
       issueStore:
@@ -44,6 +45,7 @@ spec:
       delivery-date:
         name: Frontend delivery date
         dataType: date
+    dimensionBindings: {}
   - target:
       ref: triage
       issueStore:
@@ -57,6 +59,8 @@ spec:
           login: example-org
         number: 13
     fields: {}
+    dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
     - ref: route-1

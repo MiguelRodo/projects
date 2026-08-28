@@ -46,6 +46,7 @@ spec:
           owner: {kind: organization, login: example-org}
           number: 83
       fields: {}
+      dimensionBindings: {}
     - target:
         ref: frontend
         issueStore:
@@ -55,6 +56,8 @@ spec:
           owner: {kind: organization, login: example-org}
           number: 84
       fields: {}
+      dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
       - {ref: backend-route, labelRef: route-backend, targetRef: backend}
@@ -85,7 +88,7 @@ The schema at `schemas/v1/repository-contract.schema.json` is the structural aut
 
 ## Targets
 
-Each `spec.targets` entry contains exactly one base target and one field map. Target and mapping semantics are unchanged from the single-Project contract.
+Each `spec.targets` entry contains exactly one base target, one custom-field map and one semantic dimension-binding map. The canonical dimension declarations are shared at `spec.dimensions`; [v1 project dimensions](v1-project-dimensions.md) requires every target to bind the same declared dimension set even when their provider storage kinds differ.
 
 Static validation requires:
 
@@ -93,7 +96,8 @@ Static validation requires:
 2. every target uses the same exact issue-store locator under the frozen locator comparison;
 3. every Project locator is unique under owner kind, ASCII case-insensitive owner login and exact Project number;
 4. field selector and option selector uniqueness is checked independently inside each target;
-5. no title, Project display name or declaration order acts as identity.
+5. dimension bindings are checked independently inside each target against the one shared canonical vocabulary;
+6. no title, Project display name or declaration order acts as identity.
 
 Targets are canonically ordered by exact target reference. Source order has no semantic meaning.
 

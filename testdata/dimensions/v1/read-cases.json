@@ -1,0 +1,23 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {"id": "DM-R001", "dimensionRef": "class", "bindingKind": "project_field", "input": {"configurationState": "known", "providerValueId": "PO_task"}, "expected": {"status": "resolved", "state": "known", "valueRef": "task"}},
+    {"id": "DM-R002", "dimensionRef": "priority", "bindingKind": "project_field", "input": {"configurationState": "known", "providerValueId": "PO_p2"}, "expected": {"status": "resolved", "state": "known", "valueRef": "p2"}},
+    {"id": "DM-R003", "dimensionRef": "priority", "bindingKind": "issue_field", "input": {"configurationState": "known", "providerValueId": "IFO_low"}, "expected": {"status": "resolved", "state": "known", "valueRef": "p2"}},
+    {"id": "DM-R004", "dimensionRef": "priority", "bindingKind": "issue_field", "input": {"configurationState": "known", "providerValueId": "IFO_medium"}, "expected": {"status": "resolved", "state": "known", "valueRef": "p2"}},
+    {"id": "DM-R005", "dimensionRef": "status", "bindingKind": "project_status", "input": {"configurationState": "known", "providerValueId": "PS_progress_upper"}, "expected": {"status": "resolved", "state": "known", "valueRef": "in-progress"}},
+    {"id": "DM-R006", "dimensionRef": "status", "bindingKind": "project_status", "input": {"configurationState": "known", "providerValueId": null}, "expected": {"status": "resolved", "state": "clear"}},
+    {"id": "DM-R007", "dimensionRef": "class", "bindingKind": "issue_type", "input": {"configurationState": "missing", "providerValueId": null}, "expected": {"status": "failed", "diagnostic": "dimension.configuration.missing"}},
+    {"id": "DM-R008", "dimensionRef": "class", "bindingKind": "issue_type", "input": {"configurationState": "known", "providerValueId": "IT_unmapped"}, "expected": {"status": "failed", "diagnostic": "dimension.value.unmapped", "providerValueId": "IT_unmapped"}},
+    {"id": "DM-R009", "dimensionRef": "workstream", "bindingKind": "project_field", "input": {"configurationState": "known", "valueState": "unknown"}, "expected": {"status": "resolved", "state": "unknown"}},
+    {"id": "DM-R010", "dimensionRef": "priority", "bindingKind": "issue_field", "input": {"configurationState": "known", "valueState": "forbidden"}, "expected": {"status": "resolved", "state": "forbidden"}},
+    {"id": "DM-R011", "dimensionRef": "assignees", "bindingKind": "issue_assignees", "input": {"valueState": "known", "actors": [{"providerId": "U_2", "login": "second-user"}, {"providerId": "U_1", "login": "first-user"}]}, "expected": {"status": "resolved", "state": "known", "actorIds": ["U_1", "U_2"]}},
+    {"id": "DM-R012", "dimensionRef": "parent", "bindingKind": "issue_parent", "input": {"valueState": "known", "parent": null}, "expected": {"status": "resolved", "state": "clear"}},
+    {"id": "DM-R013", "dimensionRef": "parent", "bindingKind": "issue_parent", "input": {"valueState": "known", "parent": {"providerId": "I_parent", "owner": "example-org", "repository": "tasks", "number": 9}}, "expected": {"status": "resolved", "state": "known", "providerId": "I_parent"}},
+    {"id": "DM-R014", "dimensionRef": "sub-issues-progress", "bindingKind": "project_sub_issues_progress", "input": {"valueState": "known", "completed": 3, "total": 5}, "expected": {"status": "resolved", "state": "known", "completed": 3, "total": 5}},
+    {"id": "DM-R015", "dimensionRef": "sub-issues-progress", "bindingKind": "project_sub_issues_progress", "input": {"valueState": "known", "completed": 6, "total": 5}, "expected": {"status": "failed", "diagnostic": "dimension.value.invalid"}},
+    {"id": "DM-R016", "dimensionRef": "due-date", "bindingKind": "project_field", "input": {"configurationState": "known", "providerDate": "2026-09-30"}, "expected": {"status": "resolved", "state": "known", "date": "2026-09-30"}},
+    {"id": "DM-R017", "dimensionRef": "due-date", "bindingKind": "project_field", "input": {"configurationState": "known", "providerDate": null}, "expected": {"status": "resolved", "state": "clear"}},
+    {"id": "DM-R018", "dimensionRef": "priority", "bindingKind": "issue_field", "input": {"configurationState": "known", "providerValueId": "IFO_conflict", "canonicalMatches": ["p1", "p2"]}, "expected": {"status": "failed", "diagnostic": "dimension.value.ambiguous", "canonicalValueRefs": ["p1", "p2"]}}
+  ]
+}

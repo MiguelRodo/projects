@@ -17,6 +17,8 @@ spec:
       values:
         ready: {name: Ready, color: green, description: Ready to start.}
         also-ready: {name: Ready, color: blue, description: Duplicate selector.}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}
