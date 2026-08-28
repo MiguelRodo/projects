@@ -248,22 +248,34 @@ The mutation set is an exhaustive allowlist for plans made under this contract:
 
 | Mutation | Maximum authorised effect |
 | --- | --- |
+| `issue.assignee.add` | Add one exact assignee while preserving every other assignee |
+| `issue.assignee.remove` | Remove one exact assignee while preserving every other assignee |
+| `issue.body.write` | Set one resolved Issue body to exact validated shared text |
 | `issue.create` | Create a new issue in the exact issue store from separately validated intent |
-| `issue.relationship.create` | Create one supported relationship between explicitly resolved issues |
-| `issue.type.write` | Set or clear Class through one declared native Issue Type binding |
+| `issue.dependency.add` | Add one exact directed blocked-by relationship |
+| `issue.dependency.remove` | Remove one exact directed blocked-by relationship |
 | `issue.field.write` | Set or clear Priority through one declared organisation Issue Field binding |
-| `repository.label.create` | Create one missing declared label with its exact create-time attributes |
 | `issue.label.add` | Add one exact declared label to one resolved issue |
 | `issue.label.remove` | Remove one exact declared label from one resolved issue |
+| `issue.milestone.write` | Set or clear one exact milestone by positive provider number |
+| `issue.parent.remove` | Remove one exact current parent relationship |
+| `issue.parent.set` | Add or atomically replace one exact parent relationship |
+| `issue.state.write` | Close with one supported reason or reopen one resolved Issue |
+| `issue.title.write` | Set one resolved Issue title to exact validated shared text |
+| `issue.type.write` | Set or clear Class through one declared native Issue Type binding |
 | `project.field.create` | Create one missing declared custom field with its declared select options |
 | `project.field.option.create` | Add one missing declared option while preserving every observed existing option identity and value |
 | `project.issue-field.attach` | Attach one declared organisation Issue Field to one exact Project |
-| `project.repository.link` | Link one explicitly declared repository to one exact Project |
-| `project.view.create` | Create one missing declared Project view from its exact create-time configuration |
 | `project.item.add` | Add one explicitly resolved issue to the exact Project |
 | `project.item.field.write` | Set or explicitly clear one declared custom-field dimension or built-in Status value on one resolved Project item |
+| `project.item.remove` | Remove one exact Project item and the Project-local values necessarily deleted with it |
+| `project.repository.link` | Link one explicitly declared repository to one exact Project |
+| `project.view.create` | Create one missing declared Project view from its exact create-time configuration |
+| `repository.label.create` | Create one missing declared label with its exact create-time attributes |
 
-No v1 mutation authorises deleting resources, removing Project membership, renaming or replacing fields, rewriting existing issue title/body, updating or deleting repository labels, using a set-all-labels endpoint, editing option colour/description, updating or deleting views, configuring or deleting built-in workflows, creating or updating organisation-wide Issue Type or Issue Field definitions, or updating built-in metadata other than the explicitly bound Status value.
+Only `project.item.remove` authorises a deletion, limited to one exact Project item and its necessarily deleted Project-local values. No v1 mutation authorises deleting Issues, Projects, fields, options, views or labels; renaming or replacing fields; updating label definitions; using a set-all-labels or set-all-assignees endpoint; editing option colour or description; configuring built-in workflows; or creating or updating organisation-wide Issue Type or Issue Field definitions.
+
+The complete ordinary task-action semantics, destructive-consequence disclosure, operation ordering and no-op rules are defined by [v1 ordinary task interactions](v1-task-interactions.md). This base contract defines only the exhaustive authority vocabulary and its structural prerequisites.
 
 An absent mutation scope forbids planning or execution of that write. An empty mutation array is a valid read-only contract. Mutation scopes apply only to the declared target and declared mappings; they do not grant organisation-wide authority.
 
@@ -272,7 +284,7 @@ The following prerequisites are schema invariants:
 | Declaration | Required declaration |
 | --- | --- |
 | Non-empty `fields` | Feature `project-custom-fields` |
-| `issue.relationship.create` | Feature `issue-relationships` |
+| Any `issue.parent.*` or `issue.dependency.*` scope | Feature `issue-relationships` |
 | Any non-empty label declaration set | Feature `issue-labels` |
 | `repository.label.create` | Non-empty label declarations and feature `issue-labels` |
 | `issue.label.add` | Non-empty label declarations and feature `issue-labels` |
@@ -282,7 +294,7 @@ The following prerequisites are schema invariants:
 | `project.issue-field.attach` | At least one Issue Field binding and feature `issue-fields` |
 | `project.repository.link` | Present `setup` and feature `project-repository-links` |
 | `project.view.create` | Present `setup` and feature `project-views` |
-| `project.item.add` | Feature `project-item-membership` |
+| `project.item.add` or `project.item.remove` | Feature `project-item-membership` |
 | `project.item.field.write` | Non-empty `fields`, feature `project-custom-fields` and feature `project-item-membership` |
 
 `issue.create` needs no feature beyond the mandatory `issues` requirement.
@@ -383,7 +395,7 @@ Fixtures are minimal. A validator MAY report additional low-level details, but i
 | `SP-018` | Source hooks contain symbolic collaborator-safe references only. |
 | `SP-019` | Feature declarations are requirements to probe, never observed capability claims. |
 | `SP-020` | Mutation declarations are an exhaustive allowlist scoped to declared targets and mappings. |
-| `SP-021` | Delete, destructive replacement and broad update scopes do not exist in v1. |
+| `SP-021` | Deletion authority exists only for exact Project-item removal with its disclosed Project-local consequences; broad replacement and other deletion scopes do not exist in v1. |
 | `SP-022` | Dry-run, stale protection, owned-field writes and readback verification remain mandatory regardless of declarations. |
 | `SP-023` | Null and unknown keys are rejected everywhere. |
 | `SP-024` | Mapping order and set-member declaration order carry no semantic meaning; #34 owns canonical output ordering. |

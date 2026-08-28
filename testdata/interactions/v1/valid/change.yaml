@@ -1,0 +1,25 @@
+apiVersion: projectctl/v1
+kind: TaskChangeRequest
+spec:
+  contract:
+    authority: github.com
+    owner: {kind: organization, login: sample-org}
+    repository: project-config
+    ref: sample-work
+  task: {number: 42}
+  selection: {kind: explicit, targetRef: primary}
+  execution: {mode: apply}
+  actions:
+    - {kind: issue.title.set, value: Prepare the reviewed synthetic report}
+    - {kind: issue.body.set, value: "Draft, review and publish the collaborator-safe report."}
+    - {kind: issue.assignee.add, login: example-user}
+    - {kind: issue.label.add, labelRef: course-materials}
+    - {kind: issue.milestone.set, number: 3}
+    - {kind: project.membership.add}
+    - {kind: dimension.value.set, dimensionRef: class, value: task}
+    - {kind: dimension.value.set, dimensionRef: priority, value: p0}
+    - {kind: dimension.value.set, dimensionRef: status, value: in-progress}
+    - {kind: dimension.value.set, dimensionRef: due-date, value: "2026-09-30"}
+    - {kind: issue.parent.set, parent: {number: 10}}
+    - {kind: issue.dependency.add, blockingTask: {number: 11}}
+    - {kind: issue.state.close, reason: completed}

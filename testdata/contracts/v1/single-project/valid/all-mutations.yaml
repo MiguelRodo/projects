@@ -40,9 +40,19 @@ spec:
       - project-item-membership
       - projects-v2
     mutations:
+      - issue.assignee.add
+      - issue.assignee.remove
+      - issue.body.write
       - issue.create
-      - issue.relationship.create
+      - issue.dependency.add
+      - issue.dependency.remove
+      - issue.milestone.write
+      - issue.parent.remove
+      - issue.parent.set
+      - issue.state.write
+      - issue.title.write
       - project.field.create
       - project.field.option.create
       - project.item.add
       - project.item.field.write
+      - project.item.remove

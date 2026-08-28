@@ -1,0 +1,31 @@
+{
+  "formatVersion": 1,
+  "base": "testdata/contracts/v1/interactions/valid/ordinary-full.yaml",
+  "schemaCases": [
+    {
+      "id": "TI-C001",
+      "patch": [{"op": "replace", "path": "/spec/requirements/mutations/10", "value": "issue.relationship.create"}],
+      "expected": {"diagnostic": "contract.schema.mutation-scope", "instancePath": "/spec/requirements/mutations/10"}
+    },
+    {
+      "id": "TI-C002",
+      "patch": [{"op": "remove", "path": "/spec/requirements/features/1"}],
+      "expected": {"diagnostic": "contract.schema.mutation-prerequisite", "instancePath": "/spec/requirements/features"}
+    },
+    {
+      "id": "TI-C003",
+      "patch": [{"op": "remove", "path": "/spec/requirements/features/4"}],
+      "expected": {"diagnostic": "contract.schema.mutation-prerequisite", "instancePath": "/spec/requirements/features"}
+    },
+    {
+      "id": "TI-C004",
+      "patch": [{"op": "add", "path": "/spec/requirements/mutations/-", "value": "issue.title.write"}],
+      "expected": {"diagnostic": "contract.schema.unique-items", "instancePath": "/spec/requirements/mutations"}
+    },
+    {
+      "id": "TI-C005",
+      "patch": [{"op": "remove", "path": "/spec/labels/declarations/course-materials"}, {"op": "remove", "path": "/spec/labels/declarations/documentation"}],
+      "expected": {"diagnostic": "contract.schema.mutation-prerequisite", "instancePath": "/spec/labels/declarations"}
+    }
+  ]
+}

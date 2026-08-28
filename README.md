@@ -60,6 +60,8 @@ Provider-neutral task dimensions and target-specific Project, Issue Type and Iss
 
 Create-once Project initialisation, bootstrap, adoption and explicit manual-action outcomes are defined in [docs/spec/v1-setup-outcomes.md](docs/spec/v1-setup-outcomes.md).
 
+Provider-neutral ordinary task inspection, listing, creation and safe mutation semantics are defined in [docs/spec/v1-task-interactions.md](docs/spec/v1-task-interactions.md). Its machine request schema is [schemas/v1/task-interaction.schema.json](schemas/v1/task-interaction.schema.json), with synthetic [inspect](examples/interactions/v1/inspect.yaml), [create](examples/interactions/v1/create.yaml) and [change](examples/interactions/v1/change.yaml) examples.
+
 The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
 
 The private operator-profile wire format, provider-neutral bindings and companion-provider contract are defined in [docs/spec/v1-operator-profile.md](docs/spec/v1-operator-profile.md).

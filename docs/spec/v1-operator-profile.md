@@ -267,7 +267,7 @@ issueNodeId: I_SYNTHETIC_001
 
 The private provider indexes or looks up this exact tuple. It MUST NOT derive linkage from a repository name, issue number, URL, title, shared marker or private record title. More than one record for the tuple is `privacy.companion.record.ambiguous`; an adapter does not choose one.
 
-Companion planning and execution preserve the #46 safety pipeline. A successful provider mutation response is not success until readback matches. Failure never copies the private supplement to GitHub.
+Companion planning and execution preserve the #46 safety pipeline. [V1 ordinary task interactions](v1-task-interactions.md) fixes preflight, shared-operation ordering, partial-failure and recovery semantics. A successful provider mutation response is not success until readback matches. Failure never copies the private supplement to GitHub.
 
 ## Workspaces
 

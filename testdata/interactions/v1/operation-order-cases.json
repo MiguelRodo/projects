@@ -1,0 +1,69 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {
+      "id": "TI-O001",
+      "request": "change",
+      "inputActions": ["issue.state.close.completed", "issue.dependency.add.11", "dimension.value.set.status.in-progress", "issue.title.set", "issue.label.add.documentation", "issue.assignee.add.example-user", "project.membership.add", "issue.body.set", "issue.parent.set.10"],
+      "bindingKinds": {"status": "project_status"},
+      "expectedOperations": [
+        {"id": "op-001", "action": "issue.title.set"},
+        {"id": "op-002", "action": "issue.body.set"},
+        {"id": "op-003", "action": "issue.assignee.add.example-user"},
+        {"id": "op-004", "action": "issue.label.add.documentation"},
+        {"id": "op-005", "action": "issue.parent.set.10"},
+        {"id": "op-006", "action": "issue.dependency.add.11"},
+        {"id": "op-007", "action": "project.membership.add"},
+        {"id": "op-008", "action": "dimension.value.set.status.in-progress"},
+        {"id": "op-009", "action": "issue.state.close.completed"}
+      ]
+    },
+    {
+      "id": "TI-O002",
+      "request": "change",
+      "inputActions": ["issue.body.set", "project.membership.add", "issue.label.add.documentation", "issue.state.close.completed", "issue.parent.set.10", "issue.title.set", "dimension.value.set.status.in-progress", "issue.assignee.add.example-user", "issue.dependency.add.11"],
+      "bindingKinds": {"status": "project_status"},
+      "sameExpectedOperationsAs": "TI-O001"
+    },
+    {
+      "id": "TI-O003",
+      "request": "create",
+      "inputActions": ["dimension.value.set.priority.p1", "issue.dependency.add.11", "issue.assignee.add.example-user", "issue.parent.set.10"],
+      "intrinsicActions": ["issue.create", "issue.label.add.route-primary", "project.membership.add", "private.companion.create"],
+      "bindingKinds": {"priority": "project_field"},
+      "expectedActions": ["issue.create", "issue.assignee.add.example-user", "issue.label.add.route-primary", "issue.parent.set.10", "issue.dependency.add.11", "project.membership.add", "dimension.value.set.priority.p1", "private.companion.create"]
+    },
+    {
+      "id": "TI-O004",
+      "request": "change",
+      "inputActions": ["issue.label.remove.documentation", "issue.assignee.remove.zeta-user", "issue.label.add.course-materials", "issue.assignee.add.Alpha-User"],
+      "expectedActions": ["issue.assignee.add.Alpha-User", "issue.label.add.course-materials", "issue.assignee.remove.zeta-user", "issue.label.remove.documentation"]
+    },
+    {
+      "id": "TI-O005",
+      "request": "change",
+      "inputActions": ["issue.dependency.remove.21", "issue.dependency.add.12", "issue.parent.set.10", "issue.dependency.add.11", "issue.dependency.remove.20"],
+      "expectedActions": ["issue.parent.set.10", "issue.dependency.add.11", "issue.dependency.add.12", "issue.dependency.remove.20", "issue.dependency.remove.21"]
+    },
+    {
+      "id": "TI-O006",
+      "request": "change",
+      "inputActions": ["dimension.value.set.status.done", "dimension.value.set.priority.p1", "dimension.value.set.due-date.2026-09-30", "dimension.value.set.class.task", "project.membership.add"],
+      "bindingKinds": {"class": "issue_type", "due-date": "project_field", "priority": "issue_field", "status": "project_status"},
+      "expectedActions": ["dimension.value.set.class.task", "dimension.value.set.priority.p1", "project.membership.add", "dimension.value.set.due-date.2026-09-30", "dimension.value.set.status.done"]
+    },
+    {
+      "id": "TI-O007",
+      "request": "change",
+      "inputActions": ["issue.state.close.completed", "project.membership.remove"],
+      "expectedActions": ["project.membership.remove", "issue.state.close.completed"]
+    },
+    {
+      "id": "TI-O008",
+      "request": "change",
+      "inputActions": ["issue.title.set", "issue.body.set", "issue.label.add.documentation"],
+      "observedNoOps": ["issue.title.set", "issue.label.add.documentation"],
+      "expectedOperations": [{"id": "op-001", "action": "issue.body.set"}]
+    }
+  ]
+}

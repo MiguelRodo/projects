@@ -1,0 +1,11 @@
+apiVersion: projectctl/v1
+kind: TaskInspectRequest
+spec:
+  contract:
+    authority: github.com
+    owner: {kind: organization, login: sample-org}
+    repository: project-config
+    ref: sample-work
+  task: {number: 42}
+  selection: {kind: automatic}
+  privateContext: {kind: none}

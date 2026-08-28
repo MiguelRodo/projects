@@ -20,4 +20,4 @@ spec:
       kind: repository_scope
   requirements:
     features: [issues, projects-v2]
-    mutations: [issue.relationship.create]
+    mutations: [issue.parent.set]

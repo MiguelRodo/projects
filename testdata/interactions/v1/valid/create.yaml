@@ -1,0 +1,24 @@
+apiVersion: projectctl/v1
+kind: TaskCreateRequest
+spec:
+  contract:
+    authority: github.com
+    owner: {kind: organization, login: sample-org}
+    repository: project-config
+    ref: sample-work
+  selection: {kind: explicit, targetRef: primary}
+  execution: {mode: plan}
+  title: Prepare the synthetic report
+  body: Draft and review the collaborator-safe report.
+  initialActions:
+    - {kind: issue.assignee.add, login: example-user}
+    - {kind: issue.label.add, labelRef: course-materials}
+    - {kind: issue.milestone.set, number: 3}
+    - {kind: dimension.value.set, dimensionRef: class, value: task}
+    - {kind: dimension.value.set, dimensionRef: priority, value: p1}
+    - {kind: dimension.value.set, dimensionRef: status, value: todo}
+    - {kind: issue.parent.set, parent: {number: 10}}
+    - {kind: issue.dependency.add, blockingTask: {number: 11}}
+  privateSupplement:
+    format: text/markdown
+    content: Synthetic operator-private planning context.

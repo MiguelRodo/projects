@@ -270,7 +270,7 @@ The repository contract already declares several create-once surfaces. #49 fixes
 | Issue Field Project attachment | Exact observed Issue Field identity and Project | Attach with `project.issue-field.attach` | Preserve | Ambiguous field or forbidden Project scope |
 | Built-in Status options | Exact #48 map | Manual action if mapped values are missing | Preserve aliases and extra provider states as observed | Mapping ambiguity |
 | Project item membership | Exact issue and Project identities | Add with `project.item.add` | Preserve | Ambiguous issue or Project identity |
-| Parent relationship | Exact child and parent issue identities | Add with `issue.relationship.create` | Preserve | Different existing parent or cycle |
+| Parent relationship | Exact child and parent issue identities | Add with `issue.parent.set` | Preserve | Different existing parent or cycle |
 | Derived agent guidance | #51 output path plus exact input/content digests | Produce candidate repository patch | Preserve exact bytes | Stale bytes require a reviewed patch; renderer unavailable skips the dependency |
 
 Organisation Issue Type and Issue Field APIs can create definitions, but those operations change organisation-wide configuration and require create-time metadata not owned by the semantic bindings. V1 deliberately omits organisation-wide definition mutation scopes. Missing definitions receive a manual administrator action rather than silently broadening one repository contract's authority. See GitHub's [Issue Types](https://docs.github.com/en/rest/orgs/issue-types) and [Issue Fields](https://docs.github.com/en/rest/orgs/issue-fields) REST APIs.
@@ -507,9 +507,10 @@ This specification supersedes earlier wording that treated Project views as nece
 
 It retains the earlier prohibition on title fallback, continuous reconciliation and unverified success.
 
+Ordinary task-update scopes and requests are now defined by [v1 ordinary task interactions](v1-task-interactions.md). Setup continues to own only create-once seed effects and never reconciles later task edits.
+
 Explicitly deferred:
 
-- ordinary task-update scopes and requests, owned by #50;
 - normalisation, version compatibility and migration, owned by #34 and #31;
 - guidance content/rendering, owned by #51;
 - Go initialisation, bootstrap and adoption workflows, owned by #59, #23 and #24 respectively;

@@ -18,8 +18,6 @@ GitHub issues remain the authoritative shared task records. Labels provide three
 
 A sub-project is a label and a filtered view inside one overall Project. V1 has no Sub-project Project field and no separate Project per sub-project.
 
-Sub-project classification is also separate from both issue hierarchy and Project field dimensions. Parent/sub-issue relationships express decomposition. A field such as Workstream may express a project-specific strand under #48. Neither is inferred from, or replaced by, a `subproject` label.
-
 Label names are provider-facing selectors. Contract label references are protocol identity. Prefixes such as `project:` and `subproject:` are useful conventions in examples but have no inferred meaning.
 
 ## Frozen decisions
@@ -301,25 +299,7 @@ All require a non-empty declaration set and feature `issue-labels`. They do not 
 
 There is deliberately no set-all-labels scope because provider set endpoints can erase unrelated live labels. A planner owns only the declared label membership it explicitly changes and preserves every other observed label.
 
-### Label-transition guard
-
-Before lowering any label change, a pure guard consumes a complete observed before-state plus abstract `addRefs` and `removeRefs` sets. This is not the ordinary request wire shape owned by #50.
-
-The guard evaluates in this order:
-
-1. require a known complete before-state, otherwise return `labels.before-state.unknown`, `labels.before-state.unavailable` or `labels.before-state.forbidden`;
-2. resolve every requested reference exactly and return `labels.change.unknown-ref` with exact sorted references for any miss;
-3. return `labels.change.conflict` when one reference occurs in both requested sets;
-4. reduce adding an already-present declared label and removing an absent declared label to no-ops;
-5. require `issue.label.add` for every effective addition and `issue.label.remove` for every effective removal, otherwise return `labels.mutation.add-forbidden` or `labels.mutation.remove-forbidden`;
-6. apply effective additions and removals as set operations while retaining every undeclared observed label;
-7. run overall-Project route cardinality on the complete after-state;
-8. run sub-project target and cardinality checks against the after-state target;
-9. return exact sorted effective changes and exact sorted after-state names.
-
-Route replacement and its associated sub-project replacement may therefore be one atomic valid plan. Removing a required route label without adding its one replacement is `routing.project-label.missing`. Adding a second route without removing the old one is `routing.ambiguous`. Adding a second sub-project or retaining one for the old target uses the ordinary sub-project diagnostics.
-
-Mutation authority applies only to effective writes. A completely idempotent request is a valid no-op even under a read-only contract. Execution still performs stale guards against the before-state fixed by the eventual plan.
+A planned after-state must satisfy route and sub-project cardinality. Removing a required route label without adding its one replacement is invalid. Adding a second route or sub-project without removing the old one is invalid. [V1 ordinary task interactions](v1-task-interactions.md) owns the request and operation-lowering shape, not these invariants.
 
 ## Static semantic diagnostics
 
@@ -340,26 +320,13 @@ Mutation authority applies only to effective writes. A completely idempotent req
 
 The existing #14 target, issue-store, Project and field selector diagnostics remain unchanged.
 
-The label-transition guard additionally uses:
-
-| Diagnostic | Condition |
-| --- | --- |
-| `labels.before-state.unknown` | Complete issue labels have not been established |
-| `labels.before-state.unavailable` | The provider cannot supply complete issue labels |
-| `labels.before-state.forbidden` | The acting principal cannot read complete issue labels |
-| `labels.change.unknown-ref` | A requested add or remove reference is undeclared |
-| `labels.change.conflict` | One reference is requested for both add and remove |
-| `labels.mutation.add-forbidden` | An effective addition lacks `issue.label.add` |
-| `labels.mutation.remove-forbidden` | An effective removal lacks `issue.label.remove` |
-
 ## Decision corpora
 
 The #47 corpus contains:
 
 - contract fixtures under `testdata/contracts/v1/labels/`;
-- exact combined issue-label routing and classification rows, without duplicate routing traces, at `testdata/labels/v1/cases.json`;
+- exact issue-label classification and routing rows at `testdata/labels/v1/cases.json`;
 - exact repository label discovery/adoption rows at `testdata/labels/v1/discovery-cases.json`;
-- exact mutation authority and after-state rows at `testdata/labels/v1/transition-cases.json`;
 - amended dispatcher routing rows at `testdata/routing/v1/cases.json`.
 
 Fixture values are synthetic. Every row preserves undeclared labels and proves that provider display text never becomes protocol identity.
@@ -384,8 +351,10 @@ Fixture values are synthetic. Every row preserves undeclared labels and proves t
 | `LB-014` | Case conflict and ambiguity fail closed. |
 | `LB-015` | V1 creates labels and adds/removes declared membership but never updates or deletes labels. |
 | `LB-016` | Label writes require a known complete prior set and a cardinality-valid after-state. |
-| `LB-017` | Idempotent additions and removals become no-ops and require no mutation authority. |
-| `LB-018` | Route and sub-project replacements may be validated atomically but never expose an invalid after-state. |
+
+## Interaction integration
+
+[V1 ordinary task interactions](v1-task-interactions.md) defines the finite label-add and label-remove request actions, additive provider operations, canonical operation order and complete-plan behaviour. This specification remains authoritative for label identity, routing and sub-project cardinality.
 
 ## Explicitly deferred
 
@@ -393,7 +362,6 @@ This specification does not define:
 
 - Project field dimensions, owned by #48;
 - view and auto-add setup outcomes, owned by #49;
-- ordinary task request and multi-operation lowering syntax, owned by #50;
 - version migration from the superseded pre-v1 `labelsAll` form, owned by #34 and #31;
 - Go model, discovery or planner APIs;
 - live GitHub tests.
