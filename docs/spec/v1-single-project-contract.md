@@ -234,6 +234,9 @@ Every contract requires `issues` and `projects-v2`. Other values are opt-in requ
 | `issue-labels` | Complete repository label catalogues and issue-label membership can be discovered |
 | `issue-types` | Native Issue Types and an issue's type value can be discovered |
 | `issue-fields` | Organisation Issue Fields, Project attachment and issue values can be discovered |
+| `project-repository-links` | Exact repository links on a Project can be discovered |
+| `project-views` | Project views and their supported create-time configuration can be discovered |
+| `project-workflows` | Built-in Project workflow identity, name and enabled state can be discovered; this does not imply that full workflow configuration is observable |
 
 A feature declaration is a requirement to probe, not evidence that the acting principal has it. Capability and permission remain observed runtime facts. Missing, forbidden, unavailable and unsupported results remain distinct.
 
@@ -254,10 +257,13 @@ The mutation set is an exhaustive allowlist for plans made under this contract:
 | `issue.label.remove` | Remove one exact declared label from one resolved issue |
 | `project.field.create` | Create one missing declared custom field with its declared select options |
 | `project.field.option.create` | Add one missing declared option while preserving every observed existing option identity and value |
+| `project.issue-field.attach` | Attach one declared organisation Issue Field to one exact Project |
+| `project.repository.link` | Link one explicitly declared repository to one exact Project |
+| `project.view.create` | Create one missing declared Project view from its exact create-time configuration |
 | `project.item.add` | Add one explicitly resolved issue to the exact Project |
 | `project.item.field.write` | Set or explicitly clear one declared custom-field dimension or built-in Status value on one resolved Project item |
 
-No v1 mutation authorises deleting resources, removing Project membership, renaming or replacing fields, rewriting existing issue title/body, updating or deleting repository labels, using a set-all-labels endpoint, editing option colour/description, or updating built-in metadata other than the explicitly bound Status value.
+No v1 mutation authorises deleting resources, removing Project membership, renaming or replacing fields, rewriting existing issue title/body, updating or deleting repository labels, using a set-all-labels endpoint, editing option colour/description, updating or deleting views, configuring or deleting built-in workflows, creating or updating organisation-wide Issue Type or Issue Field definitions, or updating built-in metadata other than the explicitly bound Status value.
 
 An absent mutation scope forbids planning or execution of that write. An empty mutation array is a valid read-only contract. Mutation scopes apply only to the declared target and declared mappings; they do not grant organisation-wide authority.
 
@@ -273,6 +279,9 @@ The following prerequisites are schema invariants:
 | `issue.label.remove` | Non-empty label declarations and feature `issue-labels` |
 | `project.field.create` | Non-empty `fields` and feature `project-custom-fields` |
 | `project.field.option.create` | Non-empty `fields` and feature `project-custom-fields` |
+| `project.issue-field.attach` | At least one Issue Field binding and feature `issue-fields` |
+| `project.repository.link` | Present `setup` and feature `project-repository-links` |
+| `project.view.create` | Present `setup` and feature `project-views` |
 | `project.item.add` | Feature `project-item-membership` |
 | `project.item.field.write` | Non-empty `fields`, feature `project-custom-fields` and feature `project-item-membership` |
 
@@ -305,6 +314,7 @@ There are no implicit values in this base document.
 | `fields` | Required | Rejected | Empty map valid and means no custom-field mappings |
 | `labels.declarations` | Required | Rejected | Empty map valid only when the selected routing mode permits it |
 | `labels.projectRouting` | Required | Rejected | Exactly one explicit routing mode |
+| `setup` | Optional | Rejected | When present, explicit `targets` and `seeds` containers are required; setup-target keys must equal the contract target-reference set semantically |
 | Field `name`, `dataType` | Required | Rejected | Empty string rejected |
 | Select `values` | Required for select, forbidden otherwise | Rejected | Empty map rejected |
 | Option `name`, `color`, `description` | Required | Rejected | Only `description` may be the empty string |
@@ -379,6 +389,7 @@ Fixtures are minimal. A validator MAY report additional low-level details, but i
 | `SP-024` | Mapping order and set-member declaration order carry no semantic meaning; #34 owns canonical output ordering. |
 | `SP-025` | Label declarations use their own reference namespace and explicit role. |
 | `SP-026` | Issue-label writes use narrow create, add and remove scopes, never Project field writes or set-all replacement. |
+| `SP-027` | Optional setup intent uses create-once, additive scopes and never weakens exact Project identity. |
 
 ## Explicitly deferred
 
@@ -387,9 +398,10 @@ This base specification is extended, without hidden defaults, by:
 - dispatcher topology and selection in [v1 routing](v1-routing.md);
 - label roles, route-label cardinality and sub-projects in [v1 labels and sub-projects](v1-labels-and-subprojects.md);
 - shared privacy advertisement in [v1 shared privacy](v1-shared-privacy.md);
-- private destinations, local paths and effective choices in [v1 operator profile](v1-operator-profile.md).
+- private destinations, local paths and effective choices in [v1 operator profile](v1-operator-profile.md);
+- create-once Project initialisation, bootstrap, adoption and manual outcomes in [v1 setup outcomes](v1-setup-outcomes.md).
 
-Still deferred are loader compatibility, canonical output, migrations and tool-version vocabulary (#34); final cross-contract conformance fixtures (#16); Go wire and canonical types (#18 and #33); and provider discovery, planning and execution APIs.
+Still deferred are loader compatibility, canonical output, migrations and tool-version vocabulary (#34); final cross-contract conformance fixtures (#16); Go wire and canonical types (#18 and #33); and ordinary provider interaction APIs.
 
 No downstream issue may add a fallback selector, hidden mutation scope or safety toggle to fill a deferred gap.
 
@@ -404,5 +416,6 @@ A v1 single-Project document conforms only if:
 - all field and value matching can be performed exactly within the declared target;
 - its label declarations, roles and routing mode satisfy the label specification;
 - all required feature and mutation prerequisites are explicit;
+- any setup declarations satisfy the create-once setup specification;
 - a read-only document can use an empty mutation set;
 - no document value can disable mandatory planning, stale checking or verification.

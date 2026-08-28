@@ -1,0 +1,163 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: sample-setup
+  target:
+    ref: primary
+    issueStore:
+      owner: {kind: organization, login: sample-org}
+      repository: tasks
+    project:
+      owner: {kind: organization, login: sample-org}
+      number: 12
+  fields:
+    class:
+      name: Class
+      dataType: singleSelect
+      values:
+        task: {name: Task, color: blue, description: A specific piece of work.}
+        epic: {name: Epic, color: purple, description: A substantial tracked outcome.}
+    priority:
+      name: Priority
+      dataType: singleSelect
+      values:
+        p0: {name: P0, color: red, description: Urgent or deadline-critical.}
+        p1: {name: P1, color: orange, description: Planned and important.}
+        p2: {name: P2, color: blue, description: Useful but not currently urgent.}
+  dimensions:
+    class:
+      values: [task, epic]
+    priority:
+      values: [p0, p1, p2]
+    status:
+      values: [todo, in-progress, done]
+    parent: {}
+  dimensionBindings:
+    class:
+      kind: project_field
+      fieldRef: class
+      values:
+        task: {readValueRefs: [task], writeValueRef: task}
+        epic: {readValueRefs: [epic], writeValueRef: epic}
+    priority:
+      kind: project_field
+      fieldRef: priority
+      values:
+        p0: {readValueRefs: [p0], writeValueRef: p0}
+        p1: {readValueRefs: [p1], writeValueRef: p1}
+        p2: {readValueRefs: [p2], writeValueRef: p2}
+    status:
+      kind: project_status
+      values:
+        todo: {readNames: [Todo], writeName: Todo}
+        in-progress: {readNames: [In progress, In Progress], writeName: In progress}
+        done: {readNames: [Done], writeName: Done}
+    parent: {kind: issue_parent}
+  labels:
+    declarations:
+      course-materials:
+        name: sub:course-materials
+        color: 1f6feb
+        description: Work belonging to the course-materials sub-project.
+        role: {kind: subproject, targetRef: primary}
+    projectRouting: {kind: repository_scope}
+  setup:
+    targets:
+      primary:
+        repositoryLinks:
+          - owner: {kind: organization, login: sample-org}
+            repository: tasks
+        views:
+          backlog:
+            name: Backlog
+            layout: table
+            filter: "is:issue is:open"
+            visibleFields:
+              - {kind: builtin, name: title}
+              - {kind: dimension, ref: priority}
+              - {kind: dimension, ref: status}
+            sortBy:
+              - field: {kind: dimension, ref: priority}
+                direction: asc
+            groupBy: []
+            verticalGroupBy: []
+          board:
+            name: Board
+            layout: board
+            filter: "is:issue is:open"
+            visibleFields:
+              - {kind: builtin, name: title}
+              - {kind: dimension, ref: priority}
+            sortBy: []
+            groupBy: []
+            verticalGroupBy:
+              - {kind: dimension, ref: status}
+          parent-groups:
+            name: Work by parent
+            layout: table
+            filter: "is:issue is:open"
+            visibleFields:
+              - {kind: builtin, name: title}
+              - {kind: dimension, ref: parent}
+              - {kind: dimension, ref: status}
+            sortBy: []
+            groupBy:
+              - {kind: dimension, ref: parent}
+            verticalGroupBy: []
+          course-materials:
+            name: Course materials
+            layout: table
+            filter: 'is:issue is:open label:"sub:course-materials"'
+            visibleFields:
+              - {kind: builtin, name: title}
+              - {kind: dimension, ref: priority}
+              - {kind: dimension, ref: status}
+            sortBy: []
+            groupBy: []
+            verticalGroupBy: []
+        workflows:
+          add-open-issues:
+            kind: auto_add
+            name: Auto-add open issues
+            enabled: true
+            repositories:
+              - owner: {kind: organization, login: sample-org}
+                repository: tasks
+            filter: "is:issue is:open"
+    seeds:
+      project-overview:
+        targetRef: primary
+        title: Project overview
+        body: Track the main outcomes for this work.
+        labelRefs: []
+        dimensionValues: {class: epic, priority: p1, status: todo}
+      first-task:
+        targetRef: primary
+        title: Prepare the first deliverable
+        body: Prepare and review the first synthetic deliverable.
+        labelRefs: [course-materials]
+        dimensionValues: {class: task, priority: p1, status: todo}
+        parentSeedRef: project-overview
+  sourceRefs: []
+  requirements:
+    features:
+      - issue-labels
+      - issue-relationships
+      - issues
+      - project-custom-fields
+      - project-item-membership
+      - project-repository-links
+      - project-views
+      - project-workflows
+      - projects-v2
+    mutations:
+      - issue.create
+      - issue.relationship.create
+      - project.field.create
+      - project.field.option.create
+      - project.item.add
+      - project.item.field.write
+      - project.repository.link
+      - project.view.create
+      - repository.label.create
+      - issue.label.add

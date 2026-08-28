@@ -58,6 +58,8 @@ Collaborator-safe labels, overall-Project routing labels and optional label-base
 
 Provider-neutral task dimensions and target-specific Project, Issue Type and Issue Field bindings are defined in [docs/spec/v1-project-dimensions.md](docs/spec/v1-project-dimensions.md).
 
+Create-once Project initialisation, bootstrap, adoption and explicit manual-action outcomes are defined in [docs/spec/v1-setup-outcomes.md](docs/spec/v1-setup-outcomes.md).
+
 The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
 
 The private operator-profile wire format, provider-neutral bindings and companion-provider contract are defined in [docs/spec/v1-operator-profile.md](docs/spec/v1-operator-profile.md).

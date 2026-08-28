@@ -1,0 +1,30 @@
+{
+  "apiVersion": "projectctl/v1",
+  "kind": "SetupReport",
+  "mode": "bootstrap",
+  "contractRef": "sample-setup",
+  "overallState": "blocked",
+  "items": [
+    {
+      "itemKey": "target/primary/project",
+      "surface": "project",
+      "targetRef": "primary",
+      "outcome": "forbidden",
+      "blocking": true,
+      "verification": "none",
+      "diagnostic": "setup.project.forbidden"
+    },
+    {
+      "itemKey": "target/primary/view/backlog",
+      "surface": "project_view",
+      "targetRef": "primary",
+      "resourceRef": "backlog",
+      "outcome": "skipped_dependency",
+      "blocking": true,
+      "verification": "none",
+      "diagnostic": "setup.view.skipped-dependency",
+      "dependencies": ["target/primary/project"]
+    }
+  ],
+  "manualActions": []
+}

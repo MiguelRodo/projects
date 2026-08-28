@@ -1,0 +1,24 @@
+{
+  "apiVersion": "projectctl/v1",
+  "kind": "SetupSnapshot",
+  "contractRef": "sample-setup",
+  "capturedAt": "2026-08-28T05:30:00Z",
+  "resources": [
+    {
+      "itemKey": "guidance/projection",
+      "surface": "agent_guidance",
+      "state": "known",
+      "providerIdentity": "synthetic-git-revision",
+      "facts": {
+        "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "outputs": [
+          {
+            "path": "AGENTS.md",
+            "contentDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        ]
+      },
+      "diagnostic": "setup.guidance.known"
+    }
+  ]
+}

@@ -281,7 +281,7 @@ This specification does not define:
 - YAML loading, normalisation or diagnostic rendering, owned by #34;
 - provider discovery and observed snapshots, owned by #35 and #38;
 - Project field dimensions, owned by #48;
-- view and auto-add setup, owned by #49;
+- create-once views, manual auto-add workflow expectations and setup target keys, defined by [v1 setup outcomes](v1-setup-outcomes.md);
 - ordinary request and operation lowering, owned by #50;
 - Go package or model APIs;
 - live GitHub tests.

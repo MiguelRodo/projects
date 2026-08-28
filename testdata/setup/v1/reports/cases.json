@@ -1,0 +1,78 @@
+{
+  "formatVersion": 1,
+  "base": "valid/incomplete-manual.json",
+  "schemaCases": [
+    {
+      "id": "SU-RI001",
+      "patches": [{"op": "replace", "path": "/manualActions/0/providerVerified", "value": true}],
+      "diagnostic": "setup-report.schema.manual-provider-verified",
+      "instancePath": "/manualActions/0/providerVerified"
+    },
+    {
+      "id": "SU-RI002",
+      "patches": [{"op": "replace", "path": "/items/3/outcome", "value": "manual_action_acknowledged"}, {"op": "replace", "path": "/items/3/verification", "value": "provider_readback"}],
+      "diagnostic": "setup-report.schema.manual-verification",
+      "instancePath": "/items/3/verification"
+    },
+    {
+      "id": "SU-RI003",
+      "patches": [{"op": "replace", "path": "/items/0/verification", "value": "none"}],
+      "diagnostic": "setup-report.schema.provider-verification-required",
+      "instancePath": "/items/0/verification"
+    },
+    {
+      "id": "SU-RI004",
+      "patches": [{"op": "replace", "path": "/items/2/verification", "value": "provider_readback"}],
+      "diagnostic": "setup-report.schema.unverified-outcome",
+      "instancePath": "/items/2/verification"
+    },
+    {
+      "id": "SU-RI005",
+      "patches": [{"op": "replace", "path": "/overallState", "value": "success"}],
+      "diagnostic": "setup-report.schema.overall-state",
+      "instancePath": "/overallState"
+    },
+    {
+      "id": "SU-RI006",
+      "patches": [{"op": "replace", "path": "/manualActions", "value": null}],
+      "diagnostic": "setup-report.schema.manual-actions-array",
+      "instancePath": "/manualActions"
+    },
+    {
+      "id": "SU-RI007",
+      "patches": [{"op": "remove", "path": "/manualActions/0/steps"}],
+      "diagnostic": "setup-report.schema.required",
+      "instancePath": "/manualActions/0"
+    },
+    {
+      "id": "SU-RI008",
+      "patches": [{"op": "replace", "path": "/items/2/outcome", "value": "created"}],
+      "diagnostic": "setup-report.schema.outcome",
+      "instancePath": "/items/2/outcome"
+    },
+    {
+      "id": "SU-RI009",
+      "patches": [{"op": "add", "path": "/items/0/providerId", "value": "synthetic-node"}],
+      "diagnostic": "setup-report.schema.unknown-property",
+      "instancePath": "/items/0"
+    },
+    {
+      "id": "SU-RI010",
+      "patches": [{"op": "replace", "path": "/manualActions/0/steps", "value": []}],
+      "diagnostic": "setup-report.schema.manual-steps",
+      "instancePath": "/manualActions/0/steps"
+    },
+    {
+      "id": "SU-RI011",
+      "patches": [{"op": "replace", "path": "/manualActions/0/acknowledged", "value": true}],
+      "diagnostic": "setup-report.schema.attestation-required",
+      "instancePath": "/manualActions/0"
+    },
+    {
+      "id": "SU-RI012",
+      "patches": [{"op": "replace", "path": "/items/2/blocking", "value": true}],
+      "diagnostic": "setup-report.schema.blocking-outcome",
+      "instancePath": "/items/2/blocking"
+    }
+  ]
+}

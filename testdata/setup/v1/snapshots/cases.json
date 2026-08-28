@@ -1,0 +1,90 @@
+{
+  "formatVersion": 1,
+  "base": "valid/mixed-observation.json",
+  "schemaCases": [
+    {
+      "id": "SU-SI001",
+      "patches": [{"op": "remove", "path": "/resources/0/facts"}],
+      "diagnostic": "setup-snapshot.schema.known-facts-required",
+      "instancePath": "/resources/0"
+    },
+    {
+      "id": "SU-SI002",
+      "patches": [{"op": "remove", "path": "/resources/0/providerIdentity"}],
+      "diagnostic": "setup-snapshot.schema.known-identity-required",
+      "instancePath": "/resources/0"
+    },
+    {
+      "id": "SU-SI003",
+      "patches": [{"op": "add", "path": "/resources/2/providerIdentity", "value": "unexpected-node"}],
+      "diagnostic": "setup-snapshot.schema.non-known-identity-forbidden",
+      "instancePath": "/resources/2"
+    },
+    {
+      "id": "SU-SI004",
+      "patches": [{"op": "replace", "path": "/resources/2/state", "value": "maybe"}],
+      "diagnostic": "setup-snapshot.schema.resource-state",
+      "instancePath": "/resources/2/state"
+    },
+    {
+      "id": "SU-SI005",
+      "patches": [{"op": "replace", "path": "/resources/2/surface", "value": "project_magic"}],
+      "diagnostic": "setup-snapshot.schema.surface",
+      "instancePath": "/resources/2/surface"
+    },
+    {
+      "id": "SU-SI006",
+      "patches": [{"op": "replace", "path": "/resources", "value": null}],
+      "diagnostic": "setup-snapshot.schema.resources-array",
+      "instancePath": "/resources"
+    },
+    {
+      "id": "SU-SI007",
+      "patches": [{"op": "add", "path": "/resources/0/permission", "value": "admin"}],
+      "diagnostic": "setup-snapshot.schema.unknown-property",
+      "instancePath": "/resources/0"
+    },
+    {
+      "id": "SU-SI008",
+      "patches": [{"op": "remove", "path": "/resources/0/facts/number"}],
+      "diagnostic": "setup-snapshot.schema.project-facts",
+      "instancePath": "/resources/0/facts"
+    },
+    {
+      "id": "SU-SI009",
+      "patches": [{"op": "replace", "path": "/capturedAt", "value": null}],
+      "diagnostic": "setup-snapshot.schema.date-time",
+      "instancePath": "/capturedAt"
+    },
+    {
+      "id": "SU-SI010",
+      "patches": [{"op": "replace", "path": "/resources/0/itemKey", "value": "/absolute/path"}],
+      "diagnostic": "setup-snapshot.schema.item-key",
+      "instancePath": "/resources/0/itemKey"
+    },
+    {
+      "id": "SU-SI011",
+      "patches": [{"op": "replace", "path": "/resources/0/surface", "value": "project_view"}],
+      "diagnostic": "setup-snapshot.schema.surface-facts",
+      "instancePath": "/resources/0/facts"
+    },
+    {
+      "id": "SU-SI012",
+      "patches": [
+        {"op": "replace", "path": "/resources/0/surface", "value": "dimension_value"},
+        {"op": "replace", "path": "/resources/0/facts", "value": {"dimensionRef": "priority", "valueState": "set"}}
+      ],
+      "diagnostic": "setup-snapshot.schema.canonical-value-required",
+      "instancePath": "/resources/0/facts"
+    },
+    {
+      "id": "SU-SI013",
+      "patches": [
+        {"op": "replace", "path": "/resources/0/surface", "value": "dimension_value"},
+        {"op": "replace", "path": "/resources/0/facts", "value": {"dimensionRef": "priority", "valueState": "unmapped", "canonicalValue": "p2"}}
+      ],
+      "diagnostic": "setup-snapshot.schema.canonical-value-forbidden",
+      "instancePath": "/resources/0/facts"
+    }
+  ]
+}

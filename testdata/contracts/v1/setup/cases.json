@@ -1,0 +1,235 @@
+{
+  "formatVersion": 1,
+  "base": "valid/single-full.yaml",
+  "schemaCases": [
+    {
+      "id": "SU-CI001",
+      "patches": [{"op": "replace", "path": "/spec/setup", "value": null}],
+      "diagnostic": "contract.schema.setup-object",
+      "instancePath": "/spec/setup"
+    },
+    {
+      "id": "SU-CI002",
+      "patches": [{"op": "remove", "path": "/spec/setup/targets"}],
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/setup"
+    },
+    {
+      "id": "SU-CI003",
+      "patches": [{"op": "remove", "path": "/spec/setup/seeds"}],
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/setup"
+    },
+    {
+      "id": "SU-CI004",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets", "value": {}}],
+      "diagnostic": "contract.schema.setup-targets",
+      "instancePath": "/spec/setup/targets"
+    },
+    {
+      "id": "SU-CI005",
+      "patches": [{"op": "remove", "path": "/spec/setup/targets/primary/repositoryLinks"}],
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/setup/targets/primary"
+    },
+    {
+      "id": "SU-CI006",
+      "patches": [{"op": "remove", "path": "/spec/setup/targets/primary/views"}],
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/setup/targets/primary"
+    },
+    {
+      "id": "SU-CI007",
+      "patches": [{"op": "remove", "path": "/spec/setup/targets/primary/workflows"}],
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/setup/targets/primary"
+    },
+    {
+      "id": "SU-CI008",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/views/backlog/layout", "value": "calendar"}],
+      "diagnostic": "contract.schema.setup-view-layout",
+      "instancePath": "/spec/setup/targets/primary/views/backlog/layout"
+    },
+    {
+      "id": "SU-CI009",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/views/backlog/layout", "value": "roadmap"}],
+      "diagnostic": "contract.schema.setup-roadmap-visible-fields",
+      "instancePath": "/spec/setup/targets/primary/views/backlog/visibleFields"
+    },
+    {
+      "id": "SU-CI010",
+      "patches": [{"op": "add", "path": "/spec/setup/targets/primary/views/backlog/verticalGroupBy/-", "value": {"kind": "dimension", "ref": "status"}}],
+      "diagnostic": "contract.schema.setup-vertical-group-layout",
+      "instancePath": "/spec/setup/targets/primary/views/backlog/verticalGroupBy"
+    },
+    {
+      "id": "SU-CI011",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/views/backlog/visibleFields/0/name", "value": "iteration"}],
+      "diagnostic": "contract.schema.setup-view-builtin",
+      "instancePath": "/spec/setup/targets/primary/views/backlog/visibleFields/0/name"
+    },
+    {
+      "id": "SU-CI012",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/workflows/add-open-issues/kind", "value": "scheduled_add"}],
+      "diagnostic": "contract.schema.setup-workflow-kind",
+      "instancePath": "/spec/setup/targets/primary/workflows/add-open-issues/kind"
+    },
+    {
+      "id": "SU-CI013",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/workflows/add-open-issues/repositories", "value": []}],
+      "diagnostic": "contract.schema.setup-workflow-repositories",
+      "instancePath": "/spec/setup/targets/primary/workflows/add-open-issues/repositories"
+    },
+    {
+      "id": "SU-CI014",
+      "patches": [{"op": "remove", "path": "/spec/setup/seeds/project-overview/title"}],
+      "diagnostic": "contract.schema.required",
+      "instancePath": "/spec/setup/seeds/project-overview"
+    },
+    {
+      "id": "SU-CI015",
+      "patches": [{"op": "add", "path": "/spec/setup/seeds/first-task/dimensionValues/due-date", "value": "28-08-2026"}],
+      "diagnostic": "contract.schema.date",
+      "instancePath": "/spec/setup/seeds/first-task/dimensionValues/due-date"
+    },
+    {
+      "id": "SU-CI016",
+      "patches": [{"op": "remove", "path": "/spec/requirements/features/6"}],
+      "diagnostic": "contract.schema.project-view-feature-required",
+      "instancePath": "/spec/requirements/features"
+    },
+    {
+      "id": "SU-CI017",
+      "patches": [{"op": "add", "path": "/spec/requirements/mutations/-", "value": "project.issue-field.attach"}],
+      "diagnostic": "contract.schema.issue-field-binding-required",
+      "instancePath": "/spec/dimensionBindings"
+    },
+    {
+      "id": "SU-CI018",
+      "patches": [{"op": "add", "path": "/spec/setup/targets/primary/cleanup", "value": true}],
+      "diagnostic": "contract.schema.unknown-property",
+      "instancePath": "/spec/setup/targets/primary"
+    },
+    {
+      "id": "SU-CI019",
+      "patches": [{"op": "add", "path": "/spec/setup/targets/primary/repositoryLinks/-", "value": {"owner": {"kind": "organization", "login": "sample-org"}, "repository": "tasks"}}],
+      "diagnostic": "contract.schema.unique-items",
+      "instancePath": "/spec/setup/targets/primary/repositoryLinks"
+    },
+    {
+      "id": "SU-CI020",
+      "patches": [{"op": "replace", "path": "/spec/setup/seeds/first-task/title", "value": " leading space"}],
+      "diagnostic": "contract.schema.setup-seed-title",
+      "instancePath": "/spec/setup/seeds/first-task/title"
+    }
+  ],
+  "semanticCases": [
+    {
+      "id": "SU-CS001",
+      "patches": [
+        {"op": "add", "path": "/spec/setup/targets/secondary", "value": {"repositoryLinks": [], "views": {}, "workflows": {}}}
+      ],
+      "diagnostic": "setup.semantic.target-key-set",
+      "instancePath": "/spec/setup/targets",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS002",
+      "patches": [{"op": "replace", "path": "/spec/setup/seeds/first-task/targetRef", "value": "unknown"}],
+      "diagnostic": "setup.semantic.unknown-target",
+      "instancePath": "/spec/setup/seeds/first-task/targetRef",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS003",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/views/board/visibleFields/1/ref", "value": "workstream"}],
+      "diagnostic": "setup.semantic.unknown-dimension",
+      "instancePath": "/spec/setup/targets/primary/views/board/visibleFields/1/ref",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS004",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/views/board/visibleFields/1/kind", "value": "field"}, {"op": "replace", "path": "/spec/setup/targets/primary/views/board/visibleFields/1/ref", "value": "unknown-field"}],
+      "diagnostic": "setup.semantic.unknown-field",
+      "instancePath": "/spec/setup/targets/primary/views/board/visibleFields/1/ref",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS005",
+      "patches": [{"op": "replace", "path": "/spec/setup/seeds/first-task/labelRefs/0", "value": "unknown-label"}],
+      "diagnostic": "setup.semantic.unknown-label",
+      "instancePath": "/spec/setup/seeds/first-task/labelRefs/0",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS006",
+      "patches": [{"op": "replace", "path": "/spec/setup/seeds/first-task/parentSeedRef", "value": "unknown-seed"}],
+      "diagnostic": "setup.semantic.unknown-seed-parent",
+      "instancePath": "/spec/setup/seeds/first-task/parentSeedRef",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS007",
+      "patches": [{"op": "add", "path": "/spec/setup/seeds/project-overview/parentSeedRef", "value": "first-task"}],
+      "diagnostic": "setup.semantic.seed-cycle",
+      "instancePath": "/spec/setup/seeds",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS008",
+      "patches": [{"op": "add", "path": "/spec/setup/targets/primary/views/duplicate-backlog", "value": {"name": "Backlog", "layout": "table", "filter": "", "visibleFields": [], "sortBy": [], "groupBy": [], "verticalGroupBy": []}}],
+      "diagnostic": "setup.semantic.duplicate-view-selector",
+      "instancePath": "/spec/setup/targets/primary/views/duplicate-backlog/name",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS009",
+      "patches": [{"op": "add", "path": "/spec/setup/targets/primary/workflows/duplicate-auto-add", "value": {"kind": "auto_add", "name": "Auto-add open issues", "enabled": true, "repositories": [{"owner": {"kind": "organization", "login": "sample-org"}, "repository": "tasks"}], "filter": "is:issue is:open"}}],
+      "diagnostic": "setup.semantic.duplicate-workflow-selector",
+      "instancePath": "/spec/setup/targets/primary/workflows/duplicate-auto-add/name",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS010",
+      "patches": [{"op": "replace", "path": "/spec/setup/seeds/first-task/dimensionValues/class", "value": "unknown"}],
+      "diagnostic": "setup.semantic.seed-value",
+      "instancePath": "/spec/setup/seeds/first-task/dimensionValues/class",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS011",
+      "patches": [{"op": "add", "path": "/spec/setup/seeds/first-task/dimensionValues/due-date", "value": "2026-08-28"}],
+      "diagnostic": "setup.semantic.unknown-dimension",
+      "instancePath": "/spec/setup/seeds/first-task/dimensionValues/due-date",
+      "rule": "SU-007"
+    },
+    {
+      "id": "SU-CS012",
+      "patches": [{"op": "replace", "path": "/spec/setup/targets/primary/views", "value": {}}],
+      "diagnostic": "setup.semantic.mutation-prerequisite",
+      "instancePath": "/spec/requirements/mutations",
+      "rule": "SU-009"
+    },
+    {
+      "id": "SU-CS013",
+      "patches": [{"op": "remove", "path": "/spec/requirements/mutations/7"}, {"op": "remove", "path": "/spec/requirements/features/6"}],
+      "diagnostic": "setup.semantic.mutation-prerequisite",
+      "instancePath": "/spec/requirements/features",
+      "rule": "SU-009"
+    },
+    {
+      "id": "SU-CS014",
+      "patches": [{"op": "remove", "path": "/spec/requirements/mutations/6"}, {"op": "remove", "path": "/spec/requirements/features/5"}],
+      "diagnostic": "setup.semantic.mutation-prerequisite",
+      "instancePath": "/spec/requirements/features",
+      "rule": "SU-009"
+    },
+    {
+      "id": "SU-CS015",
+      "patches": [{"op": "remove", "path": "/spec/requirements/features/7"}],
+      "diagnostic": "setup.semantic.mutation-prerequisite",
+      "instancePath": "/spec/requirements/features",
+      "rule": "SU-012"
+    }
+  ]
+}

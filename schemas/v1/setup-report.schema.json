@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:projectctl:schema:setup-report:v1",
+  "title": "projectctl v1 setup report",
+  "description": "Deterministic setup outcomes without conflating manual acknowledgement with provider verification.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "mode",
+    "contractRef",
+    "overallState",
+    "items",
+    "manualActions"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "projectctl/v1"
+    },
+    "kind": {
+      "const": "SetupReport"
+    },
+    "mode": {
+      "enum": [
+        "adopt",
+        "bootstrap",
+        "initialise"
+      ]
+    },
+    "contractRef": {
+      "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+    },
+    "overallState": {
+      "enum": [
+        "already_conformant",
+        "applied_verified",
+        "blocked",
+        "changes_planned",
+        "complete_with_manual_attestations",
+        "incomplete_manual"
+      ]
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "$ref": "#/$defs/itemOutcome"
+      }
+    },
+    "manualActions": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "$ref": "#/$defs/manualAction"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "itemKey": {
+      "$ref": "urn:projectctl:schema:setup-snapshot:v1#/$defs/itemKey"
+    },
+    "surface": {
+      "$ref": "urn:projectctl:schema:setup-snapshot:v1#/$defs/surface"
+    },
+    "outcome": {
+      "enum": [
+        "already_conformant",
+        "applied_verified",
+        "conflict",
+        "contract_patch_required",
+        "forbidden",
+        "manual_action_acknowledged",
+        "manual_action_required",
+        "planned_create",
+        "preserved_compatible",
+        "scope_forbidden",
+        "skipped_dependency",
+        "unavailable",
+        "unsupported"
+      ]
+    },
+    "verification": {
+      "enum": [
+        "none",
+        "operator_attestation",
+        "provider_readback"
+      ]
+    },
+    "itemOutcome": {
+      "type": "object",
+      "required": [
+        "itemKey",
+        "surface",
+        "outcome",
+        "blocking",
+        "verification",
+        "diagnostic"
+      ],
+      "properties": {
+        "itemKey": {
+          "$ref": "#/$defs/itemKey"
+        },
+        "surface": {
+          "$ref": "#/$defs/surface"
+        },
+        "targetRef": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "resourceRef": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "outcome": {
+          "$ref": "#/$defs/outcome"
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "verification": {
+          "$ref": "#/$defs/verification"
+        },
+        "diagnostic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"
+        },
+        "dependencies": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/itemKey"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "already_conformant",
+                  "applied_verified",
+                  "preserved_compatible"
+                ]
+              }
+            },
+            "required": [
+              "outcome"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verification": {
+                "const": "provider_readback"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "manual_action_acknowledged"
+              }
+            },
+            "required": [
+              "outcome"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verification": {
+                "const": "operator_attestation"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "not": {
+                  "enum": [
+                    "already_conformant",
+                    "applied_verified",
+                    "manual_action_acknowledged",
+                    "preserved_compatible"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "outcome"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verification": {
+                "const": "none"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "already_conformant",
+                  "applied_verified",
+                  "manual_action_acknowledged",
+                  "planned_create",
+                  "preserved_compatible"
+                ]
+              }
+            },
+            "required": [
+              "outcome"
+            ]
+          },
+          "then": {
+            "properties": {
+              "blocking": {
+                "const": false
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "blocking": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "manualReason": {
+      "enum": [
+        "ambiguous_recovery",
+        "api_unsupported",
+        "configuration_unobservable",
+        "contract_patch_required",
+        "organisation_wide_authority",
+        "scope_absent"
+      ]
+    },
+    "manualAction": {
+      "type": "object",
+      "required": [
+        "actionId",
+        "itemKey",
+        "surface",
+        "reason",
+        "summary",
+        "steps",
+        "acknowledged",
+        "providerVerified"
+      ],
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "itemKey": {
+          "$ref": "#/$defs/itemKey"
+        },
+        "surface": {
+          "$ref": "#/$defs/surface"
+        },
+        "targetRef": {
+          "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"
+        },
+        "reason": {
+          "$ref": "#/$defs/manualReason"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+          }
+        },
+        "acknowledged": {
+          "type": "boolean"
+        },
+        "attestation": {
+          "type": "object",
+          "required": [
+            "attestedAt",
+            "statement"
+          ],
+          "properties": {
+            "attestedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "statement": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "providerVerified": {
+          "const": false
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "acknowledged": {
+                "const": true
+              }
+            },
+            "required": [
+              "acknowledged"
+            ]
+          },
+          "then": {
+            "required": [
+              "attestation"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "attestation"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -247,6 +247,393 @@
       },
       "additionalProperties": false
     },
+    "repositoryLocator": {
+      "type": "object",
+      "required": [
+        "owner",
+        "repository"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "repository": {
+          "$ref": "#/$defs/repositoryName"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setupViewField": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "name"
+          ],
+          "properties": {
+            "kind": {
+              "const": "builtin"
+            },
+            "name": {
+              "enum": [
+                "assignees",
+                "labels",
+                "linked-pull-requests",
+                "milestone",
+                "parent-issue",
+                "repository",
+                "reviewers",
+                "sub-issues-progress",
+                "title",
+                "tracked-by",
+                "tracks"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "ref"
+          ],
+          "properties": {
+            "kind": {
+              "const": "field"
+            },
+            "ref": {
+              "$ref": "#/$defs/contractRef"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "ref"
+          ],
+          "properties": {
+            "kind": {
+              "const": "dimension"
+            },
+            "ref": {
+              "enum": [
+                "assignees",
+                "class",
+                "due-date",
+                "parent",
+                "priority",
+                "status",
+                "sub-issues-progress",
+                "workstream"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "setupViewSort": {
+      "type": "object",
+      "required": [
+        "field",
+        "direction"
+      ],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/setupViewField"
+        },
+        "direction": {
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "setupView": {
+      "type": "object",
+      "required": [
+        "name",
+        "layout",
+        "filter",
+        "visibleFields",
+        "sortBy",
+        "groupBy",
+        "verticalGroupBy"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "layout": {
+          "enum": [
+            "board",
+            "roadmap",
+            "table"
+          ]
+        },
+        "filter": {
+          "type": "string",
+          "maxLength": 1024,
+          "pattern": "^[^\\r\\n]*$"
+        },
+        "visibleFields": {
+          "type": "array",
+          "maxItems": 50,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/setupViewField"
+          }
+        },
+        "sortBy": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/setupViewSort"
+          }
+        },
+        "groupBy": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/setupViewField"
+          }
+        },
+        "verticalGroupBy": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/setupViewField"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "layout": {
+                "const": "roadmap"
+              }
+            },
+            "required": [
+              "layout"
+            ]
+          },
+          "then": {
+            "properties": {
+              "visibleFields": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "layout": {
+                "not": {
+                  "const": "board"
+                }
+              }
+            },
+            "required": [
+              "layout"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verticalGroupBy": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "setupViewMap": {
+      "type": "object",
+      "maxProperties": 32,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/setupView"
+      }
+    },
+    "setupWorkflow": {
+      "type": "object",
+      "required": [
+        "kind",
+        "name",
+        "enabled",
+        "repositories",
+        "filter"
+      ],
+      "properties": {
+        "kind": {
+          "const": "auto_add"
+        },
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "repositories": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/repositoryLocator"
+          }
+        },
+        "filter": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setupWorkflowMap": {
+      "type": "object",
+      "maxProperties": 32,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/setupWorkflow"
+      }
+    },
+    "setupTarget": {
+      "type": "object",
+      "required": [
+        "repositoryLinks",
+        "views",
+        "workflows"
+      ],
+      "properties": {
+        "repositoryLinks": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/repositoryLocator"
+          }
+        },
+        "views": {
+          "$ref": "#/$defs/setupViewMap"
+        },
+        "workflows": {
+          "$ref": "#/$defs/setupWorkflowMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "seedDimensionValues": {
+      "type": "object",
+      "properties": {
+        "class": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "priority": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "status": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "workstream": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "due-date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setupSeed": {
+      "type": "object",
+      "required": [
+        "targetRef",
+        "title",
+        "body",
+        "labelRefs",
+        "dimensionValues"
+      ],
+      "properties": {
+        "targetRef": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "labelRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/contractRef"
+          }
+        },
+        "dimensionValues": {
+          "$ref": "#/$defs/seedDimensionValues"
+        },
+        "parentSeedRef": {
+          "$ref": "#/$defs/contractRef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setupSeedMap": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/setupSeed"
+      }
+    },
+    "setup": {
+      "type": "object",
+      "required": [
+        "targets",
+        "seeds"
+      ],
+      "properties": {
+        "targets": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/contractRef"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/setupTarget"
+          }
+        },
+        "seeds": {
+          "$ref": "#/$defs/setupSeedMap"
+        }
+      },
+      "additionalProperties": false
+    },
     "providerName": {
       "type": "string",
       "minLength": 1,
@@ -1199,7 +1586,7 @@
     "featureRequirements": {
       "type": "array",
       "minItems": 2,
-      "maxItems": 8,
+      "maxItems": 11,
       "uniqueItems": true,
       "items": {
         "enum": [
@@ -1210,6 +1597,9 @@
           "issues",
           "project-custom-fields",
           "project-item-membership",
+          "project-repository-links",
+          "project-views",
+          "project-workflows",
           "projects-v2"
         ]
       },
@@ -1228,7 +1618,7 @@
     },
     "mutationDeclarations": {
       "type": "array",
-      "maxItems": 11,
+      "maxItems": 14,
       "uniqueItems": true,
       "items": {
         "enum": [
@@ -1240,8 +1630,11 @@
           "issue.type.write",
           "project.field.create",
           "project.field.option.create",
+          "project.issue-field.attach",
           "project.item.add",
           "project.item.field.write",
+          "project.repository.link",
+          "project.view.create",
           "repository.label.create"
         ]
       }
@@ -1395,6 +1788,72 @@
         }
       ]
     },
+    "setupPrerequisites": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.repository.link"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "setup"
+            ],
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-repository-links"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.view.create"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "setup"
+            ],
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "project-views"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "singleDimensionPrerequisites": {
       "allOf": [
         {
@@ -1459,6 +1918,24 @@
                   "mutations": {
                     "contains": {
                       "const": "issue.field.write"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/hasIssueFieldBinding"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.issue-field.attach"
                     }
                   }
                 }
@@ -1544,6 +2021,24 @@
           "then": {
             "$ref": "#/$defs/hasDispatcherIssueFieldBinding"
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "project.issue-field.attach"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/hasDispatcherIssueFieldBinding"
+          }
         }
       ]
     },
@@ -1581,6 +2076,9 @@
         "privacy": {
           "$ref": "#/$defs/privacyPolicy"
         },
+        "setup": {
+          "$ref": "#/$defs/setup"
+        },
         "sourceRefs": {
           "$ref": "#/$defs/sourceRefs"
         },
@@ -1592,6 +2090,9 @@
       "allOf": [
         {
           "$ref": "#/$defs/labelPrerequisites"
+        },
+        {
+          "$ref": "#/$defs/setupPrerequisites"
         },
         {
           "$ref": "#/$defs/singleDimensionPrerequisites"
@@ -1823,6 +2324,9 @@
         "privacy": {
           "$ref": "#/$defs/privacyPolicy"
         },
+        "setup": {
+          "$ref": "#/$defs/setup"
+        },
         "sourceRefs": {
           "$ref": "#/$defs/sourceRefs"
         },
@@ -1834,6 +2338,9 @@
       "allOf": [
         {
           "$ref": "#/$defs/labelPrerequisites"
+        },
+        {
+          "$ref": "#/$defs/setupPrerequisites"
         },
         {
           "$ref": "#/$defs/dispatcherDimensionPrerequisites"

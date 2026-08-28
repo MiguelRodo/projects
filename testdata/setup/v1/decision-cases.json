@@ -1,0 +1,230 @@
+{
+  "formatVersion": 1,
+  "cases": [
+    {
+      "id": "SU-D001", "mode": "bootstrap", "itemKey": "target/primary/project", "surface": "project",
+      "desired": "exact numbered Project", "observedState": "known_exact", "scopes": [], "apply": false,
+      "expected": {"outcome": "already_conformant", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.project.already-conformant"}
+    },
+    {
+      "id": "SU-D002", "mode": "bootstrap", "itemKey": "target/primary/project", "surface": "project",
+      "desired": "exact numbered Project", "observedState": "missing", "scopes": [], "apply": false,
+      "expected": {"outcome": "conflict", "blocking": true, "verification": "none", "diagnostic": "setup.project.missing"}
+    },
+    {
+      "id": "SU-D003", "mode": "initialise", "itemKey": "target/primary/project", "surface": "project",
+      "desired": "new Project from create descriptor", "observedState": "not_started", "scopes": [], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.project.planned-create"}
+    },
+    {
+      "id": "SU-D004", "mode": "initialise", "itemKey": "target/primary/project", "surface": "project",
+      "desired": "new Project from create descriptor", "observedState": "created_readback_match", "scopes": [], "apply": true,
+      "expected": {"outcome": "applied_verified", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.project.applied-verified"}
+    },
+    {
+      "id": "SU-D005", "mode": "initialise", "itemKey": "target/primary/project", "surface": "project",
+      "desired": "new Project from create descriptor", "observedState": "create_result_unknown", "scopes": [], "apply": true,
+      "expected": {"outcome": "unavailable", "blocking": true, "verification": "none", "diagnostic": "setup.initialise.create-result-unknown"}
+    },
+    {
+      "id": "SU-D006", "mode": "initialise", "itemKey": "contract/publication", "surface": "contract_publication",
+      "desired": "publish materialised numbered contract", "observedState": "candidate_materialised", "scopes": [], "apply": true,
+      "expected": {"outcome": "contract_patch_required", "blocking": true, "verification": "none", "diagnostic": "setup.contract.publication-required"}
+    },
+    {
+      "id": "SU-D007", "mode": "bootstrap", "itemKey": "target/primary/repository-link/sample-org/tasks", "surface": "repository_link",
+      "desired": "exact declared link", "observedState": "known_exact", "scopes": ["project.repository.link"], "apply": false,
+      "expected": {"outcome": "already_conformant", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.repository-link.already-conformant"}
+    },
+    {
+      "id": "SU-D008", "mode": "bootstrap", "itemKey": "target/primary/repository-link/sample-org/tasks", "surface": "repository_link",
+      "desired": "exact declared link", "observedState": "missing", "scopes": [], "apply": false,
+      "expected": {"outcome": "scope_forbidden", "blocking": true, "verification": "none", "diagnostic": "setup.repository-link.scope-forbidden"}
+    },
+    {
+      "id": "SU-D009", "mode": "bootstrap", "itemKey": "target/primary/repository-link/sample-org/tasks", "surface": "repository_link",
+      "desired": "exact declared link", "observedState": "missing", "scopes": ["project.repository.link"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.repository-link.planned-create"}
+    },
+    {
+      "id": "SU-D010", "mode": "bootstrap", "itemKey": "target/primary/repository-link/sample-org/tasks", "surface": "repository_link",
+      "desired": "exact declared link", "observedState": "applied_readback_match", "scopes": ["project.repository.link"], "apply": true,
+      "expected": {"outcome": "applied_verified", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.repository-link.applied-verified"}
+    },
+    {
+      "id": "SU-D011", "mode": "adopt", "itemKey": "target/primary/label/course-materials", "surface": "label",
+      "desired": "declared exact label name", "observedState": "known_exact_extra_display_state", "scopes": [], "apply": false,
+      "expected": {"outcome": "preserved_compatible", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.label.preserved-compatible"}
+    },
+    {
+      "id": "SU-D012", "mode": "bootstrap", "itemKey": "target/primary/label/course-materials", "surface": "label",
+      "desired": "declared exact label", "observedState": "missing", "scopes": ["repository.label.create"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.label.planned-create"}
+    },
+    {
+      "id": "SU-D013", "mode": "bootstrap", "itemKey": "target/primary/field/class", "surface": "project_field",
+      "desired": "Class single-select field", "observedState": "same_name_wrong_type", "scopes": ["project.field.create"], "apply": false,
+      "expected": {"outcome": "conflict", "blocking": true, "verification": "none", "diagnostic": "setup.field.conflict"}
+    },
+    {
+      "id": "SU-D014", "mode": "bootstrap", "itemKey": "target/primary/field/class/option/task", "surface": "project_option",
+      "desired": "Task option", "observedState": "option_catalogue_unavailable", "scopes": ["project.field.option.create"], "apply": false,
+      "expected": {"outcome": "unavailable", "blocking": true, "verification": "none", "diagnostic": "setup.option.unavailable"}
+    },
+    {
+      "id": "SU-D015", "mode": "bootstrap", "itemKey": "target/primary/issue-type/class", "surface": "issue_type",
+      "desired": "declared organisation Issue Type", "observedState": "missing", "scopes": [], "apply": false,
+      "expected": {"outcome": "manual_action_required", "blocking": true, "verification": "none", "diagnostic": "setup.issue-type.manual"}
+    },
+    {
+      "id": "SU-D016", "mode": "bootstrap", "itemKey": "target/primary/issue-type/class", "surface": "issue_type",
+      "desired": "declared organisation Issue Type", "observedState": "operator_acknowledged", "scopes": [], "apply": false,
+      "expected": {"outcome": "manual_action_acknowledged", "blocking": false, "verification": "operator_attestation", "diagnostic": "setup.issue-type.manual-acknowledged"}
+    },
+    {
+      "id": "SU-D017", "mode": "bootstrap", "itemKey": "target/primary/issue-field/priority", "surface": "issue_field",
+      "desired": "declared organisation Issue Field", "observedState": "missing", "scopes": [], "apply": false,
+      "expected": {"outcome": "manual_action_required", "blocking": true, "verification": "none", "diagnostic": "setup.issue-field.manual"}
+    },
+    {
+      "id": "SU-D018", "mode": "bootstrap", "itemKey": "target/primary/issue-field-attachment/priority", "surface": "issue_field_attachment",
+      "desired": "declared Issue Field attached to Project", "observedState": "missing", "scopes": ["project.issue-field.attach"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.issue-field-attachment.planned-create"}
+    },
+    {
+      "id": "SU-D019", "mode": "bootstrap", "itemKey": "target/primary/issue-field-attachment/priority", "surface": "issue_field_attachment",
+      "desired": "declared Issue Field attached to Project", "observedState": "provider_forbidden", "scopes": ["project.issue-field.attach"], "apply": false,
+      "expected": {"outcome": "forbidden", "blocking": true, "verification": "none", "diagnostic": "setup.issue-field-attachment.forbidden"}
+    },
+    {
+      "id": "SU-D020", "mode": "bootstrap", "itemKey": "target/primary/view/backlog", "surface": "project_view",
+      "desired": "exact Backlog view", "observedState": "known_exact", "scopes": ["project.view.create"], "apply": false,
+      "expected": {"outcome": "already_conformant", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.view.already-conformant"}
+    },
+    {
+      "id": "SU-D021", "mode": "adopt", "itemKey": "target/primary/view/backlog", "surface": "project_view",
+      "desired": "exact Backlog view", "observedState": "known_compatible_extra_display_state", "scopes": [], "apply": false,
+      "expected": {"outcome": "preserved_compatible", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.view.preserved-compatible"}
+    },
+    {
+      "id": "SU-D022", "mode": "bootstrap", "itemKey": "target/primary/view/backlog", "surface": "project_view",
+      "desired": "exact Backlog view", "observedState": "same_name_different_filter", "scopes": ["project.view.create"], "apply": false,
+      "expected": {"outcome": "conflict", "blocking": true, "verification": "none", "diagnostic": "setup.view.conflict"}
+    },
+    {
+      "id": "SU-D023", "mode": "bootstrap", "itemKey": "target/primary/view/backlog", "surface": "project_view",
+      "desired": "exact Backlog view", "observedState": "adapter_unsupported", "scopes": ["project.view.create"], "apply": false,
+      "expected": {"outcome": "unsupported", "blocking": true, "verification": "none", "diagnostic": "setup.view.unsupported"}
+    },
+    {
+      "id": "SU-D024", "mode": "bootstrap", "itemKey": "target/primary/view/backlog", "surface": "project_view",
+      "desired": "exact Backlog view", "observedState": "missing", "scopes": ["project.view.create"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.view.planned-create"}
+    },
+    {
+      "id": "SU-D025", "mode": "bootstrap", "itemKey": "target/primary/workflow/add-open-issues", "surface": "project_workflow",
+      "desired": "exact auto-add configuration", "observedState": "configuration_unobservable", "scopes": [], "apply": false,
+      "expected": {"outcome": "manual_action_required", "blocking": true, "verification": "none", "diagnostic": "setup.workflow.manual"}
+    },
+    {
+      "id": "SU-D026", "mode": "bootstrap", "itemKey": "target/primary/workflow/add-open-issues", "surface": "project_workflow",
+      "desired": "exact auto-add configuration", "observedState": "operator_acknowledged", "scopes": [], "apply": false,
+      "expected": {"outcome": "manual_action_acknowledged", "blocking": false, "verification": "operator_attestation", "diagnostic": "setup.workflow.manual-acknowledged"}
+    },
+    {
+      "id": "SU-D027", "mode": "bootstrap", "itemKey": "seed/project-overview/issue", "surface": "seed_issue",
+      "desired": "one issue with exact seed marker", "observedState": "multiple_marker_matches", "scopes": ["issue.create"], "apply": false,
+      "expected": {"outcome": "conflict", "blocking": true, "verification": "none", "diagnostic": "setup.seed.duplicate-marker"}
+    },
+    {
+      "id": "SU-D028", "mode": "bootstrap", "itemKey": "seed/project-overview/issue", "surface": "seed_issue",
+      "desired": "one issue with exact seed marker", "observedState": "missing", "scopes": ["issue.create"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.seed.planned-create"}
+    },
+    {
+      "id": "SU-D029", "mode": "bootstrap", "itemKey": "seed/project-overview/issue", "surface": "seed_issue",
+      "desired": "one issue with exact seed marker", "observedState": "known_marker_title_body_changed", "scopes": ["issue.create"], "apply": false,
+      "expected": {"outcome": "preserved_compatible", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.seed.preserved-compatible"}
+    },
+    {
+      "id": "SU-D030", "mode": "bootstrap", "itemKey": "seed/project-overview/issue", "surface": "seed_issue",
+      "desired": "one issue with exact seed marker", "observedState": "applied_readback_match", "scopes": ["issue.create"], "apply": true,
+      "expected": {"outcome": "applied_verified", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.seed.applied-verified"}
+    },
+    {
+      "id": "SU-D031", "mode": "bootstrap", "itemKey": "seed/first-task/membership", "surface": "project_membership",
+      "desired": "seed issue belongs to exact target Project", "observedState": "dependency_seed_failed", "scopes": ["project.item.add"], "apply": false,
+      "expected": {"outcome": "skipped_dependency", "blocking": true, "verification": "none", "diagnostic": "setup.membership.skipped-dependency"}
+    },
+    {
+      "id": "SU-D032", "mode": "adopt", "itemKey": "target/primary/field/class", "surface": "project_field",
+      "desired": "Class single-select field", "observedState": "explicit_candidate_compatible_different_name", "scopes": [], "apply": false,
+      "expected": {"outcome": "contract_patch_required", "blocking": true, "verification": "none", "diagnostic": "setup.adopt.contract-patch-required"}
+    },
+    {
+      "id": "SU-D033", "mode": "adopt", "itemKey": "target/primary/field/class", "surface": "project_field",
+      "desired": "Class single-select field", "observedState": "multiple_explicit_candidates", "scopes": [], "apply": false,
+      "expected": {"outcome": "conflict", "blocking": true, "verification": "none", "diagnostic": "setup.adopt.ambiguous"}
+    },
+    {
+      "id": "SU-D034", "mode": "bootstrap", "itemKey": "seed/first-task/parent", "surface": "issue_relationship",
+      "desired": "exact parent relationship", "observedState": "known_exact", "scopes": ["issue.relationship.create"], "apply": false,
+      "expected": {"outcome": "already_conformant", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.relationship.already-conformant"}
+    },
+    {
+      "id": "SU-D035", "mode": "bootstrap", "itemKey": "seed/first-task/parent", "surface": "issue_relationship",
+      "desired": "exact parent relationship", "observedState": "different_existing_parent", "scopes": ["issue.relationship.create"], "apply": false,
+      "expected": {"outcome": "conflict", "blocking": true, "verification": "none", "diagnostic": "setup.relationship.conflict"}
+    },
+    {
+      "id": "SU-D036", "mode": "bootstrap", "itemKey": "target/primary/view/backlog", "surface": "project_view",
+      "desired": "exact Backlog view", "observedState": "provider_forbidden", "scopes": ["project.view.create"], "apply": false,
+      "expected": {"outcome": "forbidden", "blocking": true, "verification": "none", "diagnostic": "setup.view.forbidden"}
+    },
+    {
+      "id": "SU-D037", "mode": "bootstrap", "itemKey": "guidance/projection", "surface": "agent_guidance",
+      "desired": "exact #51 paths and content digests", "observedState": "known_exact", "scopes": [], "apply": false,
+      "expected": {"outcome": "already_conformant", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.guidance.already-conformant"}
+    },
+    {
+      "id": "SU-D038", "mode": "bootstrap", "itemKey": "guidance/projection", "surface": "agent_guidance",
+      "desired": "exact #51 paths and content digests", "observedState": "missing_or_stale", "scopes": [], "apply": false,
+      "expected": {"outcome": "contract_patch_required", "blocking": true, "verification": "none", "diagnostic": "setup.guidance.contract-patch-required"}
+    },
+    {
+      "id": "SU-D039", "mode": "bootstrap", "itemKey": "guidance/projection", "surface": "agent_guidance",
+      "desired": "exact #51 paths and content digests", "observedState": "renderer_unavailable", "scopes": [], "apply": false,
+      "expected": {"outcome": "skipped_dependency", "blocking": true, "verification": "none", "diagnostic": "setup.guidance.skipped-dependency"}
+    },
+    {
+      "id": "SU-D040", "mode": "bootstrap", "itemKey": "seed/first-task/dimension/priority", "surface": "dimension_value",
+      "desired": "create-time Priority p1", "observedState": "existing_seed_changed_to_p2", "scopes": ["project.item.field.write"], "apply": false,
+      "expected": {"outcome": "preserved_compatible", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.seed-dimension.preserved-compatible"}
+    },
+    {
+      "id": "SU-D041", "mode": "bootstrap", "itemKey": "seed/first-task/dimension/priority", "surface": "dimension_value",
+      "desired": "create-time Priority p1", "observedState": "new_seed_value_unset", "scopes": ["project.item.field.write"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.seed-dimension.planned-create"}
+    },
+    {
+      "id": "SU-D042", "mode": "bootstrap", "itemKey": "seed/first-task/label/course-materials", "surface": "issue_label_membership",
+      "desired": "create-time course-materials label", "observedState": "existing_seed_label_missing", "scopes": ["issue.label.add"], "apply": false,
+      "expected": {"outcome": "preserved_compatible", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.seed-label.preserved-compatible"}
+    },
+    {
+      "id": "SU-D043", "mode": "bootstrap", "itemKey": "seed/first-task/label/course-materials", "surface": "issue_label_membership",
+      "desired": "create-time course-materials label", "observedState": "new_seed_label_missing", "scopes": ["issue.label.add"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.seed-label.planned-create"}
+    },
+    {
+      "id": "SU-D044", "mode": "bootstrap", "itemKey": "seed/first-task/membership", "surface": "project_membership",
+      "desired": "seed issue belongs to exact target Project", "observedState": "known_missing", "scopes": ["project.item.add"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.membership.planned-create"}
+    },
+    {
+      "id": "SU-D045", "mode": "bootstrap", "itemKey": "seed/first-task/parent", "surface": "issue_relationship",
+      "desired": "declared parent relationship", "observedState": "known_missing", "scopes": ["issue.relationship.create"], "apply": false,
+      "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.relationship.planned-create"}
+    }
+  ]
+}

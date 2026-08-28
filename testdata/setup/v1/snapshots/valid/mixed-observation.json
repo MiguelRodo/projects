@@ -1,0 +1,62 @@
+{
+  "apiVersion": "projectctl/v1",
+  "kind": "SetupSnapshot",
+  "contractRef": "sample-setup",
+  "capturedAt": "2026-08-28T04:30:00Z",
+  "resources": [
+    {
+      "itemKey": "target/primary/project",
+      "surface": "project",
+      "targetRef": "primary",
+      "state": "known",
+      "providerIdentity": "project-node-synthetic-12",
+      "facts": {
+        "owner": {"kind": "organization", "login": "sample-org"},
+        "number": 12,
+        "title": "Sample setup",
+        "visibility": "private",
+        "closed": false
+      }
+    },
+    {
+      "itemKey": "target/primary/repository-link/sample-org/tasks",
+      "surface": "repository_link",
+      "targetRef": "primary",
+      "state": "known",
+      "providerIdentity": "repository-node-synthetic-tasks",
+      "facts": {
+        "owner": {"kind": "organization", "login": "sample-org"},
+        "repository": "tasks"
+      }
+    },
+    {
+      "itemKey": "target/primary/view/backlog",
+      "surface": "project_view",
+      "targetRef": "primary",
+      "resourceRef": "backlog",
+      "state": "missing",
+      "diagnostic": "setup.view.missing"
+    },
+    {
+      "itemKey": "target/primary/workflow/add-open-issues",
+      "surface": "project_workflow",
+      "targetRef": "primary",
+      "resourceRef": "add-open-issues",
+      "state": "known",
+      "providerIdentity": "workflow-node-synthetic-1",
+      "facts": {
+        "name": "Auto-add open issues",
+        "enabled": true
+      },
+      "diagnostic": "setup.workflow.configuration-unobservable"
+    },
+    {
+      "itemKey": "seed/project-overview/issue",
+      "surface": "seed_issue",
+      "targetRef": "primary",
+      "resourceRef": "project-overview",
+      "state": "missing",
+      "diagnostic": "setup.seed.missing"
+    }
+  ]
+}

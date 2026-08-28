@@ -1,0 +1,66 @@
+{
+  "formatVersion": 1,
+  "base": "valid/single-full.yaml",
+  "schemaCases": [
+    {
+      "id": "SU-BI001",
+      "patches": [{"op": "remove", "path": "/spec/setup"}],
+      "diagnostic": "setup-blueprint.schema.required",
+      "instancePath": "/spec"
+    },
+    {
+      "id": "SU-BI002",
+      "patches": [{"op": "replace", "path": "/spec/target/project/title", "value": " title with leading space"}],
+      "diagnostic": "setup-blueprint.schema.project-title",
+      "instancePath": "/spec/target/project/title"
+    },
+    {
+      "id": "SU-BI003",
+      "patches": [{"op": "remove", "path": "/spec/target/project/shortDescription"}],
+      "diagnostic": "setup-blueprint.schema.required",
+      "instancePath": "/spec/target/project"
+    },
+    {
+      "id": "SU-BI004",
+      "patches": [{"op": "replace", "path": "/spec/target/project/visibility", "value": "internal"}],
+      "diagnostic": "setup-blueprint.schema.visibility",
+      "instancePath": "/spec/target/project/visibility"
+    },
+    {
+      "id": "SU-BI005",
+      "patches": [{"op": "add", "path": "/spec/target/project/number", "value": 12}],
+      "diagnostic": "setup-blueprint.schema.project-number-forbidden",
+      "instancePath": "/spec/target/project"
+    },
+    {
+      "id": "SU-BI006",
+      "patches": [{"op": "replace", "path": "/kind", "value": "SingleProjectRepository"}],
+      "diagnostic": "setup-blueprint.schema.kind",
+      "instancePath": "/kind"
+    },
+    {
+      "id": "SU-BI007",
+      "patches": [{"op": "replace", "path": "/spec/setup", "value": null}],
+      "diagnostic": "setup-blueprint.schema.setup-object",
+      "instancePath": "/spec/setup"
+    },
+    {
+      "id": "SU-BI008",
+      "patches": [{"op": "remove", "path": "/spec/requirements/features/6"}],
+      "diagnostic": "setup-blueprint.schema.project-view-feature-required",
+      "instancePath": "/spec/requirements/features"
+    },
+    {
+      "id": "SU-BI009",
+      "patches": [{"op": "add", "path": "/spec/target/project/providerId", "value": "synthetic-node"}],
+      "diagnostic": "setup-blueprint.schema.provider-id-forbidden",
+      "instancePath": "/spec/target/project"
+    },
+    {
+      "id": "SU-BI010",
+      "patches": [{"op": "replace", "path": "/spec/target/project/shortDescription", "value": "line one\nline two"}],
+      "diagnostic": "setup-blueprint.schema.project-description",
+      "instancePath": "/spec/target/project/shortDescription"
+    }
+  ]
+}
