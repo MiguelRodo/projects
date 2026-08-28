@@ -11,6 +11,8 @@ spec:
     supportedModes: [shareable_by_default]
     defaultMode: shareable_by_default
   sourceRefs: []
+  dimensions: {}
+  dimensionBindings: {}
   labels:
     declarations: {}
     projectRouting:

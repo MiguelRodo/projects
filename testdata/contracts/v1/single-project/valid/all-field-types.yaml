@@ -42,6 +42,8 @@ spec:
           description: API-facing work.
   sourceRefs:
     - handbook
+  dimensions: {}
+  dimensionBindings: {}
   labels:
     declarations: {}
     projectRouting:

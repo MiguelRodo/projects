@@ -11,6 +11,8 @@ spec:
       owner: {kind: organization, login: example-org}
       number: 82
   fields: {}
+  dimensions: {}
+  dimensionBindings: {}
   labels:
     declarations:
       route-alpha:

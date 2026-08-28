@@ -11,6 +11,8 @@ spec:
     supportedModes: [shareable_by_default, full_github_context]
     defaultMode: shareable_by_default
     effectiveMode: full_github_context
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

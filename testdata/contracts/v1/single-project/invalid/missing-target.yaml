@@ -3,6 +3,8 @@ kind: SingleProjectRepository
 spec:
   ref: alpha
   fields: {}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

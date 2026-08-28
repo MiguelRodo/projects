@@ -384,6 +384,422 @@
         "$ref": "#/$defs/field"
       }
     },
+    "canonicalClassValues": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "task",
+          "bug",
+          "enhancement",
+          "raw-data",
+          "processed-data",
+          "analysis",
+          "report",
+          "documentation",
+          "epic"
+        ]
+      }
+    },
+    "canonicalPriorityValues": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "p0",
+          "p1",
+          "p2"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "p0"
+          }
+        },
+        {
+          "contains": {
+            "const": "p1"
+          }
+        },
+        {
+          "contains": {
+            "const": "p2"
+          }
+        }
+      ]
+    },
+    "canonicalStatusValues": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "todo",
+          "in-progress",
+          "done"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "todo"
+          }
+        },
+        {
+          "contains": {
+            "const": "in-progress"
+          }
+        },
+        {
+          "contains": {
+            "const": "done"
+          }
+        }
+      ]
+    },
+    "canonicalWorkstreamValue": {
+      "type": "object",
+      "required": [
+        "name",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "description": {
+          "$ref": "#/$defs/optionDescription"
+        }
+      },
+      "additionalProperties": false
+    },
+    "canonicalWorkstreamValues": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/canonicalWorkstreamValue"
+      }
+    },
+    "dimensionDefinitions": {
+      "type": "object",
+      "maxProperties": 8,
+      "properties": {
+        "class": {
+          "type": "object",
+          "required": [
+            "values"
+          ],
+          "properties": {
+            "values": {
+              "$ref": "#/$defs/canonicalClassValues"
+            }
+          },
+          "additionalProperties": false
+        },
+        "priority": {
+          "type": "object",
+          "required": [
+            "values"
+          ],
+          "properties": {
+            "values": {
+              "$ref": "#/$defs/canonicalPriorityValues"
+            }
+          },
+          "additionalProperties": false
+        },
+        "status": {
+          "type": "object",
+          "required": [
+            "values"
+          ],
+          "properties": {
+            "values": {
+              "$ref": "#/$defs/canonicalStatusValues"
+            }
+          },
+          "additionalProperties": false
+        },
+        "workstream": {
+          "type": "object",
+          "required": [
+            "values"
+          ],
+          "properties": {
+            "values": {
+              "$ref": "#/$defs/canonicalWorkstreamValues"
+            }
+          },
+          "additionalProperties": false
+        },
+        "due-date": {
+          "type": "object",
+          "maxProperties": 0
+        },
+        "assignees": {
+          "type": "object",
+          "maxProperties": 0
+        },
+        "parent": {
+          "type": "object",
+          "maxProperties": 0
+        },
+        "sub-issues-progress": {
+          "type": "object",
+          "maxProperties": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "projectValueBinding": {
+      "type": "object",
+      "required": [
+        "readValueRefs",
+        "writeValueRef"
+      ],
+      "properties": {
+        "readValueRefs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/contractRef"
+          }
+        },
+        "writeValueRef": {
+          "$ref": "#/$defs/contractRef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "projectValueBindingMap": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/projectValueBinding"
+      }
+    },
+    "nativeValueBinding": {
+      "type": "object",
+      "required": [
+        "readNames",
+        "writeName"
+      ],
+      "properties": {
+        "readNames": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/providerName"
+          }
+        },
+        "writeName": {
+          "$ref": "#/$defs/providerName"
+        }
+      },
+      "additionalProperties": false
+    },
+    "nativeValueBindingMap": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/contractRef"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/nativeValueBinding"
+      }
+    },
+    "projectEnumDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind",
+        "fieldRef",
+        "values"
+      ],
+      "properties": {
+        "kind": {
+          "const": "project_field"
+        },
+        "fieldRef": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "values": {
+          "$ref": "#/$defs/projectValueBindingMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "projectDateDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind",
+        "fieldRef"
+      ],
+      "properties": {
+        "kind": {
+          "const": "project_field"
+        },
+        "fieldRef": {
+          "$ref": "#/$defs/contractRef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "issueTypeDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind",
+        "values"
+      ],
+      "properties": {
+        "kind": {
+          "const": "issue_type"
+        },
+        "values": {
+          "$ref": "#/$defs/nativeValueBindingMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "issueFieldDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind",
+        "name",
+        "dataType",
+        "values"
+      ],
+      "properties": {
+        "kind": {
+          "const": "issue_field"
+        },
+        "name": {
+          "$ref": "#/$defs/providerName"
+        },
+        "dataType": {
+          "const": "singleSelect"
+        },
+        "values": {
+          "$ref": "#/$defs/nativeValueBindingMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "projectStatusDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind",
+        "values"
+      ],
+      "properties": {
+        "kind": {
+          "const": "project_status"
+        },
+        "values": {
+          "$ref": "#/$defs/nativeValueBindingMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "issueAssigneesDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "const": "issue_assignees"
+        }
+      },
+      "additionalProperties": false
+    },
+    "issueParentDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "const": "issue_parent"
+        }
+      },
+      "additionalProperties": false
+    },
+    "projectSubIssuesProgressDimensionBinding": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "const": "project_sub_issues_progress"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dimensionBindings": {
+      "type": "object",
+      "maxProperties": 8,
+      "properties": {
+        "class": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/projectEnumDimensionBinding"
+            },
+            {
+              "$ref": "#/$defs/issueTypeDimensionBinding"
+            }
+          ]
+        },
+        "priority": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/projectEnumDimensionBinding"
+            },
+            {
+              "$ref": "#/$defs/issueFieldDimensionBinding"
+            }
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/projectStatusDimensionBinding"
+        },
+        "workstream": {
+          "$ref": "#/$defs/projectEnumDimensionBinding"
+        },
+        "due-date": {
+          "$ref": "#/$defs/projectDateDimensionBinding"
+        },
+        "assignees": {
+          "$ref": "#/$defs/issueAssigneesDimensionBinding"
+        },
+        "parent": {
+          "$ref": "#/$defs/issueParentDimensionBinding"
+        },
+        "sub-issues-progress": {
+          "$ref": "#/$defs/projectSubIssuesProgressDimensionBinding"
+        }
+      },
+      "additionalProperties": false
+    },
     "labelName": {
       "type": "string",
       "minLength": 1,
@@ -614,7 +1030,8 @@
       "type": "object",
       "required": [
         "target",
-        "fields"
+        "fields",
+        "dimensionBindings"
       ],
       "properties": {
         "target": {
@@ -622,6 +1039,9 @@
         },
         "fields": {
           "$ref": "#/$defs/fieldMap"
+        },
+        "dimensionBindings": {
+          "$ref": "#/$defs/dimensionBindings"
         }
       },
       "additionalProperties": false
@@ -648,6 +1068,126 @@
         }
       }
     },
+    "hasProjectStatusBinding": {
+      "type": "object",
+      "required": [
+        "dimensionBindings"
+      ],
+      "properties": {
+        "dimensionBindings": {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "project_status"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hasIssueTypeBinding": {
+      "type": "object",
+      "required": [
+        "dimensionBindings"
+      ],
+      "properties": {
+        "dimensionBindings": {
+          "type": "object",
+          "required": [
+            "class"
+          ],
+          "properties": {
+            "class": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "issue_type"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hasIssueFieldBinding": {
+      "type": "object",
+      "required": [
+        "dimensionBindings"
+      ],
+      "properties": {
+        "dimensionBindings": {
+          "type": "object",
+          "required": [
+            "priority"
+          ],
+          "properties": {
+            "priority": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "issue_field"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hasDispatcherStatusBinding": {
+      "type": "object",
+      "required": [
+        "targets"
+      ],
+      "properties": {
+        "targets": {
+          "contains": {
+            "$ref": "#/$defs/hasProjectStatusBinding"
+          }
+        }
+      }
+    },
+    "hasDispatcherIssueTypeBinding": {
+      "type": "object",
+      "required": [
+        "targets"
+      ],
+      "properties": {
+        "targets": {
+          "contains": {
+            "$ref": "#/$defs/hasIssueTypeBinding"
+          }
+        }
+      }
+    },
+    "hasDispatcherIssueFieldBinding": {
+      "type": "object",
+      "required": [
+        "targets"
+      ],
+      "properties": {
+        "targets": {
+          "contains": {
+            "$ref": "#/$defs/hasIssueFieldBinding"
+          }
+        }
+      }
+    },
     "sourceRefs": {
       "type": "array",
       "maxItems": 64,
@@ -659,12 +1199,14 @@
     "featureRequirements": {
       "type": "array",
       "minItems": 2,
-      "maxItems": 6,
+      "maxItems": 8,
       "uniqueItems": true,
       "items": {
         "enum": [
+          "issue-fields",
           "issue-relationships",
           "issue-labels",
+          "issue-types",
           "issues",
           "project-custom-fields",
           "project-item-membership",
@@ -686,14 +1228,16 @@
     },
     "mutationDeclarations": {
       "type": "array",
-      "maxItems": 9,
+      "maxItems": 11,
       "uniqueItems": true,
       "items": {
         "enum": [
           "issue.create",
+          "issue.field.write",
           "issue.label.add",
           "issue.label.remove",
           "issue.relationship.create",
+          "issue.type.write",
           "project.field.create",
           "project.field.option.create",
           "project.item.add",
@@ -851,12 +1395,166 @@
         }
       ]
     },
+    "singleDimensionPrerequisites": {
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/hasIssueTypeBinding"
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "issue-types"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/hasIssueFieldBinding"
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "issue-fields"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "issue.type.write"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/hasIssueTypeBinding"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "issue.field.write"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/hasIssueFieldBinding"
+          }
+        }
+      ]
+    },
+    "dispatcherDimensionPrerequisites": {
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/hasDispatcherIssueTypeBinding"
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "issue-types"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/hasDispatcherIssueFieldBinding"
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "features": {
+                    "contains": {
+                      "const": "issue-fields"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "issue.type.write"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/hasDispatcherIssueTypeBinding"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "requirements": {
+                "properties": {
+                  "mutations": {
+                    "contains": {
+                      "const": "issue.field.write"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/hasDispatcherIssueFieldBinding"
+          }
+        }
+      ]
+    },
     "singleProjectSpec": {
       "type": "object",
       "required": [
         "ref",
         "target",
         "fields",
+        "dimensions",
+        "dimensionBindings",
         "labels",
         "sourceRefs",
         "requirements"
@@ -870,6 +1568,12 @@
         },
         "fields": {
           "$ref": "#/$defs/fieldMap"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/dimensionDefinitions"
+        },
+        "dimensionBindings": {
+          "$ref": "#/$defs/dimensionBindings"
         },
         "labels": {
           "$ref": "#/$defs/labels"
@@ -888,6 +1592,9 @@
       "allOf": [
         {
           "$ref": "#/$defs/labelPrerequisites"
+        },
+        {
+          "$ref": "#/$defs/singleDimensionPrerequisites"
         },
         {
           "if": {
@@ -1048,29 +1755,35 @@
             }
           },
           "then": {
-            "properties": {
-              "fields": {
-                "minProperties": 1
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "fields": {
+                        "minProperties": 1
+                      }
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/hasProjectStatusBinding"
+                  }
+                ]
               },
-              "requirements": {
+              {
                 "properties": {
-                  "features": {
-                    "allOf": [
-                      {
-                        "contains": {
-                          "const": "project-custom-fields"
-                        }
-                      },
-                      {
+                  "requirements": {
+                    "properties": {
+                      "features": {
                         "contains": {
                           "const": "project-item-membership"
                         }
                       }
-                    ]
+                    }
                   }
                 }
               }
-            }
+            ]
           }
         }
       ]
@@ -1080,6 +1793,7 @@
       "required": [
         "ref",
         "targets",
+        "dimensions",
         "routing",
         "labels",
         "sourceRefs",
@@ -1096,6 +1810,9 @@
           "items": {
             "$ref": "#/$defs/dispatcherTarget"
           }
+        },
+        "dimensions": {
+          "$ref": "#/$defs/dimensionDefinitions"
         },
         "routing": {
           "$ref": "#/$defs/routing"
@@ -1117,6 +1834,9 @@
       "allOf": [
         {
           "$ref": "#/$defs/labelPrerequisites"
+        },
+        {
+          "$ref": "#/$defs/dispatcherDimensionPrerequisites"
         },
         {
           "if": {
@@ -1279,25 +1999,23 @@
           "then": {
             "allOf": [
               {
-                "$ref": "#/$defs/hasDispatcherFields"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/hasDispatcherFields"
+                  },
+                  {
+                    "$ref": "#/$defs/hasDispatcherStatusBinding"
+                  }
+                ]
               },
               {
                 "properties": {
                   "requirements": {
                     "properties": {
                       "features": {
-                        "allOf": [
-                          {
-                            "contains": {
-                              "const": "project-custom-fields"
-                            }
-                          },
-                          {
-                            "contains": {
-                              "const": "project-item-membership"
-                            }
-                          }
-                        ]
+                        "contains": {
+                          "const": "project-item-membership"
+                        }
                       }
                     }
                   }

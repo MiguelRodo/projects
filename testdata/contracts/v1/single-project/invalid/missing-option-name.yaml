@@ -12,6 +12,8 @@ spec:
       dataType: singleSelect
       values:
         ready: {color: green, description: Ready to start.}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

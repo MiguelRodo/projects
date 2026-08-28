@@ -23,7 +23,7 @@ The keywords **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT** and **MAY** are 
 | Provider IDs | Discovered at runtime and never stored in this shared contract |
 | Project title | Display-only observed state, never a selector or fallback |
 | Custom fields | `date`, `number`, `text`, `singleSelect` and `multiSelect` |
-| Iteration and built-in fields | Unsupported as v1 contract mappings |
+| Iteration and built-ins | Iteration unsupported; standard built-ins use #48 semantic bindings, never the custom-field map |
 | Unknown keys | Rejected at every object boundary |
 | Null | Rejected everywhere |
 | Defaults | None in this base schema |
@@ -55,6 +55,8 @@ spec:
         login: example-org
       number: 7
   fields: {}
+  dimensions: {}
+  dimensionBindings: {}
   labels:
     declarations: {}
     projectRouting:
@@ -119,7 +121,7 @@ The same spelling in two different namespaces does not create a relationship. Ma
 
 ## Custom-field mappings
 
-`spec.fields` is a map from stable contract field references to explicit GitHub custom-field declarations. Every declared mapping is required structure for this contract. An empty map means the contract does not require or address any custom field.
+`spec.fields` is a map from stable contract field references to explicit GitHub custom-field declarations. Every declared mapping is required structure for this contract. An empty map means the contract does not require or address any custom field. Standard semantic meaning is attached only through [v1 project dimensions](v1-project-dimensions.md); a field name never acquires Class, Priority, Workstream or Due-date meaning by itself.
 
 ### Scalar fields
 
@@ -184,7 +186,7 @@ The v1 schema supports the custom-field types that have fixed scalar or fixed op
 | `singleSelect` | One value reference resolves to one option |
 | `multiSelect` | A set of distinct value references resolves to options |
 
-Iteration fields are intentionally rejected. Their rolling schedule, iteration identifiers and update semantics are live configuration, not a fixed value map. Supporting them requires a later contract version with explicit discovery, comparison and mutation rules. Built-in fields such as title, assignees, labels, milestone and repository are not custom-field mappings. Declared issue-label membership uses the separate label scopes and MUST NOT be written through `project.item.field.write`.
+Iteration fields are intentionally rejected. Their rolling schedule, iteration identifiers and update semantics are live configuration, not a fixed value map. Supporting them requires a later contract version with explicit discovery, comparison and mutation rules. Built-in and issue-owned fields are not custom-field mappings. #48 defines explicit bindings for built-in Status, assignees, hierarchy metadata, native Issue Types and organisation Issue Fields. Declared issue-label membership uses the separate label scopes and MUST NOT be written through `project.item.field.write`.
 
 ### Exact provider selection
 
@@ -230,6 +232,8 @@ Every contract requires `issues` and `projects-v2`. Other values are opt-in requ
 | `project-item-membership` | Issue membership in the Project can be discovered |
 | `issue-relationships` | Supported issue relationships can be discovered |
 | `issue-labels` | Complete repository label catalogues and issue-label membership can be discovered |
+| `issue-types` | Native Issue Types and an issue's type value can be discovered |
+| `issue-fields` | Organisation Issue Fields, Project attachment and issue values can be discovered |
 
 A feature declaration is a requirement to probe, not evidence that the acting principal has it. Capability and permission remain observed runtime facts. Missing, forbidden, unavailable and unsupported results remain distinct.
 
@@ -243,15 +247,17 @@ The mutation set is an exhaustive allowlist for plans made under this contract:
 | --- | --- |
 | `issue.create` | Create a new issue in the exact issue store from separately validated intent |
 | `issue.relationship.create` | Create one supported relationship between explicitly resolved issues |
+| `issue.type.write` | Set or clear Class through one declared native Issue Type binding |
+| `issue.field.write` | Set or clear Priority through one declared organisation Issue Field binding |
 | `repository.label.create` | Create one missing declared label with its exact create-time attributes |
 | `issue.label.add` | Add one exact declared label to one resolved issue |
 | `issue.label.remove` | Remove one exact declared label from one resolved issue |
 | `project.field.create` | Create one missing declared custom field with its declared select options |
 | `project.field.option.create` | Add one missing declared option while preserving every observed existing option identity and value |
 | `project.item.add` | Add one explicitly resolved issue to the exact Project |
-| `project.item.field.write` | Set or explicitly clear one declared custom-field value on one resolved Project item |
+| `project.item.field.write` | Set or explicitly clear one declared custom-field dimension or built-in Status value on one resolved Project item |
 
-No v1 mutation authorises deleting resources, removing Project membership, renaming or replacing fields, rewriting existing issue title/body, updating or deleting repository labels, using a set-all-labels endpoint, editing option colour/description, or updating built-in fields through the Projects API.
+No v1 mutation authorises deleting resources, removing Project membership, renaming or replacing fields, rewriting existing issue title/body, updating or deleting repository labels, using a set-all-labels endpoint, editing option colour/description, or updating built-in metadata other than the explicitly bound Status value.
 
 An absent mutation scope forbids planning or execution of that write. An empty mutation array is a valid read-only contract. Mutation scopes apply only to the declared target and declared mappings; they do not grant organisation-wide authority.
 
@@ -363,7 +369,7 @@ Fixtures are minimal. A validator MAY report additional low-level details, but i
 | `SP-014` | Provider selection does not trim, case-fold, fuzzy-match or use display order. |
 | `SP-015` | Duplicate field or option selectors are semantic conflicts, not aliases. |
 | `SP-016` | Select option colour and description are create-time attributes, not identity or continuous reconciliation intent. |
-| `SP-017` | Iteration and built-in Project fields are unsupported as v1 custom-field mappings. |
+| `SP-017` | Iteration is unsupported; built-in and issue-owned semantics use #48 bindings rather than custom-field mappings. |
 | `SP-018` | Source hooks contain symbolic collaborator-safe references only. |
 | `SP-019` | Feature declarations are requirements to probe, never observed capability claims. |
 | `SP-020` | Mutation declarations are an exhaustive allowlist scoped to declared targets and mappings. |

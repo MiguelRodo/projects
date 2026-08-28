@@ -12,6 +12,8 @@ spec:
     defaultMode: shareable_by_default
     companion:
       linkage: {kind: issue_url}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

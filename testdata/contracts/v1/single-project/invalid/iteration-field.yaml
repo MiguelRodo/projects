@@ -12,6 +12,8 @@ spec:
       number: 1
   fields:
     sprint: {name: Sprint, dataType: iteration}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

@@ -16,6 +16,7 @@ spec:
           login: example-org
         number: 61
     fields: {}
+    dimensionBindings: {}
   - target:
       ref: triage
       issueStore:
@@ -29,6 +30,8 @@ spec:
           login: example-org
         number: 62
     fields: {}
+    dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
     - ref: route-1

@@ -8,6 +8,8 @@ spec:
     project: {owner: {kind: organization, login: example-org}, number: 81}
   fields: {}
   privacy: {}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

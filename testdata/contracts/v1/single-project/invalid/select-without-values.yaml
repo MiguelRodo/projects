@@ -12,6 +12,8 @@ spec:
       number: 1
   fields:
     status: {name: Status, dataType: singleSelect}
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

@@ -10,6 +10,8 @@ spec:
   privacy:
     supportedModes: []
     defaultMode: shareable_by_default
+  dimensions: {}
+  dimensionBindings: {}
   sourceRefs: []
   labels:
     declarations: {}

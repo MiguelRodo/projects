@@ -24,6 +24,7 @@ spec:
             name: Active
             color: blue
             description: Delivery is active.
+    dimensionBindings: {}
   - target:
       ref: research
       issueStore:
@@ -48,6 +49,8 @@ spec:
       evidence:
         name: Evidence
         dataType: text
+    dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
     - ref: route-1

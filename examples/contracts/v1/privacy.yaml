@@ -24,6 +24,8 @@ spec:
       linkage:
         kind: github_issue_node_id
   sourceRefs: []
+  dimensions: {}
+  dimensionBindings: {}
   labels:
     declarations: {}
     projectRouting:

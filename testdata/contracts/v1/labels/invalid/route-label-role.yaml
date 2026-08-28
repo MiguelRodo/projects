@@ -12,6 +12,7 @@ spec:
           owner: {kind: organization, login: example-org}
           number: 83
       fields: {}
+      dimensionBindings: {}
     - target:
         ref: frontend
         issueStore:
@@ -21,6 +22,8 @@ spec:
           owner: {kind: organization, login: example-org}
           number: 84
       fields: {}
+      dimensionBindings: {}
+  dimensions: {}
   routing:
     rules:
       - {ref: backend-route, labelRef: blocked, targetRef: backend}
