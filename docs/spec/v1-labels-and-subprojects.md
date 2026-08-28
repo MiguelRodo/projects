@@ -303,7 +303,7 @@ There is deliberately no set-all-labels scope because provider set endpoints can
 
 ### Label-transition guard
 
-Before lowering any label change, a pure guard consumes a complete observed before-state plus abstract `addRefs` and `removeRefs` sets. This is not the ordinary request wire shape owned by #50.
+Before lowering any label change, a pure guard consumes a complete observed before-state plus abstract `addRefs` and `removeRefs` sets. [V1 ordinary task interactions](v1-task-interactions.md) defines the ordinary request wire shape.
 
 The guard evaluates in this order:
 
@@ -387,13 +387,16 @@ Fixture values are synthetic. Every row preserves undeclared labels and proves t
 | `LB-017` | Idempotent additions and removals become no-ops and require no mutation authority. |
 | `LB-018` | Route and sub-project replacements may be validated atomically but never expose an invalid after-state. |
 
+## Interaction integration
+
+[V1 ordinary task interactions](v1-task-interactions.md) defines the finite label-add and label-remove request actions, additive provider operations, canonical operation order and complete-plan behaviour. This specification remains authoritative for label identity, routing and sub-project cardinality.
+
 ## Explicitly deferred
 
 This specification does not define:
 
 - Project field dimensions, owned by #48;
 - view and auto-add setup outcomes, owned by #49;
-- ordinary task request and multi-operation lowering syntax, owned by #50;
 - version migration from the superseded pre-v1 `labelsAll` form, owned by #34 and #31;
 - Go model, discovery or planner APIs;
 - live GitHub tests.

@@ -1,0 +1,12 @@
+apiVersion: projectctl/v1
+kind: ProjectSummariseRequest
+spec:
+  contract:
+    authority: github.com
+    owner: {kind: organization, login: sample-org}
+    repository: project-config
+    ref: sample-work
+  selection: {kind: explicit, targetRef: primary}
+  filters:
+    state: open
+    labelRefs: [course-materials]

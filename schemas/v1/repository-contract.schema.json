@@ -1618,21 +1618,31 @@
     },
     "mutationDeclarations": {
       "type": "array",
-      "maxItems": 14,
+      "maxItems": 24,
       "uniqueItems": true,
       "items": {
         "enum": [
+          "issue.assignee.add",
+          "issue.assignee.remove",
+          "issue.body.write",
           "issue.create",
+          "issue.dependency.add",
+          "issue.dependency.remove",
           "issue.field.write",
           "issue.label.add",
           "issue.label.remove",
-          "issue.relationship.create",
+          "issue.milestone.write",
+          "issue.parent.remove",
+          "issue.parent.set",
+          "issue.state.write",
+          "issue.title.write",
           "issue.type.write",
           "project.field.create",
           "project.field.option.create",
           "project.issue-field.attach",
           "project.item.add",
           "project.item.field.write",
+          "project.item.remove",
           "project.repository.link",
           "project.view.create",
           "repository.label.create"
@@ -2161,7 +2171,12 @@
                 "properties": {
                   "mutations": {
                     "contains": {
-                      "const": "issue.relationship.create"
+                      "enum": [
+                        "issue.dependency.add",
+                        "issue.dependency.remove",
+                        "issue.parent.remove",
+                        "issue.parent.set"
+                      ]
                     }
                   }
                 }
@@ -2220,7 +2235,10 @@
                 "properties": {
                   "mutations": {
                     "contains": {
-                      "const": "project.item.add"
+                      "enum": [
+                        "project.item.add",
+                        "project.item.remove"
+                      ]
                     }
                   }
                 }
@@ -2405,7 +2423,12 @@
                 "properties": {
                   "mutations": {
                     "contains": {
-                      "const": "issue.relationship.create"
+                      "enum": [
+                        "issue.dependency.add",
+                        "issue.dependency.remove",
+                        "issue.parent.remove",
+                        "issue.parent.set"
+                      ]
                     }
                   }
                 }
@@ -2468,7 +2491,10 @@
                 "properties": {
                   "mutations": {
                     "contains": {
-                      "const": "project.item.add"
+                      "enum": [
+                        "project.item.add",
+                        "project.item.remove"
+                      ]
                     }
                   }
                 }

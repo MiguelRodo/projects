@@ -137,17 +137,17 @@ Every mutating execution path must:
 
 A client MAY present the plan as an explicit dry-run artefact. An interactive adapter MAY proceed under explicit operator authorisation, but it does not skip planning, stale protection or verification.
 
-## Deferred decisions
+## Specialised specifications
 
-The following remain deliberately deferred to dedicated normative issues:
+Dedicated normative specifications own these decisions. Linked specifications are settled; unlinked issue references remain deferred:
 
-- private operator-profile wire representation: #32;
-- label, routing-label and label-based sub-project declarations: #47;
-- semantic project dimensions and provider bindings: #48;
-- automated setup and manual-action outcomes: #49;
-- ordinary task-interaction requests and mutation scopes: #50;
+- private operator-profile wire representation: [v1 operator profile](../spec/v1-operator-profile.md);
+- label, routing-label and label-based sub-project declarations: [v1 labels and sub-projects](../spec/v1-labels-and-subprojects.md);
+- semantic project dimensions and provider bindings: [v1 project dimensions](../spec/v1-project-dimensions.md);
+- automated setup and manual-action outcomes: [v1 setup outcomes](../spec/v1-setup-outcomes.md);
+- ordinary task-interaction requests and mutation scopes: [v1 ordinary task interactions](../spec/v1-task-interactions.md);
 - contract-version vocabulary, presence and migration rules: #34;
 - concise derived guidance projection and renderers: #51;
 - final structured output schemas and exit codes: #26.
 
-No implementation or execution adapter may decide these implicitly.
+No implementation or execution adapter may contradict a settled specification or decide a remaining deferred item implicitly.

@@ -168,12 +168,12 @@
     },
     {
       "id": "SU-D034", "mode": "bootstrap", "itemKey": "seed/first-task/parent", "surface": "issue_relationship",
-      "desired": "exact parent relationship", "observedState": "known_exact", "scopes": ["issue.relationship.create"], "apply": false,
+      "desired": "exact parent relationship", "observedState": "known_exact", "scopes": ["issue.parent.set"], "apply": false,
       "expected": {"outcome": "already_conformant", "blocking": false, "verification": "provider_readback", "diagnostic": "setup.relationship.already-conformant"}
     },
     {
       "id": "SU-D035", "mode": "bootstrap", "itemKey": "seed/first-task/parent", "surface": "issue_relationship",
-      "desired": "exact parent relationship", "observedState": "different_existing_parent", "scopes": ["issue.relationship.create"], "apply": false,
+      "desired": "exact parent relationship", "observedState": "different_existing_parent", "scopes": ["issue.parent.set"], "apply": false,
       "expected": {"outcome": "conflict", "blocking": true, "verification": "none", "diagnostic": "setup.relationship.conflict"}
     },
     {
@@ -223,7 +223,7 @@
     },
     {
       "id": "SU-D045", "mode": "bootstrap", "itemKey": "seed/first-task/parent", "surface": "issue_relationship",
-      "desired": "declared parent relationship", "observedState": "known_missing", "scopes": ["issue.relationship.create"], "apply": false,
+      "desired": "declared parent relationship", "observedState": "known_missing", "scopes": ["issue.parent.set"], "apply": false,
       "expected": {"outcome": "planned_create", "blocking": false, "verification": "none", "diagnostic": "setup.relationship.planned-create"}
     }
   ]

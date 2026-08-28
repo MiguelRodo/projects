@@ -1,0 +1,90 @@
+apiVersion: projectctl/v1
+kind: SingleProjectRepository
+spec:
+  ref: sample-work
+  target:
+    ref: primary
+    issueStore:
+      owner: {kind: organization, login: sample-org}
+      repository: tasks
+    project:
+      owner: {kind: organization, login: sample-org}
+      number: 12
+  fields:
+    priority:
+      name: Priority
+      dataType: singleSelect
+      values:
+        p0: {name: P0, color: red, description: Urgent or deadline-critical.}
+        p1: {name: P1, color: orange, description: Planned and important.}
+        p2: {name: P2, color: blue, description: Useful but not currently urgent.}
+    target-date: {name: Target date, dataType: date}
+  privacy:
+    supportedModes: [shareable_by_default, full_github_context]
+    defaultMode: shareable_by_default
+    companion:
+      linkage: {kind: github_issue_node_id}
+  dimensions:
+    priority: {values: [p0, p1, p2]}
+    status: {values: [todo, in-progress, done]}
+    due-date: {}
+    assignees: {}
+    parent: {}
+    sub-issues-progress: {}
+  dimensionBindings:
+    priority:
+      kind: project_field
+      fieldRef: priority
+      values:
+        p0: {readValueRefs: [p0], writeValueRef: p0}
+        p1: {readValueRefs: [p1], writeValueRef: p1}
+        p2: {readValueRefs: [p2], writeValueRef: p2}
+    status:
+      kind: project_status
+      values:
+        todo: {readNames: [Todo], writeName: Todo}
+        in-progress: {readNames: [In progress, In Progress], writeName: In progress}
+        done: {readNames: [Done], writeName: Done}
+    due-date: {kind: project_field, fieldRef: target-date}
+    assignees: {kind: issue_assignees}
+    parent: {kind: issue_parent}
+    sub-issues-progress: {kind: project_sub_issues_progress}
+  labels:
+    declarations:
+      course-materials:
+        name: sub:course-materials
+        color: 1f6feb
+        description: Synthetic course-materials work.
+        role: {kind: subproject, targetRef: primary}
+      documentation:
+        name: documentation
+        color: 8250df
+        description: Synthetic documentation work.
+        role: {kind: general}
+    projectRouting: {kind: repository_scope}
+  sourceRefs: []
+  requirements:
+    features:
+      - issue-labels
+      - issue-relationships
+      - issues
+      - project-custom-fields
+      - project-item-membership
+      - projects-v2
+    mutations:
+      - issue.assignee.add
+      - issue.assignee.remove
+      - issue.body.write
+      - issue.create
+      - issue.dependency.add
+      - issue.dependency.remove
+      - issue.label.add
+      - issue.label.remove
+      - issue.milestone.write
+      - issue.parent.remove
+      - issue.parent.set
+      - issue.state.write
+      - issue.title.write
+      - project.item.add
+      - project.item.field.write
+      - project.item.remove

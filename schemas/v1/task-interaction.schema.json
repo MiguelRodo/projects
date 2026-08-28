@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:projectctl:schema:task-interaction:v1",
+  "title": "projectctl v1 provider-neutral task interaction",
+  "type": "object",
+  "required": ["apiVersion", "kind", "spec"],
+  "properties": {
+    "apiVersion": {"const": "projectctl/v1"},
+    "kind": {
+      "enum": [
+        "ProjectSummariseRequest",
+        "RoutingExplainRequest",
+        "TaskChangeRequest",
+        "TaskCreateRequest",
+        "TaskInspectRequest",
+        "TaskListRequest"
+      ]
+    },
+    "spec": {"type": "object"}
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {"properties": {"kind": {"const": "TaskInspectRequest"}}},
+      "then": {"properties": {"spec": {"$ref": "#/$defs/taskInspectSpec"}}}
+    },
+    {
+      "if": {"properties": {"kind": {"const": "TaskListRequest"}}},
+      "then": {"properties": {"spec": {"$ref": "#/$defs/taskListSpec"}}}
+    },
+    {
+      "if": {"properties": {"kind": {"const": "ProjectSummariseRequest"}}},
+      "then": {"properties": {"spec": {"$ref": "#/$defs/projectSummariseSpec"}}}
+    },
+    {
+      "if": {"properties": {"kind": {"const": "RoutingExplainRequest"}}},
+      "then": {"properties": {"spec": {"$ref": "#/$defs/routingExplainSpec"}}}
+    },
+    {
+      "if": {"properties": {"kind": {"const": "TaskCreateRequest"}}},
+      "then": {"properties": {"spec": {"$ref": "#/$defs/taskCreateSpec"}}}
+    },
+    {
+      "if": {"properties": {"kind": {"const": "TaskChangeRequest"}}},
+      "then": {"properties": {"spec": {"$ref": "#/$defs/taskChangeSpec"}}}
+    }
+  ],
+  "$defs": {
+    "contractSelector": {
+      "type": "object",
+      "required": ["authority", "owner", "repository", "ref"],
+      "properties": {
+        "authority": {"const": "github.com"},
+        "owner": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/owner"},
+        "repository": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/repositoryName"},
+        "ref": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"}
+      },
+      "additionalProperties": false
+    },
+    "taskSelector": {
+      "type": "object",
+      "required": ["number"],
+      "properties": {"number": {"type": "integer", "minimum": 1}},
+      "additionalProperties": false
+    },
+    "automaticSelection": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"const": "automatic"}},
+      "additionalProperties": false
+    },
+    "explicitSelection": {
+      "type": "object",
+      "required": ["kind", "targetRef"],
+      "properties": {
+        "kind": {"const": "explicit"},
+        "targetRef": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"}
+      },
+      "additionalProperties": false
+    },
+    "selection": {
+      "oneOf": [
+        {"$ref": "#/$defs/automaticSelection"},
+        {"$ref": "#/$defs/explicitSelection"}
+      ]
+    },
+    "execution": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {"mode": {"enum": ["apply", "plan"]}},
+      "additionalProperties": false
+    },
+    "privateContext": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"enum": ["none", "required"]}},
+      "additionalProperties": false
+    },
+    "privateSupplement": {
+      "type": "object",
+      "required": ["format", "content"],
+      "properties": {
+        "format": {"const": "text/markdown"},
+        "content": {"type": "string", "minLength": 1, "maxLength": 131072}
+      },
+      "additionalProperties": false
+    },
+    "taskFilters": {
+      "type": "object",
+      "required": ["state", "labelRefs"],
+      "properties": {
+        "state": {"enum": ["all", "closed", "open"]},
+        "labelRefs": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "taskInspectSpec": {
+      "type": "object",
+      "required": ["contract", "task", "selection", "privateContext"],
+      "properties": {
+        "contract": {"$ref": "#/$defs/contractSelector"},
+        "task": {"$ref": "#/$defs/taskSelector"},
+        "selection": {"$ref": "#/$defs/selection"},
+        "privateContext": {"$ref": "#/$defs/privateContext"}
+      },
+      "additionalProperties": false
+    },
+    "taskListSpec": {
+      "type": "object",
+      "required": ["contract", "selection", "filters"],
+      "properties": {
+        "contract": {"$ref": "#/$defs/contractSelector"},
+        "selection": {"$ref": "#/$defs/selection"},
+        "filters": {"$ref": "#/$defs/taskFilters"}
+      },
+      "additionalProperties": false
+    },
+    "projectSummariseSpec": {
+      "type": "object",
+      "required": ["contract", "selection", "filters"],
+      "properties": {
+        "contract": {"$ref": "#/$defs/contractSelector"},
+        "selection": {"$ref": "#/$defs/selection"},
+        "filters": {"$ref": "#/$defs/taskFilters"}
+      },
+      "additionalProperties": false
+    },
+    "routingExplainSpec": {
+      "type": "object",
+      "required": ["contract", "task", "selection"],
+      "properties": {
+        "contract": {"$ref": "#/$defs/contractSelector"},
+        "task": {"$ref": "#/$defs/taskSelector"},
+        "selection": {"$ref": "#/$defs/selection"}
+      },
+      "additionalProperties": false
+    },
+    "taskCreateSpec": {
+      "type": "object",
+      "required": ["contract", "selection", "execution", "title", "body", "initialActions"],
+      "properties": {
+        "contract": {"$ref": "#/$defs/contractSelector"},
+        "selection": {"$ref": "#/$defs/selection"},
+        "execution": {"$ref": "#/$defs/execution"},
+        "title": {"$ref": "#/$defs/issueTitle"},
+        "body": {"$ref": "#/$defs/issueBody"},
+        "initialActions": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/initialAction"}
+        },
+        "privateSupplement": {"$ref": "#/$defs/privateSupplement"}
+      },
+      "additionalProperties": false
+    },
+    "taskChangeSpec": {
+      "type": "object",
+      "required": ["contract", "task", "selection", "execution", "actions"],
+      "properties": {
+        "contract": {"$ref": "#/$defs/contractSelector"},
+        "task": {"$ref": "#/$defs/taskSelector"},
+        "selection": {"$ref": "#/$defs/selection"},
+        "execution": {"$ref": "#/$defs/execution"},
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/changeAction"}
+        },
+        "privateSupplement": {"$ref": "#/$defs/privateSupplement"}
+      },
+      "additionalProperties": false
+    },
+    "issueTitle": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?:\\S|\\S(?:[^\\r\\n]*\\S))$"
+    },
+    "issueBody": {"type": "string", "maxLength": 65536},
+    "githubLogin": {
+      "$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/owner/properties/login"
+    },
+    "titleSetAction": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "properties": {"kind": {"const": "issue.title.set"}, "value": {"$ref": "#/$defs/issueTitle"}},
+      "additionalProperties": false
+    },
+    "bodySetAction": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "properties": {"kind": {"const": "issue.body.set"}, "value": {"$ref": "#/$defs/issueBody"}},
+      "additionalProperties": false
+    },
+    "stateCloseAction": {
+      "type": "object",
+      "required": ["kind", "reason"],
+      "properties": {"kind": {"const": "issue.state.close"}, "reason": {"enum": ["completed", "not_planned"]}},
+      "additionalProperties": false
+    },
+    "stateReopenAction": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"const": "issue.state.reopen"}},
+      "additionalProperties": false
+    },
+    "assigneeAddAction": {
+      "type": "object",
+      "required": ["kind", "login"],
+      "properties": {"kind": {"const": "issue.assignee.add"}, "login": {"$ref": "#/$defs/githubLogin"}},
+      "additionalProperties": false
+    },
+    "assigneeRemoveAction": {
+      "type": "object",
+      "required": ["kind", "login"],
+      "properties": {"kind": {"const": "issue.assignee.remove"}, "login": {"$ref": "#/$defs/githubLogin"}},
+      "additionalProperties": false
+    },
+    "labelAddAction": {
+      "type": "object",
+      "required": ["kind", "labelRef"],
+      "properties": {"kind": {"const": "issue.label.add"}, "labelRef": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"}},
+      "additionalProperties": false
+    },
+    "labelRemoveAction": {
+      "type": "object",
+      "required": ["kind", "labelRef"],
+      "properties": {"kind": {"const": "issue.label.remove"}, "labelRef": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"}},
+      "additionalProperties": false
+    },
+    "milestoneSetAction": {
+      "type": "object",
+      "required": ["kind", "number"],
+      "properties": {"kind": {"const": "issue.milestone.set"}, "number": {"type": "integer", "minimum": 1}},
+      "additionalProperties": false
+    },
+    "milestoneClearAction": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"const": "issue.milestone.clear"}},
+      "additionalProperties": false
+    },
+    "membershipAddAction": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"const": "project.membership.add"}},
+      "additionalProperties": false
+    },
+    "membershipRemoveAction": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"const": "project.membership.remove"}},
+      "additionalProperties": false
+    },
+    "dimensionSetAction": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "dimensionRef", "value"],
+          "properties": {
+            "kind": {"const": "dimension.value.set"},
+            "dimensionRef": {"enum": ["class", "priority", "status", "workstream"]},
+            "value": {"$ref": "urn:projectctl:schema:repository-contract:v1#/$defs/contractRef"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "dimensionRef", "value"],
+          "properties": {
+            "kind": {"const": "dimension.value.set"},
+            "dimensionRef": {"const": "due-date"},
+            "value": {"type": "string", "format": "date"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "dimensionClearAction": {
+      "type": "object",
+      "required": ["kind", "dimensionRef"],
+      "properties": {
+        "kind": {"const": "dimension.value.clear"},
+        "dimensionRef": {"enum": ["class", "due-date", "priority", "status", "workstream"]}
+      },
+      "additionalProperties": false
+    },
+    "parentSetAction": {
+      "type": "object",
+      "required": ["kind", "parent"],
+      "properties": {"kind": {"const": "issue.parent.set"}, "parent": {"$ref": "#/$defs/taskSelector"}},
+      "additionalProperties": false
+    },
+    "parentRemoveAction": {
+      "type": "object",
+      "required": ["kind", "parent"],
+      "properties": {"kind": {"const": "issue.parent.remove"}, "parent": {"$ref": "#/$defs/taskSelector"}},
+      "additionalProperties": false
+    },
+    "dependencyAddAction": {
+      "type": "object",
+      "required": ["kind", "blockingTask"],
+      "properties": {"kind": {"const": "issue.dependency.add"}, "blockingTask": {"$ref": "#/$defs/taskSelector"}},
+      "additionalProperties": false
+    },
+    "dependencyRemoveAction": {
+      "type": "object",
+      "required": ["kind", "blockingTask"],
+      "properties": {"kind": {"const": "issue.dependency.remove"}, "blockingTask": {"$ref": "#/$defs/taskSelector"}},
+      "additionalProperties": false
+    },
+    "initialAction": {
+      "oneOf": [
+        {"$ref": "#/$defs/assigneeAddAction"},
+        {"$ref": "#/$defs/labelAddAction"},
+        {"$ref": "#/$defs/milestoneSetAction"},
+        {"$ref": "#/$defs/dimensionSetAction"},
+        {"$ref": "#/$defs/parentSetAction"},
+        {"$ref": "#/$defs/dependencyAddAction"}
+      ]
+    },
+    "changeAction": {
+      "oneOf": [
+        {"$ref": "#/$defs/titleSetAction"},
+        {"$ref": "#/$defs/bodySetAction"},
+        {"$ref": "#/$defs/stateCloseAction"},
+        {"$ref": "#/$defs/stateReopenAction"},
+        {"$ref": "#/$defs/assigneeAddAction"},
+        {"$ref": "#/$defs/assigneeRemoveAction"},
+        {"$ref": "#/$defs/labelAddAction"},
+        {"$ref": "#/$defs/labelRemoveAction"},
+        {"$ref": "#/$defs/milestoneSetAction"},
+        {"$ref": "#/$defs/milestoneClearAction"},
+        {"$ref": "#/$defs/membershipAddAction"},
+        {"$ref": "#/$defs/membershipRemoveAction"},
+        {"$ref": "#/$defs/dimensionSetAction"},
+        {"$ref": "#/$defs/dimensionClearAction"},
+        {"$ref": "#/$defs/parentSetAction"},
+        {"$ref": "#/$defs/parentRemoveAction"},
+        {"$ref": "#/$defs/dependencyAddAction"},
+        {"$ref": "#/$defs/dependencyRemoveAction"}
+      ]
+    }
+  }
+}

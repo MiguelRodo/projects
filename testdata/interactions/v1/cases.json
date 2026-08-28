@@ -1,0 +1,272 @@
+{
+  "formatVersion": 1,
+  "bases": {
+    "change": "testdata/interactions/v1/valid/change.yaml",
+    "create": "testdata/interactions/v1/valid/create.yaml",
+    "inspect": "testdata/interactions/v1/valid/inspect.yaml",
+    "list": "testdata/interactions/v1/valid/list.yaml",
+    "routing-explain": "testdata/interactions/v1/valid/routing-explain.yaml",
+    "summary": "testdata/interactions/v1/valid/summary.yaml"
+  },
+  "schemaCases": [
+    {
+      "id": "TI-S001", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/apiVersion", "value": "projectctl/v2"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.api-version", "instancePath": "/apiVersion"}
+    },
+    {
+      "id": "TI-S002", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/kind", "value": "TaskDeleteRequest"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.kind", "instancePath": "/kind"}
+    },
+    {
+      "id": "TI-S003", "base": "inspect",
+      "patch": [{"op": "remove", "path": "/spec"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.required", "instancePath": ""}
+    },
+    {
+      "id": "TI-S004", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/spec", "value": null}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.null-forbidden", "instancePath": "/spec"}
+    },
+    {
+      "id": "TI-S005", "base": "inspect",
+      "patch": [{"op": "add", "path": "/provider", "value": "github"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.unknown-property", "instancePath": ""}
+    },
+    {
+      "id": "TI-S006", "base": "inspect",
+      "patch": [{"op": "remove", "path": "/spec/contract"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.required", "instancePath": "/spec"}
+    },
+    {
+      "id": "TI-S007", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/spec/contract/authority", "value": "gitlab.com"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.authority", "instancePath": "/spec/contract/authority"}
+    },
+    {
+      "id": "TI-S008", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/spec/contract/ref", "value": "Sample-Work"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.contract-ref", "instancePath": "/spec/contract/ref"}
+    },
+    {
+      "id": "TI-S009", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/spec/task/number", "value": 0}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.positive-number", "instancePath": "/spec/task/number"}
+    },
+    {
+      "id": "TI-S010", "base": "inspect",
+      "patch": [{"op": "remove", "path": "/spec/selection/kind"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.selection", "instancePath": "/spec/selection"}
+    },
+    {
+      "id": "TI-S011", "base": "list",
+      "patch": [{"op": "remove", "path": "/spec/selection/targetRef"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.selection", "instancePath": "/spec/selection"}
+    },
+    {
+      "id": "TI-S012", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/spec/privateContext/kind", "value": "optional"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.private-context", "instancePath": "/spec/privateContext/kind"}
+    },
+    {
+      "id": "TI-S013", "base": "list",
+      "patch": [{"op": "remove", "path": "/spec/filters"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.required", "instancePath": "/spec"}
+    },
+    {
+      "id": "TI-S014", "base": "list",
+      "patch": [{"op": "replace", "path": "/spec/filters/state", "value": "merged"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.filter-state", "instancePath": "/spec/filters/state"}
+    },
+    {
+      "id": "TI-S015", "base": "summary",
+      "patch": [{"op": "add", "path": "/spec/filters/labelRefs/-", "value": "course-materials"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.unique-items", "instancePath": "/spec/filters/labelRefs"}
+    },
+    {
+      "id": "TI-S016", "base": "create",
+      "patch": [{"op": "remove", "path": "/spec/execution"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.required", "instancePath": "/spec"}
+    },
+    {
+      "id": "TI-S017", "base": "create",
+      "patch": [{"op": "replace", "path": "/spec/execution/mode", "value": "force"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.execution-mode", "instancePath": "/spec/execution/mode"}
+    },
+    {
+      "id": "TI-S018", "base": "create",
+      "patch": [{"op": "replace", "path": "/spec/title", "value": " "}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.issue-title", "instancePath": "/spec/title"}
+    },
+    {
+      "id": "TI-S019", "base": "create",
+      "patch": [{"op": "replace", "path": "/spec/body", "value": null}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.null-forbidden", "instancePath": "/spec/body"}
+    },
+    {
+      "id": "TI-S020", "base": "create",
+      "patch": [{"op": "add", "path": "/spec/initialActions/-", "value": {"kind": "issue.comment.add", "value": "hello"}}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.action-kind", "instancePath": "/spec/initialActions/8"}
+    },
+    {
+      "id": "TI-S021", "base": "create",
+      "patch": [{"op": "replace", "path": "/spec/privateSupplement/format", "value": "text/plain"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.private-format", "instancePath": "/spec/privateSupplement/format"}
+    },
+    {
+      "id": "TI-S022", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": []}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.non-empty-actions", "instancePath": "/spec/actions"}
+    },
+    {
+      "id": "TI-S023", "base": "change",
+      "patch": [{"op": "add", "path": "/spec/actions/0/providerField", "value": "title"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.unknown-property", "instancePath": "/spec/actions/0"}
+    },
+    {
+      "id": "TI-S024", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions/12/reason", "value": "duplicate"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.close-reason", "instancePath": "/spec/actions/12/reason"}
+    },
+    {
+      "id": "TI-S025", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions/4/number", "value": 0}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.positive-number", "instancePath": "/spec/actions/4/number"}
+    },
+    {
+      "id": "TI-S026", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions/9/value", "value": "30 September 2026"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.date", "instancePath": "/spec/actions/9/value"}
+    },
+    {
+      "id": "TI-S027", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions/10/parent/number", "value": 0}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.positive-number", "instancePath": "/spec/actions/10/parent/number"}
+    },
+    {
+      "id": "TI-S028", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions/6/dimensionRef", "value": "estimate"}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.dimension-ref", "instancePath": "/spec/actions/6/dimensionRef"}
+    },
+    {
+      "id": "TI-S029", "base": "inspect",
+      "patch": [{"op": "add", "path": "/spec/execution", "value": {"mode": "apply"}}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.unknown-property", "instancePath": "/spec"}
+    },
+    {
+      "id": "TI-S030", "base": "list",
+      "patch": [{"op": "add", "path": "/spec/task", "value": {"number": 42}}],
+      "expected": {"stage": "schema", "diagnostic": "interaction.schema.unknown-property", "instancePath": "/spec"}
+    }
+  ],
+  "semanticCases": [
+    {
+      "id": "TI-M001", "base": "inspect",
+      "patch": [{"op": "replace", "path": "/spec/contract/ref", "value": "other-work"}],
+      "context": {"loadedContractRef": "sample-work"},
+      "expected": {"diagnostic": "interaction.contract.mismatch", "rule": "TI-003"}
+    },
+    {
+      "id": "TI-M002", "base": "list",
+      "patch": [{"op": "replace", "path": "/spec/selection", "value": {"kind": "automatic"}}],
+      "context": {"topology": "dispatcher"},
+      "expected": {"diagnostic": "interaction.selection.explicit-required", "rule": "TI-006"}
+    },
+    {
+      "id": "TI-M003", "base": "create",
+      "patch": [{"op": "replace", "path": "/spec/selection", "value": {"kind": "automatic"}}],
+      "context": {"topology": "dispatcher"},
+      "expected": {"diagnostic": "interaction.selection.explicit-required", "rule": "TI-006"}
+    },
+    {
+      "id": "TI-M004", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.label.add", "labelRef": "unknown-label"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.label.unknown-ref", "rule": "TI-007"}
+    },
+    {
+      "id": "TI-M005", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "dimension.value.set", "dimensionRef": "priority", "value": "p9"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.dimension.unknown-value", "rule": "TI-007"}
+    },
+    {
+      "id": "TI-M006", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.title.set", "value": "First"}, {"kind": "issue.title.set", "value": "Second"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.duplicate", "rule": "TI-007"}
+    },
+    {
+      "id": "TI-M007", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.state.close", "reason": "completed"}, {"kind": "issue.state.reopen"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.conflict", "rule": "TI-007"}
+    },
+    {
+      "id": "TI-M008", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.assignee.add", "login": "example-user"}, {"kind": "issue.assignee.remove", "login": "EXAMPLE-USER"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.conflict", "rule": "TI-009"}
+    },
+    {
+      "id": "TI-M009", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.label.add", "labelRef": "documentation"}, {"kind": "issue.label.remove", "labelRef": "documentation"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.conflict", "rule": "TI-009"}
+    },
+    {
+      "id": "TI-M010", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.milestone.set", "number": 3}, {"kind": "issue.milestone.clear"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.conflict", "rule": "TI-007"}
+    },
+    {
+      "id": "TI-M011", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "dimension.value.set", "dimensionRef": "priority", "value": "p1"}, {"kind": "dimension.value.clear", "dimensionRef": "priority"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.conflict", "rule": "TI-007"}
+    },
+    {
+      "id": "TI-M012", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.parent.set", "parent": {"number": 10}}, {"kind": "issue.parent.remove", "parent": {"number": 11}}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.conflict", "rule": "TI-012"}
+    },
+    {
+      "id": "TI-M013", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "project.membership.remove"}, {"kind": "dimension.value.set", "dimensionRef": "priority", "value": "p1"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.action.conflict", "rule": "TI-011"}
+    },
+    {
+      "id": "TI-M014", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.parent.set", "parent": {"number": 42}}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.relationship.self", "rule": "TI-012"}
+    },
+    {
+      "id": "TI-M015", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.dependency.add", "blockingTask": {"number": 42}}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.relationship.self", "rule": "TI-012"}
+    },
+    {
+      "id": "TI-M016", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/selection", "value": {"kind": "automatic"}}, {"op": "replace", "path": "/spec/actions", "value": [{"kind": "issue.label.add", "labelRef": "course-materials"}]}],
+      "context": {"contract": "ordinary-full", "labelRole": "subproject"},
+      "expected": {"diagnostic": "interaction.selection.explicit-required", "rule": "TI-005"}
+    },
+    {
+      "id": "TI-M017", "base": "create", "patch": [],
+      "context": {"privacyResolution": "destination_missing"},
+      "expected": {"diagnostic": "privacy.companion.destination.required", "rule": "TI-020"}
+    },
+    {
+      "id": "TI-M018", "base": "change",
+      "patch": [{"op": "replace", "path": "/spec/actions", "value": [{"kind": "dimension.value.set", "dimensionRef": "class", "value": "task"}]}],
+      "context": {"contract": "ordinary-full"},
+      "expected": {"diagnostic": "interaction.dimension.unknown-ref", "rule": "TI-007"}
+    }
+  ]
+}

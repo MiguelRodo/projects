@@ -309,7 +309,7 @@ A plan proposes adding an issue to a Project based on snapshot S. Before apply, 
 - Derived agent guidance adds no authority and remains traceable to validated inputs.
 - Automated setup and ordinary project interaction are both first-class product outcomes.
 
-### Deferred to specialised issues
+### Specialised decision owners
 
 | Issue | Decision owner |
 | --- | --- |
@@ -321,14 +321,14 @@ A plan proposes adding an issue to a Project based on snapshot S. Before apply, 
 | #47 | Label, routing-label and label-based sub-project declarations |
 | #48 | Semantic project dimensions and provider bindings |
 | #49 | Automated setup and manual-action outcomes |
-| #50 | Ordinary task-interaction semantics and granular mutation scopes |
+| [#50](v1-task-interactions.md) | Ordinary task-interaction semantics and granular mutation scopes, now settled |
 | #34 | Version vocabulary, absent/null/empty/zero semantics, all defaults, normalisation, unknown-version and migration behaviour |
 | #51 | Concise derived agent-guidance projection and renderer contract |
 | #16 | Frozen v1 conformance corpus, semantic decision rows and expected diagnostics |
 | #31 | Supported legacy inventory and exact compatibility/migration fixtures |
 | #26 | Final structured report schema and CLI exit codes |
 
-No downstream issue may decide a deferred item implicitly. If implementation requires an answer that its named normative issue does not provide, work stops at that boundary and the normative issue is corrected first.
+No downstream issue may contradict a settled specialised specification or decide a remaining deferred item implicitly. If implementation requires an answer that its named normative issue does not provide, work stops at that boundary and the normative issue is corrected first.
 
 ## Normative invariant register
 

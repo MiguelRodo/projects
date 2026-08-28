@@ -4,7 +4,7 @@ Status: **normative pre-v1 specification**
 
 Issue: #15
 
-This document defines the collaborator-safe privacy policy that a participating repository may advertise in the v1 shared contract. It also defines the sole v1 association between a shared GitHub issue and an optional private companion record. It refines the [v1 conceptual model](v1-conceptual-model.md) without defining the private operator-profile wire format, a companion provider, content authoring or mutation execution.
+This document defines the collaborator-safe privacy policy that a participating repository may advertise in the v1 shared contract. It also defines the sole v1 association between a shared GitHub issue and an optional private companion record. It refines the [v1 conceptual model](v1-conceptual-model.md) without defining the private operator-profile wire format, a companion provider or content authoring. [V1 ordinary task interactions](v1-task-interactions.md) defines how a resolved private supplement composes with shared planning, execution, failure and recovery.
 
 The keywords **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT** and **MAY** are normative.
 
@@ -287,7 +287,7 @@ This specification does not define:
 - the private operator-profile file, storage location, permissions or destination references, owned by #32;
 - provider credentials or companion-provider APIs;
 - content authoring, classification UI or secret detection;
-- GitHub or companion mutations;
+- provider-specific GitHub or companion mutation payloads;
 - canonical normalised serialisation and privacy-safe migrations, owned by #34;
 - final cross-contract conformance packaging, owned by #16;
 - Go model or resolver APIs.

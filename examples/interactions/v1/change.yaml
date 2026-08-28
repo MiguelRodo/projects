@@ -1,0 +1,17 @@
+apiVersion: projectctl/v1
+kind: TaskChangeRequest
+spec:
+  contract:
+    authority: github.com
+    owner: {kind: organization, login: sample-org}
+    repository: project-config
+    ref: sample-work
+  task: {number: 42}
+  selection: {kind: explicit, targetRef: primary}
+  execution: {mode: apply}
+  actions:
+    - {kind: issue.title.set, value: Prepare the reviewed synthetic report}
+    - {kind: issue.assignee.add, login: example-user}
+    - {kind: issue.label.add, labelRef: course-materials}
+    - {kind: dimension.value.set, dimensionRef: priority, value: p0}
+    - {kind: issue.dependency.add, blockingTask: {number: 11}}

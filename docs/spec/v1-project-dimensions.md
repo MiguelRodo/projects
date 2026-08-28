@@ -340,7 +340,7 @@ Canonical output contains `dimensionRef`, `state`, and the canonical value appro
 
 ## Write and clear semantics
 
-#48 defines storage authority and required scope, not the ordinary request envelope owned by #50.
+#48 defines storage authority and required scope. [V1 ordinary task interactions](v1-task-interactions.md) defines the ordinary request envelope.
 
 For a requested canonical set or clear:
 
@@ -362,11 +362,11 @@ Scope mapping is exact:
 | `project_status` | `project.item.field.write` |
 | `issue_type` | `issue.type.write` |
 | `issue_field` | `issue.field.write` |
-| `issue_assignees` | Deferred to #50 |
-| `issue_parent` | Deferred to #50 |
+| `issue_assignees` | `issue.assignee.add` for one addition or `issue.assignee.remove` for one removal |
+| `issue_parent` | `issue.parent.set` for add or replace, or `issue.parent.remove` for removal |
 | `project_sub_issues_progress` | Never writable |
 
-An idempotent no-op requires no mutation scope. Scope is checked only for an effective write.
+An idempotent no-op requires no mutation scope. Scope is checked only for an effective write. [V1 ordinary task interactions](v1-task-interactions.md) defines the request actions, complete snapshot requirements, ordering and readback semantics for these bindings.
 
 ## Feature requirements
 

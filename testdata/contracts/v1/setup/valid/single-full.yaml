@@ -152,7 +152,7 @@ spec:
       - projects-v2
     mutations:
       - issue.create
-      - issue.relationship.create
+      - issue.parent.set
       - project.field.create
       - project.field.option.create
       - project.item.add
