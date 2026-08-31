@@ -91,6 +91,39 @@ Classic personal access tokens need `read:org` to list organisation issue fields
 
 ## Project fields
 
+`gh project` can create, list and delete fields, but it does not currently expose a command for editing the options of an existing single-select field. When the authorised outcome changes a field definition, use GraphQL `updateProjectV2Field`.
+
+This mutation replaces the supplied `singleSelectOptions` collection. To add one option without clearing existing item values:
+
+1. query the exact field and its complete option collection, including each option's `id`, `name`, `color` and `description`;
+2. re-query immediately before writing and stop if the field or option collection changed;
+3. send every existing option back unchanged and with its existing `id`, then append the new option without an `id`;
+4. re-query the complete option collection and affected Project items independently after writing;
+5. verify that every previous option ID and item value is preserved and that exactly one new option exists.
+
+Use this mutation shape with a JSON variables object assembled from the fresh query result:
+
+```graphql
+mutation AddSingleSelectOption(
+  $fieldId: ID!
+  $options: [ProjectV2SingleSelectFieldOptionInput!]!
+) {
+  updateProjectV2Field(
+    input: {fieldId: $fieldId, singleSelectOptions: $options}
+  ) {
+    projectV2Field {
+      ... on ProjectV2SingleSelectField {
+        id
+        name
+        options { id name color description }
+      }
+    }
+  }
+}
+```
+
+Do not omit existing option IDs, because GitHub uses them to preserve option identity and item values. Do not remove, rename or reorder another option unless that separate change is explicitly authorised.
+
 After discovering the current Project item, Project field and option IDs, update one single-select field:
 
 ```bash
