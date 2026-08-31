@@ -1,0 +1,117 @@
+# Repository contract
+
+Repository-specific GitHub Project configuration lives under `.projects/`. It contains only facts that differ between repositories. Common operating behaviour belongs in the skill.
+
+## Source precedence
+
+Use a local replacement skill only when this exact file exists:
+
+```text
+.projects/skills/github-project-admin/SKILL.md
+```
+
+The `.projects/` directory by itself never overrides the canonical skill.
+
+Always read `.projects/project.md` after selecting the skill.
+
+## Single-Project form
+
+Use this form when one repository resolves to one Project:
+
+```markdown
+# GitHub Project configuration
+
+| Key | Value |
+| --- | --- |
+| Contract version | 1 |
+| Mode | single |
+| Issue repository | octo-org/example |
+| Project owner | octo-org |
+| Owner type | organization |
+| Project number | 12 |
+| Project title | Example planning |
+| Routing | linked repository |
+| Privacy | repository |
+
+## Field locations
+
+| Common dimension | Provider location | Provider field |
+| --- | --- | --- |
+| Class | organization issue type | Issue Type |
+| Priority | organization issue field | Priority |
+| Status | project field | Status |
+| Workstream | project field | Workstream |
+| Due date | project field | Target date |
+
+## Priority mapping
+
+| Common value | Provider value |
+| --- | --- |
+| P0 | Urgent |
+| P1 | High |
+| P2 | Medium |
+| P3 | Low |
+
+## Governance
+
+- Exact user-requested changes may be applied without retrieving scope-design sources.
+- Keep private material out of this repository.
+```
+
+Use GitHub's provider spelling `organization` in the `Owner type` row. `Routing` may name a linked repository, one exact routing label, or another deterministic repository-specific rule.
+
+## Multi-Project form
+
+Use `.projects/project.md` as a dispatcher:
+
+```markdown
+# GitHub Project dispatcher
+
+| Key | Value |
+| --- | --- |
+| Contract version | 1 |
+| Mode | dispatcher |
+| Issue repository | octo-user/issues |
+| Privacy | private repository |
+
+## Routes
+
+| Project key | Routing label | Project number | Contract |
+| --- | --- | --- | --- |
+| alpha | project:alpha | 4 | .projects/projects/alpha.md |
+| beta | project:beta | 5 | .projects/projects/beta.md |
+```
+
+Each referenced file uses the single-Project form with `Mode` set to `project`. Route keys, routing labels and Project numbers must each be unique. A supplied label, key and number must resolve to the same row.
+
+## Field locations and mappings
+
+For each dimension, record the semantic name, provider location and exact provider field name. Typical locations are:
+
+- repository issue metadata;
+- organisation Issue Type;
+- organisation issue field;
+- Project field;
+- repository label;
+- native parent/sub-issue relationship.
+
+Do not store transient GraphQL node IDs, REST option IDs or credentials. Discover IDs and live options at operation time.
+
+The Priority table must contain P0, P1, P2 and P3 exactly once, with four distinct, non-empty provider values. Omit no value. When the provider uses `Urgent`, `High`, `Medium` and `Low`, use the default table. A repository may use an exact one-to-one override such as P0, P1, P2 and P3.
+
+## Governance and source rules
+
+Record only local constraints, for example:
+
+- whether issues may contain private material;
+- whether the repository is personal, shared or public;
+- whether assignment defaults exist;
+- whether a source must be consulted before inventing or restructuring scope;
+- whether routing labels or sub-project labels are required;
+- which external mirror is read-only.
+
+Do not repeat fresh inspection, narrow writes, stale refusal, preservation or readback rules. The skill already owns them.
+
+## Exceptional setup
+
+Use `.projects/setup.sh` only for prerequisites unique to this repository. It may call the shared skill setup, but must not copy it. Repository language runtimes, such as R, are separate from GitHub Project administration unless a real Project operation depends on them.

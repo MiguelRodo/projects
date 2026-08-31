@@ -1,76 +1,71 @@
-# `projects` / `projectctl`
+# `projects`
 
-`projects` is the public home of a portable, agent-neutral protocol for automated GitHub project setup and consistent ordinary interaction, plus a Go administration core and `projectctl` reference client.
+`projects` is the canonical home of an agent-neutral skill for safe GitHub issue and Project administration, plus the roadmap for a future setup and command-reliability CLI.
 
 ## Status
 
-This repository is in **pre-v1 architecture and contract design**.
+The first supported surface is the [`github-project-admin` Agent Skill](skills/github-project-admin/SKILL.md). It lets capable agents act on short outcome requests while applying one shared procedure for exact resolution, fresh inspection, narrow mutations, preservation, stale-state refusal and verified readback.
 
-There is currently no supported CLI, Go library, contract format or release to install. The discarded pre-v1 workspace manager had no users or releases and is not part of the product. Implementation begins only after the normative protocol issues and conformance fixtures are merged.
+There is no supported CLI or Go library yet. The authoritative roadmap and execution order are in [issue #1](../../issues/1), with the post-dogfood architecture decision in [issue #67](../../issues/67).
 
-The authoritative roadmap and execution order are in [issue #1](../../issues/1).
+## Install the skill
 
-## Product boundary
+With GitHub CLI 2.90.0 or newer:
 
-| Interface or layer | Purpose |
+```bash
+gh skill install MiguelRodo/projects github-project-admin --agent codex --scope user
+```
+
+To install every skill published by this repository:
+
+```bash
+gh skill install MiguelRodo/projects --all --agent codex --scope user
+```
+
+The skill is agent-neutral. `--agent codex` is one installation adapter, not part of its semantic contract.
+
+Run its generic environment preflight from an installed or checked-out copy:
+
+```bash
+bash skills/github-project-admin/scripts/setup.sh --repository OWNER/REPO
+```
+
+The host supplies credentials and network access. The setup installs or verifies `gh`, checks authentication and optional runtime context, and does not require a repository's language toolchain.
+
+## Repository contract
+
+Each participating repository keeps only its local topology and mappings under `.projects/`:
+
+```text
+.projects/project.md
+```
+
+A multi-Project issue store may also use `.projects/projects/*.md`. Repository `AGENTS.md` files and provider Project instructions should only route Project-administration work to the shared skill and the local `.projects/` contract.
+
+The default cross-provider Priority vocabulary is lossless:
+
+| Common value | Default provider value |
 | --- | --- |
-| Shared protocol | Collaborator-safe, versioned project topology, structure, mappings and interaction semantics |
-| Private operator profile | Per-user privacy choices, private destinations, local mappings and optional provider configuration |
-| Derived agent guidance | Concise deterministic project instructions derived from validated contracts |
-| Environment-specific execution adapter | Direct provider tools, the portable client or an explicit optional bridge |
-| Portable Go core | Parsing, normalisation, validation, resolution, planning, execution and reporting |
-| Provider adapters | GitHub first, with optional private or external providers behind interfaces |
-| `projectctl` | Portable reference implementation and setup/administration client over the reusable core |
-| Future application | Graphical interface over the same core after v1 is proven |
+| P0 | Urgent |
+| P1 | High |
+| P2 | Medium |
+| P3 | Low |
 
-GitHub issues and GitHub Projects are the authoritative shared task surface. Private control planes are optional consumers and must never become a prerequisite for ordinary collaborators. `projectctl` may be comprehensive, but it is not a mandatory runtime dependency for an agent that can apply the same protocol safely through provider tools.
+Repositories may declare a complete one-to-one override.
 
-The primary v1 product outcomes are:
+## Execution surfaces
 
-1. automate creation or adoption of the declared repository/Project structure as far as provider APIs allow, with unsupported manual actions reported explicitly; and
-2. let capable agents and operators read and manage ordinary project work consistently across collaborator/private, single/multi-Project and central/repository-backed scenarios.
+The skill currently uses proven native `gh`, versioned REST and GraphQL operations. If a conversational surface cannot mutate GitHub, it returns the smallest executable command block governed by the same procedure.
 
-## Participation paths
+A future CLI may be named `projects`, or `projectscli` if a collision review requires it. Its initial jobs are setup assistance and reliable execution or generation of Project-administration commands. It will be an optional backend for the skill, not a prerequisite for capable agents.
 
-### Collaborator or external agent
+## Earlier design material
 
-Work through normal GitHub issues and pull requests. A capable agent may use suitable GitHub/provider tools directly from the shared contract and concise generated guidance. No private operator configuration, external provider access or local binary is required.
-
-### Repository maintainer
-
-Adopt or bootstrap a repository using the shared contract and `projectctl`, review plans before writes, and verify resulting GitHub state. Provider surfaces without a supported automation API are returned as explicit manual actions rather than false successes.
-
-### Full-system operator
-
-Add a private operator profile, private source routing, agenda rules or optional providers without placing private destinations or account-specific identifiers in shared files.
-
-## Architecture
-
-The normative layer, package and dependency boundaries are defined in [docs/architecture/v1-boundaries.md](docs/architecture/v1-boundaries.md).
-
-The normative terminology, authority, identity and processing model is defined in [docs/spec/v1-conceptual-model.md](docs/spec/v1-conceptual-model.md).
-
-The shared single-Project wire contract and schema are defined in [docs/spec/v1-single-project-contract.md](docs/spec/v1-single-project-contract.md).
-
-The dispatcher extension and deterministic multi-Project routing semantics are defined in [docs/spec/v1-routing.md](docs/spec/v1-routing.md).
-
-Collaborator-safe labels, overall-Project routing labels and optional label-based sub-projects are defined in [docs/spec/v1-labels-and-subprojects.md](docs/spec/v1-labels-and-subprojects.md).
-
-Provider-neutral task dimensions and target-specific Project, Issue Type and Issue Field bindings are defined in [docs/spec/v1-project-dimensions.md](docs/spec/v1-project-dimensions.md).
-
-Create-once Project initialisation, bootstrap, adoption and explicit manual-action outcomes are defined in [docs/spec/v1-setup-outcomes.md](docs/spec/v1-setup-outcomes.md).
-
-Provider-neutral ordinary task inspection, listing, creation and safe mutation semantics are defined in [docs/spec/v1-task-interactions.md](docs/spec/v1-task-interactions.md). Its machine request schema is [schemas/v1/task-interaction.schema.json](schemas/v1/task-interaction.schema.json), with synthetic [inspect](examples/interactions/v1/inspect.yaml), [create](examples/interactions/v1/create.yaml) and [change](examples/interactions/v1/change.yaml) examples.
-
-The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
-
-The private operator-profile wire format, provider-neutral bindings and companion-provider contract are defined in [docs/spec/v1-operator-profile.md](docs/spec/v1-operator-profile.md).
-
-The intended executable is `projectctl`. There is no `projects` compatibility binary and no multi-repository clone/sync workspace-manager scope. Direct-provider agents and optional execution bridges remain separate adapters over the same protocol.
+The documents under `docs/spec/v1/`, their schemas and fixtures record the more elaborate pre-dogfood protocol design. They remain useful evidence but are not the active ordinary-administration contract. Issue #67 governs which parts are retained, narrowed or retired.
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Work is issue-driven, one issue per PR, and foundational semantics must be merged before dependent implementation begins.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Work is issue-driven and uses one issue per PR.
 
 Security and privacy reports follow [SECURITY.md](SECURITY.md).
 

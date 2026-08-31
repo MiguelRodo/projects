@@ -1,0 +1,156 @@
+# Proven GitHub operations
+
+Read this reference before performing or returning a mutation. Substitute values only after resolving the repository contract and inspecting live state. Never hard-code credentials or reuse provider IDs from examples.
+
+Use the current stable GitHub REST API version declared by GitHub documentation. The examples below use `2026-03-10`.
+
+## Baseline inspection
+
+Inspect ordinary issue state:
+
+```bash
+gh issue view "$ISSUE_NUMBER" --repo "$REPOSITORY" \
+  --json number,title,state,labels,assignees,milestone,projectItems,url
+```
+
+Inspect the REST issue identity when a database ID is required:
+
+```bash
+gh api "repos/$REPOSITORY/issues/$ISSUE_NUMBER" \
+  --jq '{id,number,state,url:.html_url}'
+```
+
+For Project identity and fields, GraphQL works for both user-owned and organisation-owned Projects and exposes option IDs:
+
+```bash
+gh api graphql \
+  -f query='query($login: String!, $number: Int!) {
+    user(login: $login) {
+      projectV2(number: $number) { ...ProjectData }
+    }
+    organization(login: $login) {
+      projectV2(number: $number) { ...ProjectData }
+    }
+  }
+  fragment ProjectData on ProjectV2 {
+    id number title
+    fields(first: 100) {
+      nodes {
+        __typename
+        ... on ProjectV2FieldCommon { id name dataType }
+        ... on ProjectV2SingleSelectField { options { id name } }
+      }
+      pageInfo { hasNextPage }
+    }
+  }' \
+  -F login="$PROJECT_OWNER" \
+  -F number="$PROJECT_NUMBER"
+```
+
+Require exactly one non-null Project. Stop if field pagination reports another page rather than silently ignoring fields.
+
+`gh project item-list "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --format json --limit 1000` is useful when it succeeds, but inspect pagination and do not assume it includes organisation-native issue fields.
+
+Observed provider limitation: with GitHub CLI 2.98.0, `gh project field-list NUMBER --owner USER --format json` can fail with `unknown owner type` for a user-owned Project. Use GraphQL. Do not interpret that message as proof that the Project is absent.
+
+## Organisation-native issue fields
+
+Discover the field and its exact option names immediately before use:
+
+```bash
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "orgs/$ORGANIZATION/issue-fields"
+```
+
+Inspect all current issue-field values:
+
+```bash
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "repos/$REPOSITORY/issues/$ISSUE_NUMBER/issue-field-values"
+```
+
+Use `POST` to add or update only the named field. GitHub accepts the exact single-select option name as `value`:
+
+```bash
+gh api --method POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "repos/$REPOSITORY/issues/$ISSUE_NUMBER/issue-field-values" \
+  --input - <<JSON
+{"issue_field_values":[{"field_id":$ISSUE_FIELD_ID,"value":"$PROVIDER_VALUE"}]}
+JSON
+```
+
+Do not use `PUT` for a one-field change. The set endpoint replaces all existing issue-field values. Read the values again with `GET` and verify the field ID, option name and preservation of other values.
+
+Classic personal access tokens need `read:org` to list organisation issue fields. Fine-grained credentials need the relevant organisation Issue Fields permission plus repository Issues write permission for mutations. Report the exact permission failure instead of guessing.
+
+## Project fields
+
+After discovering the current Project item, Project field and option IDs, update one single-select field:
+
+```bash
+gh project item-edit \
+  --id "$PROJECT_ITEM_ID" \
+  --project-id "$PROJECT_ID" \
+  --field-id "$PROJECT_FIELD_ID" \
+  --single-select-option-id "$OPTION_ID"
+```
+
+For a date field, replace the final option with `--date YYYY-MM-DD`. For a name-based interactive form, `gh project item-edit NUMBER --owner OWNER --url ISSUE_URL --field FIELD --value VALUE` is available, but ID-based scripts make the exact target easier to audit.
+
+Re-query the item and affected field after the mutation. Do not use the command's success status as readback.
+
+Adding an issue to a Project is a separate mutation:
+
+```bash
+gh project item-add "$PROJECT_NUMBER" \
+  --owner "$PROJECT_OWNER" \
+  --url "$ISSUE_URL"
+```
+
+Perform it only when membership itself is authorised or necessarily implied by an authorised Project-field change and allowed by the local contract. Read membership back before editing fields.
+
+## Ordinary issue mutations
+
+Prefer the narrow native command when it owns only the requested property, for example:
+
+```bash
+gh issue edit "$ISSUE_NUMBER" --repo "$REPOSITORY" --add-assignee "$LOGIN"
+gh issue close "$ISSUE_NUMBER" --repo "$REPOSITORY" --reason completed
+gh issue reopen "$ISSUE_NUMBER" --repo "$REPOSITORY"
+```
+
+For labels, use additive or subtractive flags rather than replacing the full label set. Read the issue again after the command.
+
+Issue bodies and comments are collaborative text. Replace a body only when the request explicitly authorises that exact replacement and the pre-write body still matches the inspected version.
+
+## Native hierarchy
+
+Resolve the child issue's current REST database ID, inspect both issues and their existing hierarchy, then add one sub-issue:
+
+```bash
+gh api --method POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "repos/$REPOSITORY/issues/$PARENT_NUMBER/sub_issues" \
+  -F sub_issue_id="$CHILD_DATABASE_ID"
+```
+
+Verify through the sub-issues endpoint or a GraphQL issue query. Do not represent the relationship only with a Markdown checklist.
+
+## Command-returning surfaces
+
+When the current surface cannot write:
+
+1. resolve every safe value it can read;
+2. return only the commands required for the delta and readback;
+3. keep discovered non-secret values literal;
+4. leave a placeholder only for a fact the user must supply;
+5. state that the command has not run.
+
+Do not return a broad script that rewrites unrelated state when one focused `gh` operation and one readback suffice.
