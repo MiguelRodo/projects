@@ -20,13 +20,19 @@ gh api "repos/$REPOSITORY/issues/$ISSUE_NUMBER" \
   --jq '{id,number,state,url:.html_url}'
 ```
 
-For Project identity and fields, GraphQL works for both user-owned and organisation-owned Projects and exposes option IDs. Use the exact `Owner type` from the repository contract to select one GraphQL root. Do not query both roots in one request: GitHub may reject the inapplicable root instead of returning `null`.
+For Project identity and fields, GraphQL works for both user-owned and organisation-owned Projects and exposes option IDs. Discover the owner type first, then select exactly one GraphQL root. Do not query both roots in one request: GitHub may reject the inapplicable root instead of returning `null`.
 
 ```bash
-case "$PROJECT_OWNER_TYPE" in
+observed_owner_type="$(gh api "users/$PROJECT_OWNER" --jq .type)"
+case "$observed_owner_type" in
+  User) project_owner_type="user" ;;
+  Organization) project_owner_type="organization" ;;
+  *) echo "Unsupported Project owner type: $observed_owner_type" >&2; exit 1 ;;
+esac
+
+case "$project_owner_type" in
   user) project_owner_root="user" ;;
   organization) project_owner_root="organization" ;;
-  *) echo "PROJECT_OWNER_TYPE must be user or organization" >&2; exit 1 ;;
 esac
 
 gh api graphql \
@@ -50,7 +56,7 @@ gh api graphql \
   -F number="$PROJECT_NUMBER"
 ```
 
-Require one non-null Project at that declared root. If no contract supplies the type, discover it first with `gh api "users/$PROJECT_OWNER" --jq .type` and map only `User` to `user` or `Organization` to `organization`. Stop if field pagination reports another page rather than silently ignoring fields.
+If the repository contract declares `Owner type`, compare it with the discovered value and stop on disagreement. Require one non-null Project at the discovered root. Stop if field pagination reports another page rather than silently ignoring fields.
 
 `gh project item-list "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --format json --limit 1000` is useful when it succeeds, but inspect pagination and do not assume it includes organisation-native issue fields.
 
