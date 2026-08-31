@@ -98,6 +98,25 @@ Do not store transient GraphQL node IDs, REST option IDs or credentials. Discove
 
 The Priority table must contain P0, P1, P2 and P3 exactly once, with four distinct, non-empty provider values. Omit no value. When the provider uses `Urgent`, `High`, `Medium` and `Low`, use the default table. A repository may use an exact one-to-one override such as P0, P1, P2 and P3.
 
+## Option colours
+
+A repository may make a single-select palette exact by using an `Option` and `Colour` table in the field's values section:
+
+```markdown
+## Class values
+
+| Option | Colour |
+| --- | --- |
+| Epic | BLUE |
+| Task | YELLOW |
+| Bug | RED |
+| Documentation | GREEN |
+```
+
+Supported colours are `BLUE`, `GRAY`, `GREEN`, `ORANGE`, `PINK`, `PURPLE`, `RED` and `YELLOW`. Reusing a colour is allowed.
+
+If a contract lists values without colours, colour is not a contract constraint. When creating or organising a Project, an agent may choose stable colours without asking if the choice is purely presentational. Prefer familiar meanings where they fit: red for bugs or blocked work, blue for epics or enhancements, yellow or orange for ordinary work in progress, green for documentation or reports, purple or pink for research and data, and grey for neutral governance. Preserve useful existing colours unless the requested outcome includes changing them.
+
 ## Governance and source rules
 
 Record only local constraints, for example:
