@@ -6,7 +6,6 @@
 | Mode | single |
 | Issue repository | MiguelRodo/projects |
 | Project owner | MiguelRodo |
-| Owner type | user |
 | Project number | 40 |
 | Project title | projects |
 | Routing | Project 40 membership; no routing label |
