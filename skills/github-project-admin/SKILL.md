@@ -42,6 +42,8 @@ Use this default common Priority vocabulary unless the resolved contract declare
 
 Mappings must be one-to-one. Never collapse two provider values into one common value or use different read and write mappings. Discover the exact live provider option before a write and stop if it does not match the contract.
 
+For single-select option colours, follow any exact palette in the repository contract. If none is declared and the choice is only presentational, choose stable colours that fit the option meanings without asking the user to design a palette. Preserve useful existing colours. Read [the repository contract reference](references/repository-contract.md) when creating or changing option definitions.
+
 ## Choose an execution surface
 
 Use the first capable surface:
