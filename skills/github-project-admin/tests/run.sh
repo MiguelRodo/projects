@@ -16,6 +16,10 @@ if bash "$validator" "$test_dir/fixtures/invalid" >/dev/null 2>&1; then
   echo "ERROR: lossy Priority mapping unexpectedly validated" >&2
   exit 1
 fi
+if bash "$validator" "$test_dir/fixtures/invalid-dispatcher" >/dev/null 2>&1; then
+  echo "ERROR: mismatched dispatcher leaf unexpectedly validated" >&2
+  exit 1
+fi
 
 grep -Fqx 'name: github-project-admin' "$skill_dir/SKILL.md"
 grep -Fq 'Set example#313 to P2.' "$test_dir/short-requests.md"
@@ -73,7 +77,7 @@ chmod 0755 "$test_tmp_dir/bin/gh"
 
 secret_value="test-token-must-not-appear"
 PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
-  bash "$setup" --skip-install --no-contract \
+  bash -x "$setup" --skip-install --no-contract \
   --repository octo-org/example \
   --project-owner octo-org --project-number 12 \
   --project-title "Example planning" \

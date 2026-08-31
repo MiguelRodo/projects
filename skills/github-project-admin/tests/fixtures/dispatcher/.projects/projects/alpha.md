@@ -4,6 +4,7 @@
 | --- | --- |
 | Contract version | 1 |
 | Mode | project |
+| Project key | alpha |
 | Issue repository | octo-user/issues |
 | Project owner | octo-user |
 | Owner type | user |

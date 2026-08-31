@@ -274,6 +274,8 @@ fi
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ "$contract_root" != "-" ]]; then
+  [[ -f "$script_dir/validate-contract.sh" ]] ||
+    die "contract validator is missing; use the complete skill or pass --no-contract"
   if [[ -n "$contract_root" ]]; then
     bash "$script_dir/validate-contract.sh" "$contract_root"
   elif [[ -f .projects/project.md ]]; then

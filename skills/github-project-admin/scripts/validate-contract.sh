@@ -86,6 +86,9 @@ validate_project_file() {
   [[ "$version" == "1" ]] || die "$file has unsupported Contract version"
   mode="$(require_table_value "$file" "Mode")"
   [[ "$mode" == "$expected_mode" ]] || die "$file must use Mode $expected_mode"
+  if [[ "$expected_mode" == "project" ]]; then
+    require_table_value "$file" "Project key" >/dev/null
+  fi
 
   repository="$(require_table_value "$file" "Issue repository")"
   [[ "$repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] ||
@@ -115,7 +118,8 @@ validate_project_file() {
 
 validate_dispatcher() {
   local file="$1" root="$2" version mode repository route_count=0
-  local project_key routing_label project_number contract extra
+  local project_key routing_label project_number contract extra leaf
+  local leaf_key leaf_label leaf_number leaf_repository
   local keys=$'\n' labels=$'\n' numbers=$'\n'
 
   version="$(require_table_value "$file" "Contract version")"
@@ -148,7 +152,16 @@ validate_dispatcher() {
     labels+="$routing_label"$'\n'
     numbers+="$project_number"$'\n'
 
-    validate_project_file "$root/$contract" project
+    leaf="$root/$contract"
+    validate_project_file "$leaf" project
+    leaf_key="$(require_table_value "$leaf" "Project key")"
+    leaf_label="$(require_table_value "$leaf" "Routing")"
+    leaf_number="$(require_table_value "$leaf" "Project number")"
+    leaf_repository="$(require_table_value "$leaf" "Issue repository")"
+    [[ "$leaf_key" == "$project_key" ]] || die "$file route key disagrees with $contract"
+    [[ "$leaf_label" == "label:$routing_label" ]] || die "$file route label disagrees with $contract"
+    [[ "$leaf_number" == "$project_number" ]] || die "$file route number disagrees with $contract"
+    [[ "$leaf_repository" == "$repository" ]] || die "$file issue repository disagrees with $contract"
     ((route_count += 1))
   done < <(awk '
     /^## Routes[[:space:]]*$/ { in_routes = 1; next }

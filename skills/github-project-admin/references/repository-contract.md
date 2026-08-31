@@ -82,7 +82,7 @@ Use `.projects/project.md` as a dispatcher:
 | beta | project:beta | 5 | .projects/projects/beta.md |
 ```
 
-Each referenced file uses the single-Project form with `Mode` set to `project`. Route keys, routing labels and Project numbers must each be unique. A supplied label, key and number must resolve to the same row.
+Each referenced file uses the single-Project form with `Mode` set to `project` and adds a `Project key` metadata row. Its key, `label:` routing value, Project number and issue repository must match the dispatcher row exactly. Route keys, routing labels and Project numbers must each be unique. A supplied label, key and number must resolve to the same row.
 
 ## Field locations and mappings
 
