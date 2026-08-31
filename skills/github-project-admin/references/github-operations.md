@@ -181,9 +181,29 @@ Verify through the sub-issues endpoint or a GraphQL issue query. Do not represen
 When the current surface cannot write:
 
 1. resolve every safe value it can read;
-2. return only the commands required for the delta and readback;
+2. return only the commands required for the delta and readback in one terminal-ready block;
 3. keep discovered non-secret values literal;
 4. leave a placeholder only for a fact the user must supply;
 5. state that the command has not run.
 
-Do not return a broad script that rewrites unrelated state when one focused `gh` operation and one readback suffice.
+Ordinary handoffs are commands to paste directly into a terminal, not files for the user to create. Do not add a shebang, `set -e`, `set -u`, `set -o pipefail` or script boilerplate to a short command block. Use a named script only when the operation is long enough that pasting it would be awkward or unreliable.
+
+Check authentication at the start without forcing a new login when `gh` is already authenticated. A short block may use this shape:
+
+```bash
+if gh auth status; then
+  # focused operation and independent readback
+else
+  echo "Authenticate gh, then paste this block again."
+fi
+```
+
+Prefer commands that are safe to paste again after a partial run. Inspect before creating a resource, skip a change that already has the requested value, and keep the final readback useful even when the mutation became a no-op. Do not blindly retry an uncertain create.
+
+If a pasted block fails, accept either the complete terminal output or the exact command where it stopped. Re-inspect live state because earlier commands may already have succeeded, then return only the corrected or remaining copy-paste commands. Do not make the user recreate a script merely to recover.
+
+Avoid Python when `gh --json`, `--jq`, shell or `jq` is simpler. When Python is genuinely useful, discover an available command from `python3`, `python` and `py` rather than assuming its name or version.
+
+If a failure reveals a reusable error mode in this skill or its provider recipes, offer to prepare a focused pull request for `MiguelRodo/projects`. Do not create the issue or pull request unless the user explicitly accepts. If accepted, remove credentials and private repository content from the reproduction.
+
+Do not return a broad command block that rewrites unrelated state when one focused `gh` operation and one readback suffice.

@@ -114,4 +114,16 @@ Do not repeat fresh inspection, narrow writes, stale refusal, preservation or re
 
 ## Exceptional setup
 
-Use `.projects/setup.sh` only for prerequisites unique to this repository. It may call the shared skill setup, but must not copy it. Repository language runtimes, such as R, are separate from GitHub Project administration unless a real Project operation depends on them.
+Use `.projects/setup.sh` only for prerequisites unique to this repository. The shared `scripts/setup.sh` discovers it automatically from the repository root.
+
+By default the local script extends the shared setup and runs after the common GitHub checks. It must not call or copy the shared setup.
+
+To replace the common setup entirely, put this exact marker within the first 20 lines:
+
+```bash
+# github-project-admin: override
+```
+
+In override mode the shared entry point disables shell tracing, finds the repository and immediately runs `.projects/setup.sh`; it does not install `gh`, check authentication or validate the contract. The local script receives `PROJECTS_REPOSITORY_ROOT` and `PROJECTS_SETUP_MODE` in its environment.
+
+Keep local setup idempotent so rerunning it after a partial failure is safe. Skill installation and updates must never edit or delete `.projects/setup.sh`. Repository language runtimes, such as R, remain separate from GitHub Project administration unless a real Project operation depends on them.

@@ -22,6 +22,7 @@ if bash "$validator" "$test_dir/fixtures/invalid-dispatcher" >/dev/null 2>&1; th
 fi
 
 grep -Fqx 'name: github-project-admin' "$skill_dir/SKILL.md"
+test -f "$skill_dir/README.md"
 grep -Fq 'Set example#313 to P2.' "$test_dir/short-requests.md"
 grep -Fq 'P3 | Low' "$skill_dir/SKILL.md"
 
@@ -43,6 +44,9 @@ case "${1:-}" in
     ;;
   project)
     [[ "${2:-}" == "--help" ]]
+    ;;
+  auth)
+    [[ "${2:-}" == "status" ]]
     ;;
   api)
     if [[ "${2:-}" == "user" ]]; then
@@ -91,5 +95,47 @@ fi
 grep -Fq 'preflight passed' "$test_tmp_dir/setup.log"
 grep -Fq 'Verified repository: octo-org/example.' "$test_tmp_dir/setup.log"
 grep -Fq 'Verified Project: octo-org/12.' "$test_tmp_dir/setup.log"
+
+PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
+  bash "$setup" --skip-install \
+  --contract-root "$test_dir/fixtures/single" \
+  >"$test_tmp_dir/contract-setup.log" 2>&1
+grep -Fq 'Verified repository: octo-org/example.' "$test_tmp_dir/contract-setup.log"
+grep -Fq 'Verified Project: octo-org/12.' "$test_tmp_dir/contract-setup.log"
+
+mkdir -p "$test_tmp_dir/extend/.projects"
+cat >"$test_tmp_dir/extend/.projects/setup.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '%s:%s\n' "$PROJECTS_SETUP_MODE" "$PROJECTS_REPOSITORY_ROOT" >"$LOCAL_SETUP_LOG"
+EOF
+extend_setup_sha="$(sha256sum "$test_tmp_dir/extend/.projects/setup.sh" | awk '{print $1}')"
+(
+  cd "$test_tmp_dir/extend"
+  PATH="$test_tmp_dir/bin:$PATH" LOCAL_SETUP_LOG="$test_tmp_dir/extend.log" \
+    bash "$setup" --skip-install --no-contract --no-repository \
+    >"$test_tmp_dir/extend-output.log" 2>&1
+)
+grep -Fq "extend:$test_tmp_dir/extend" "$test_tmp_dir/extend.log"
+grep -Fq 'Running repository setup (extend)' "$test_tmp_dir/extend-output.log"
+[[ "$(sha256sum "$test_tmp_dir/extend/.projects/setup.sh" | awk '{print $1}')" == "$extend_setup_sha" ]]
+
+mkdir -p "$test_tmp_dir/override/.projects"
+cat >"$test_tmp_dir/override/.projects/setup.sh" <<'EOF'
+#!/usr/bin/env bash
+# github-project-admin: override
+printf '%s:%s\n' "$PROJECTS_SETUP_MODE" "$PROJECTS_REPOSITORY_ROOT" >"$LOCAL_SETUP_LOG"
+EOF
+(
+  cd "$test_tmp_dir/override"
+  LOCAL_SETUP_LOG="$test_tmp_dir/override.log" \
+    bash "$setup" --skip-install --no-contract --no-repository \
+    >"$test_tmp_dir/override-output.log" 2>&1
+)
+grep -Fq "override:$test_tmp_dir/override" "$test_tmp_dir/override.log"
+grep -Fq 'Repository override setup completed.' "$test_tmp_dir/override-output.log"
+if grep -Fq 'preflight passed' "$test_tmp_dir/override-output.log"; then
+  echo "ERROR: override setup unexpectedly ran the shared preflight" >&2
+  exit 1
+fi
 
 echo "github-project-admin tests passed"

@@ -21,6 +21,9 @@ skip_install=false
 skill_source=""
 skill_agent=""
 skill_scope="user"
+repository_root=""
+local_setup=""
+local_setup_mode="none"
 
 die() {
   echo "ERROR: $*" >&2
@@ -45,6 +48,35 @@ Options:
   --scope SCOPE              Skill scope: user or project (default: user).
   --help                     Show this help.
 EOF
+}
+
+contract_table_value() {
+  local file="$1" wanted="$2"
+  awk -F'|' -v wanted="$wanted" '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+    /^\|/ {
+      key = trim($2)
+      value = trim($3)
+      if (key == wanted) {
+        print value
+        exit
+      }
+    }
+  ' "$file"
+}
+
+run_local_setup() {
+  echo "Running repository setup ($local_setup_mode): .projects/setup.sh"
+  (
+    cd "$repository_root"
+    PROJECTS_REPOSITORY_ROOT="$repository_root" \
+      PROJECTS_SETUP_MODE="$local_setup_mode" \
+      bash "$local_setup"
+  )
 }
 
 while (($#)); do
@@ -126,6 +158,76 @@ if [[ -n "$skill_source" || -n "$skill_agent" ]]; then
   [[ -n "$skill_source" && -n "$skill_agent" ]] ||
     die "--install-skill-from and --agent must be supplied together"
 fi
+
+if [[ "${GITHUB_PROJECT_ADMIN_SETUP_ACTIVE:-}" == "1" ]]; then
+  die "repository setup called the shared setup recursively"
+fi
+export GITHUB_PROJECT_ADMIN_SETUP_ACTIVE=1
+
+if [[ -n "$contract_root" && "$contract_root" != "-" ]]; then
+  [[ -d "$contract_root" ]] || die "contract root is not a directory: $contract_root"
+  repository_root="$(cd "$contract_root" && pwd)"
+elif command -v git >/dev/null 2>&1 &&
+     git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  repository_root="$(git rev-parse --show-toplevel)"
+else
+  repository_root="$(pwd)"
+fi
+
+local_setup="$repository_root/.projects/setup.sh"
+if [[ -f "$local_setup" ]]; then
+  if head -n 20 "$local_setup" |
+     grep -Eq '^[[:space:]]*#[[:space:]]*github-project-admin:[[:space:]]*override[[:space:]]*$'; then
+    local_setup_mode="override"
+  else
+    local_setup_mode="extend"
+  fi
+fi
+
+if [[ "$local_setup_mode" == "override" ]]; then
+  run_local_setup
+  echo "Repository override setup completed."
+  exit 0
+fi
+
+main_contract="$repository_root/.projects/project.md"
+if [[ "$contract_root" != "-" && -f "$main_contract" ]]; then
+  contract_mode="$(contract_table_value "$main_contract" "Mode")"
+  contract_repository="$(contract_table_value "$main_contract" "Issue repository")"
+  [[ -n "$contract_repository" ]] || die "$main_contract has no Issue repository"
+
+  if [[ -n "$repository" && "$repository" != "$contract_repository" ]]; then
+    die "--repository disagrees with $main_contract"
+  fi
+  repository="$contract_repository"
+  discover_repository=false
+
+  if [[ "$contract_mode" == "single" ]]; then
+    contract_owner="$(contract_table_value "$main_contract" "Project owner")"
+    contract_number="$(contract_table_value "$main_contract" "Project number")"
+    contract_title="$(contract_table_value "$main_contract" "Project title")"
+
+    [[ -z "$project_owner" || "$project_owner" == "$contract_owner" ]] ||
+      die "--project-owner disagrees with $main_contract"
+    [[ -z "$project_number" || "$project_number" == "$contract_number" ]] ||
+      die "--project-number disagrees with $main_contract"
+    [[ -z "$project_title" || "$project_title" == "$contract_title" ]] ||
+      die "--project-title disagrees with $main_contract"
+
+    project_owner="$contract_owner"
+    project_number="$contract_number"
+    project_title="$contract_title"
+  fi
+fi
+
+if [[ -n "$project_owner" || -n "$project_number" || -n "$project_title" ]]; then
+  [[ -n "$project_owner" && -n "$project_number" ]] ||
+    die "Project owner and number must resolve together"
+fi
+[[ -z "$project_number" || "$project_number" =~ ^[1-9][0-9]*$ ]] ||
+  die "Project number must be a positive integer"
+[[ -z "$repository" || "$repository" =~ ^[^/[:space:]]+/[^/[:space:]]+$ ]] ||
+  die "repository must use OWNER/REPO form"
 
 cleanup() {
   if [[ -n "$setup_tmp_dir" && "$setup_tmp_dir" != "/" && -d "$setup_tmp_dir" ]]; then
@@ -231,6 +333,8 @@ fi
 command -v gh >/dev/null 2>&1 || die "gh installation failed"
 gh project --help >/dev/null 2>&1 || die "this gh build does not provide Project commands"
 
+gh auth status >/dev/null 2>&1 ||
+  die "GitHub is not authenticated; authenticate gh or configure a task-scoped GH_TOKEN"
 login="$(gh api user --jq .login 2>/dev/null)" ||
   die "GitHub authentication failed; configure a task-scoped GH_TOKEN or authenticate gh"
 [[ -n "$login" ]] || die "GitHub authentication returned no login"
@@ -269,7 +373,7 @@ fi
 
 if [[ -n "$skill_source" ]]; then
   gh skill install "$skill_source" github-project-admin \
-    --agent "$skill_agent" --scope "$skill_scope"
+    --agent "$skill_agent" --scope "$skill_scope" --force
 fi
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -278,9 +382,13 @@ if [[ "$contract_root" != "-" ]]; then
     die "contract validator is missing; use the complete skill or pass --no-contract"
   if [[ -n "$contract_root" ]]; then
     bash "$script_dir/validate-contract.sh" "$contract_root"
-  elif [[ -f .projects/project.md ]]; then
-    bash "$script_dir/validate-contract.sh" .
+  elif [[ -f "$repository_root/.projects/project.md" ]]; then
+    bash "$script_dir/validate-contract.sh" "$repository_root"
   fi
+fi
+
+if [[ "$local_setup_mode" == "extend" ]]; then
+  run_local_setup
 fi
 
 echo "GitHub Project-administration preflight passed for $login."
