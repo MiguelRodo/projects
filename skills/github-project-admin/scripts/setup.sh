@@ -13,6 +13,7 @@ readonly GH_CLI_SHA256_ARM64="cf689084f3a3618f7eae4a2420d335d74626d65f5e594b9828
 setup_tmp_dir=""
 repository=""
 project_owner=""
+project_owner_type=""
 project_number=""
 project_title=""
 contract_root=""
@@ -38,6 +39,7 @@ Options:
   --repository OWNER/REPO    Verify access to this repository.
   --no-repository            Do not discover or verify a repository.
   --project-owner LOGIN      Verify this user or organisation Project owner.
+  --project-owner-type TYPE  Owner type: user or organization.
   --project-number NUMBER    Verify this Project number.
   --project-title TITLE      Also verify the exact Project title.
   --contract-root DIRECTORY  Validate DIRECTORY/.projects/project.md.
@@ -96,6 +98,11 @@ while (($#)); do
       project_owner="$2"
       shift 2
       ;;
+    --project-owner-type)
+      (($# >= 2)) || die "--project-owner-type requires user or organization"
+      project_owner_type="$2"
+      shift 2
+      ;;
     --project-number)
       (($# >= 2)) || die "--project-number requires a number"
       project_number="$2"
@@ -144,10 +151,12 @@ while (($#)); do
   esac
 done
 
-if [[ -n "$project_owner" || -n "$project_number" || -n "$project_title" ]]; then
+if [[ -n "$project_owner" || -n "$project_owner_type" || -n "$project_number" || -n "$project_title" ]]; then
   [[ -n "$project_owner" && -n "$project_number" ]] ||
     die "--project-owner and --project-number must be supplied together"
 fi
+[[ -z "$project_owner_type" || "$project_owner_type" == "user" || "$project_owner_type" == "organization" ]] ||
+  die "--project-owner-type must be user or organization"
 [[ -z "$project_number" || "$project_number" =~ ^[1-9][0-9]*$ ]] ||
   die "--project-number must be a positive integer"
 [[ -z "$repository" || "$repository" =~ ^[^/[:space:]]+/[^/[:space:]]+$ ]] ||
@@ -205,26 +214,32 @@ if [[ "$contract_root" != "-" && -f "$main_contract" ]]; then
 
   if [[ "$contract_mode" == "single" ]]; then
     contract_owner="$(contract_table_value "$main_contract" "Project owner")"
+    contract_owner_type="$(contract_table_value "$main_contract" "Owner type")"
     contract_number="$(contract_table_value "$main_contract" "Project number")"
     contract_title="$(contract_table_value "$main_contract" "Project title")"
 
     [[ -z "$project_owner" || "$project_owner" == "$contract_owner" ]] ||
       die "--project-owner disagrees with $main_contract"
+    [[ -z "$project_owner_type" || "$project_owner_type" == "$contract_owner_type" ]] ||
+      die "--project-owner-type disagrees with $main_contract"
     [[ -z "$project_number" || "$project_number" == "$contract_number" ]] ||
       die "--project-number disagrees with $main_contract"
     [[ -z "$project_title" || "$project_title" == "$contract_title" ]] ||
       die "--project-title disagrees with $main_contract"
 
     project_owner="$contract_owner"
+    project_owner_type="$contract_owner_type"
     project_number="$contract_number"
     project_title="$contract_title"
   fi
 fi
 
-if [[ -n "$project_owner" || -n "$project_number" || -n "$project_title" ]]; then
+if [[ -n "$project_owner" || -n "$project_owner_type" || -n "$project_number" || -n "$project_title" ]]; then
   [[ -n "$project_owner" && -n "$project_number" ]] ||
     die "Project owner and number must resolve together"
 fi
+[[ -z "$project_owner_type" || "$project_owner_type" == "user" || "$project_owner_type" == "organization" ]] ||
+  die "Project owner type must be user or organization"
 [[ -z "$project_number" || "$project_number" =~ ^[1-9][0-9]*$ ]] ||
   die "Project number must be a positive integer"
 [[ -z "$repository" || "$repository" =~ ^[^/[:space:]]+/[^/[:space:]]+$ ]] ||
@@ -353,20 +368,42 @@ if [[ -n "$repository" ]]; then
 fi
 
 if [[ -n "$project_owner" ]]; then
-  readonly project_query='query($login: String!, $number: Int!) {
-    user(login: $login) { projectV2(number: $number) { id number title } }
-    organization(login: $login) { projectV2(number: $number) { id number title } }
-  }'
-  match_count="$(gh api graphql -f query="$project_query" \
+  if [[ -z "$project_owner_type" ]]; then
+    observed_owner_type="$(gh api "users/$project_owner" --jq .type 2>/dev/null)" ||
+      die "could not discover the Project owner type"
+    case "$observed_owner_type" in
+      User) project_owner_type="user" ;;
+      Organization) project_owner_type="organization" ;;
+      *) die "unsupported GitHub Project owner type: $observed_owner_type" ;;
+    esac
+  fi
+
+  case "$project_owner_type" in
+    user)
+      project_query='query($login: String!, $number: Int!) {
+        user(login: $login) { projectV2(number: $number) { id number title } }
+      }'
+      project_selector='.data.user.projectV2'
+      ;;
+    organization)
+      project_query='query($login: String!, $number: Int!) {
+        organization(login: $login) { projectV2(number: $number) { id number title } }
+      }'
+      project_selector='.data.organization.projectV2'
+      ;;
+  esac
+
+  observed_project_number="$(gh api graphql -f query="$project_query" \
     -F login="$project_owner" -F number="$project_number" \
-    --jq '[.data.user.projectV2, .data.organization.projectV2] | map(select(. != null)) | length')"
-  [[ "$match_count" == "1" ]] ||
-    die "expected exactly one readable Project for the supplied owner and number"
+    --jq "$project_selector.number")" ||
+    die "could not read the supplied $project_owner_type Project"
+  [[ "$observed_project_number" == "$project_number" ]] ||
+    die "expected one readable $project_owner_type Project for the supplied owner and number"
 
   if [[ -n "$project_title" ]]; then
     observed_title="$(gh api graphql -f query="$project_query" \
       -F login="$project_owner" -F number="$project_number" \
-      --jq '[.data.user.projectV2, .data.organization.projectV2] | map(select(. != null)) | .[0].title')"
+      --jq "$project_selector.title")"
     [[ "$observed_title" == "$project_title" ]] ||
       die "Project title mismatch"
   fi
