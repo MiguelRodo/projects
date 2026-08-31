@@ -102,18 +102,18 @@ Classic personal access tokens need `read:org` to list organisation issue fields
 
 `gh project` can create, list and delete fields, but it does not currently expose a command for editing the options of an existing single-select field. When the authorised outcome changes a field definition, use GraphQL `updateProjectV2Field`.
 
-This mutation replaces the supplied `singleSelectOptions` collection. To add one option without clearing existing item values:
+This mutation replaces the supplied `singleSelectOptions` collection. The same rule applies when adding an option or changing names, descriptions or colours. To change the authorised properties without clearing existing item values:
 
 1. query the exact field and its complete option collection, including each option's `id`, `name`, `color` and `description`;
 2. re-query immediately before writing and stop if the field or option collection changed;
-3. send every existing option back unchanged and with its existing `id`, then append the new option without an `id`;
+3. send every existing option back with its existing `id`, changing only the authorised properties; append a genuinely new option without an `id`;
 4. re-query the complete option collection and affected Project items independently after writing;
-5. verify that every previous option ID and item value is preserved and that exactly one new option exists.
+5. verify that every previous option ID and item value is preserved and that the exact requested option properties changed.
 
 Use this mutation shape with a JSON variables object assembled from the fresh query result:
 
 ```graphql
-mutation AddSingleSelectOption(
+mutation UpdateSingleSelectOptions(
   $fieldId: ID!
   $options: [ProjectV2SingleSelectFieldOptionInput!]!
 ) {
@@ -131,7 +131,7 @@ mutation AddSingleSelectOption(
 }
 ```
 
-Do not omit existing option IDs, because GitHub uses them to preserve option identity and item values. Do not remove, rename or reorder another option unless that separate change is explicitly authorised.
+Do not omit existing option IDs, because GitHub uses them to preserve option identity and item values. Do not remove, rename, recolour or reorder another option unless that separate change is explicitly authorised.
 
 After discovering the current Project item, Project field and option IDs, update one single-select field:
 

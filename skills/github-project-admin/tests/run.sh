@@ -21,6 +21,10 @@ if bash "$validator" "$test_dir/fixtures/invalid-dispatcher" >/dev/null 2>&1; th
   echo "ERROR: mismatched dispatcher leaf unexpectedly validated" >&2
   exit 1
 fi
+if bash "$validator" "$test_dir/fixtures/invalid-colour" >/dev/null 2>&1; then
+  echo "ERROR: unsupported option colour unexpectedly validated" >&2
+  exit 1
+fi
 
 grep -Fqx 'name: github-project-admin' "$skill_dir/SKILL.md"
 test -f "$skill_dir/README.md"

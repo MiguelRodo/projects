@@ -78,6 +78,37 @@ validate_priority_mapping() {
     die "$file Priority mapping is not one-to-one"
 }
 
+validate_colour_tables() {
+  local file="$1" option colour
+  while IFS=$'\t' read -r option colour; do
+    [[ -n "$option" ]] || die "$file has an empty option in a colour table"
+    case "$colour" in
+      BLUE|GRAY|GREEN|ORANGE|PINK|PURPLE|RED|YELLOW) ;;
+      *) die "$file has unsupported colour '$colour' for option '$option'" ;;
+    esac
+  done < <(awk -F'|' '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+    /^## / { in_colour_table = 0 }
+    /^\|/ {
+      option = trim($2)
+      colour = trim($3)
+      if (option == "Option" && colour == "Colour") {
+        in_colour_table = 1
+        next
+      }
+      if (in_colour_table && option != "---" && colour != "---") {
+        print option "\t" colour
+      }
+      next
+    }
+    in_colour_table && /[^[:space:]]/ { in_colour_table = 0 }
+  ' "$file")
+}
+
 validate_project_file() {
   local file="$1" expected_mode="$2" version mode repository owner owner_type number title
   [[ -f "$file" ]] || die "missing Project contract: $file"
@@ -110,6 +141,7 @@ validate_project_file() {
   grep -Eq '^\|[[:space:]]*Priority[[:space:]]*\|' "$file" ||
     die "$file does not declare the Priority field location"
   validate_priority_mapping "$file"
+  validate_colour_tables "$file"
 
   if grep -Eq '(gh[pousr]_[A-Za-z0-9]{20,}|GH_TOKEN[[:space:]]*=|GITHUB_TOKEN[[:space:]]*=)' "$file"; then
     die "$file appears to contain a credential"
