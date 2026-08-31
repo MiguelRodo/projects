@@ -372,8 +372,17 @@ if [[ -n "$project_owner" ]]; then
 fi
 
 if [[ -n "$skill_source" ]]; then
-  gh skill install "$skill_source" github-project-admin \
-    --agent "$skill_agent" --scope "$skill_scope" --force
+  skill_install_args=(
+    "$skill_source"
+    github-project-admin
+    --agent "$skill_agent"
+    --scope "$skill_scope"
+    --force
+  )
+  if [[ -d "$skill_source" ]]; then
+    skill_install_args+=(--from-local)
+  fi
+  gh skill install "${skill_install_args[@]}"
 fi
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
