@@ -95,9 +95,9 @@ validate_project_file() {
     die "$file has an invalid Issue repository"
   owner="$(require_table_value "$file" "Project owner")"
   [[ "$owner" =~ ^[A-Za-z0-9_.-]+$ ]] || die "$file has an invalid Project owner"
-  owner_type="$(require_table_value "$file" "Owner type")"
-  [[ "$owner_type" == "user" || "$owner_type" == "organization" ]] ||
-    die "$file Owner type must be user or organization"
+  owner_type="$(table_value "$file" "Owner type")"
+  [[ -z "$owner_type" || "$owner_type" == "user" || "$owner_type" == "organization" ]] ||
+    die "$file Owner type must be user or organization when supplied"
   number="$(require_table_value "$file" "Project number")"
   [[ "$number" =~ ^[1-9][0-9]*$ ]] || die "$file has an invalid Project number"
   title="$(require_table_value "$file" "Project title")"
