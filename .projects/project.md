@@ -35,12 +35,14 @@ This Project uses the common names directly.
 
 ## Class values
 
-- Epic
-- Task
-- Bug
-- Enhancement
-- Research
-- Documentation
+| Option | Colour |
+| --- | --- |
+| Epic | BLUE |
+| Task | YELLOW |
+| Bug | RED |
+| Enhancement | BLUE |
+| Research | PURPLE |
+| Documentation | GREEN |
 
 ## Status mapping
 
@@ -52,18 +54,20 @@ This Project uses the common names directly.
 
 ## Workstream values
 
-- Shared skill
-- Repository contracts
-- Agent distribution
-- Provider integration
-- CLI
-- User interface
-- Testing and pilots
-- Governance and documentation
+| Option | Colour |
+| --- | --- |
+| Shared skill | PURPLE |
+| Repository contracts | BLUE |
+| Agent distribution | GREEN |
+| Provider integration | PINK |
+| CLI | YELLOW |
+| User interface | ORANGE |
+| Testing and pilots | RED |
+| Governance and documentation | GRAY |
 
 ## Bootstrap target
 
-- Class and Workstream are required single-select Project fields with the exact values above.
+- Class and Workstream are required single-select Project fields with the exact values and colours above.
 - Priority requires the P0, P1, P2 and P3 options. Add P3 if live discovery confirms that only P0 to P2 exist.
 - Target date is optional and remains blank unless an issue has a real deadline.
 - Use native parent and sub-issue relationships for the roadmap hierarchy.
