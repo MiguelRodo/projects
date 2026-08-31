@@ -1,79 +1,59 @@
-# `projects` / `projectctl`
+# GitHub Projects made easier
 
-`projects` is the public home of a portable, agent-neutral protocol for automated GitHub project setup and consistent ordinary interaction, plus a Go administration core and `projectctl` reference client.
+This repository keeps one shared set of instructions for agents that work with GitHub issues and Projects.
 
-## Status
+The aim is simple: you should be able to ask for the result you want without explaining GitHub's commands every time.
 
-This repository is in **pre-v1 architecture and contract design**.
+For example:
 
-There is currently no supported CLI, Go library, contract format or release to install. The discarded pre-v1 workspace manager had no users or releases and is not part of the product. Implementation begins only after the normative protocol issues and conformance fixtures are merged.
+- `Set stimgate#313 to P2.`
+- `What are the highest-priority open items?`
+- `Organise this Project and show me what changed.`
 
-The authoritative roadmap and execution order are in [issue #1](../../issues/1).
+## Use it in a repository
 
-## Product boundary
+The repository being managed keeps its own Project details in:
 
-| Interface or layer | Purpose |
-| --- | --- |
-| Shared protocol | Collaborator-safe, versioned project topology, structure, mappings and interaction semantics |
-| Private operator profile | Per-user privacy choices, private destinations, local mappings and optional provider configuration |
-| Derived agent guidance | Concise deterministic project instructions derived from validated contracts |
-| Environment-specific execution adapter | Direct provider tools, the portable client or an explicit optional bridge |
-| Portable Go core | Parsing, normalisation, validation, resolution, planning, execution and reporting |
-| Provider adapters | GitHub first, with optional private or external providers behind interfaces |
-| `projectctl` | Portable reference implementation and setup/administration client over the reusable core |
-| Future application | Graphical interface over the same core after v1 is proven |
+```text
+.projects/project.md
+```
 
-GitHub issues and GitHub Projects are the authoritative shared task surface. Private control planes are optional consumers and must never become a prerequisite for ordinary collaborators. `projectctl` may be comprehensive, but it is not a mandatory runtime dependency for an agent that can apply the same protocol safely through provider tools.
+Install the shared skill for Codex:
 
-The primary v1 product outcomes are:
+```bash
+gh skill install MiguelRodo/projects github-project-admin --agent codex --scope user
+```
 
-1. automate creation or adoption of the declared repository/Project structure as far as provider APIs allow, with unsupported manual actions reported explicitly; and
-2. let capable agents and operators read and manage ordinary project work consistently across collaborator/private, single/multi-Project and central/repository-backed scenarios.
+Then ask for the outcome you want. The skill handles field lookup, safety checks and checking the result.
 
-## Participation paths
+The short guide inside the skill explains [setup, updates and repository-specific setup](skills/github-project-admin/README.md).
 
-### Collaborator or external agent
+## Set up Codex Cloud for this repository
 
-Work through normal GitHub issues and pull requests. A capable agent may use suitable GitHub/provider tools directly from the shared contract and concise generated guidance. No private operator configuration, external provider access or local binary is required.
+Create an environment for `MiguelRodo/projects` and put this in its setup-script box:
 
-### Repository maintainer
+```bash
+bash skills/github-project-admin/scripts/setup.sh
+```
 
-Adopt or bootstrap a repository using the shared contract and `projectctl`, review plans before writes, and verify resulting GitHub state. Provider surfaces without a supported automation API are returned as explicit manual actions rather than false successes.
+Add `GH_TOKEN` as an environment variable with access to this repository and its GitHub Project. Do not add it as a setup-only secret because Codex needs it while doing the task. Allow agent internet access to `github.com` and `api.github.com`.
 
-### Full-system operator
+When the environment is ready, a normal request can be as short as:
 
-Add a private operator profile, private source routing, agenda rules or optional providers without placing private destinations or account-specific identifiers in shared files.
+> Bring the projects Project into line with `.projects/project.md`.
 
-## Architecture
+[OpenAI's Codex Cloud environment guide](https://developers.openai.com/codex/environments/cloud-environment) explains where setup scripts, environment variables and internet access are configured.
 
-The normative layer, package and dependency boundaries are defined in [docs/architecture/v1-boundaries.md](docs/architecture/v1-boundaries.md).
+## What is here
 
-The normative terminology, authority, identity and processing model is defined in [docs/spec/v1-conceptual-model.md](docs/spec/v1-conceptual-model.md).
+- [`skills/github-project-admin/`](skills/github-project-admin/README.md): the reusable skill and its setup.
+- [Issue #1](../../issues/1): the product roadmap.
+- [Issue #67](../../issues/67): the design decisions from the first real trials.
 
-The shared single-Project wire contract and schema are defined in [docs/spec/v1-single-project-contract.md](docs/spec/v1-single-project-contract.md).
-
-The dispatcher extension and deterministic multi-Project routing semantics are defined in [docs/spec/v1-routing.md](docs/spec/v1-routing.md).
-
-Collaborator-safe labels, overall-Project routing labels and optional label-based sub-projects are defined in [docs/spec/v1-labels-and-subprojects.md](docs/spec/v1-labels-and-subprojects.md).
-
-Provider-neutral task dimensions and target-specific Project, Issue Type and Issue Field bindings are defined in [docs/spec/v1-project-dimensions.md](docs/spec/v1-project-dimensions.md).
-
-Create-once Project initialisation, bootstrap, adoption and explicit manual-action outcomes are defined in [docs/spec/v1-setup-outcomes.md](docs/spec/v1-setup-outcomes.md).
-
-Provider-neutral ordinary task inspection, listing, creation and safe mutation semantics are defined in [docs/spec/v1-task-interactions.md](docs/spec/v1-task-interactions.md). Its machine request schema is [schemas/v1/task-interaction.schema.json](schemas/v1/task-interaction.schema.json), with synthetic [inspect](examples/interactions/v1/inspect.yaml), [create](examples/interactions/v1/create.yaml) and [change](examples/interactions/v1/change.yaml) examples.
-
-The shared privacy advertisement and repository-safe companion linkage are defined in [docs/spec/v1-shared-privacy.md](docs/spec/v1-shared-privacy.md).
-
-The private operator-profile wire format, provider-neutral bindings and companion-provider contract are defined in [docs/spec/v1-operator-profile.md](docs/spec/v1-operator-profile.md).
-
-The intended executable is `projectctl`. There is no `projects` compatibility binary and no multi-repository clone/sync workspace-manager scope. Direct-provider agents and optional execution bridges remain separate adapters over the same protocol.
+A future command-line tool may be called `projects`, or `projectscli` if that name conflicts with another program. It will be added only when the trials show that it is useful.
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Work is issue-driven, one issue per PR, and foundational semantics must be merged before dependent implementation begins.
+Changes use GitHub issues and pull requests. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Security and privacy reports follow [SECURITY.md](SECURITY.md).
-
-## Licence
-
-This project is licensed under the [MIT Licence](LICENSE).
+This project uses the [MIT Licence](LICENSE).

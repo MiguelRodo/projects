@@ -29,12 +29,18 @@ jobs:
           test -f CODE_OF_CONDUCT.md
           test -f LICENSE
           test -f docs/architecture/v1-boundaries.md
+          test -f skills/github-project-admin/SKILL.md
 
-      - name: Verify pre-v1 architecture boundary
+      - name: Test github-project-admin skill
+        shell: bash
+        run: bash skills/github-project-admin/tests/run.sh
+
+      - name: Verify pre-CLI boundary
         shell: bash
         run: |
           set -euo pipefail
           test ! -e cmd/projects
+          test ! -e cmd/projectscli
           test ! -e projects.go
 
       - name: Check whitespace
