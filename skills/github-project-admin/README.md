@@ -29,7 +29,7 @@ bash "$HOME/.agents/skills/github-project-admin/scripts/setup.sh"
 For the `MiguelRodo/projects` repository itself, use the checked-in copy:
 
 ```bash
-bash skills/github-project-admin/scripts/setup.sh
+bash skills/github-project-admin/scripts/setup.sh --install-skill-from . --agent codex --scope user
 ```
 
 In Codex Cloud, put the same command in the environment's setup-script box. Add `GH_TOKEN` as an environment variable so it is available while Codex is working, and allow access to `github.com` and `api.github.com`. Do not print the token or commit it to the repository.
