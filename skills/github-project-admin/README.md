@@ -13,6 +13,7 @@ The skill checks the current Project before changing anything and checks the res
 ## Set it up
 
 The repository needs a `.projects/project.md` file describing its Project and field names.
+Setup discovers automatically whether the Project owner is a person or an organisation.
 
 Install the skill for compatible agents:
 
