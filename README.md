@@ -18,10 +18,10 @@ The repository being managed keeps its own Project details in:
 .projects/project.md
 ```
 
-Install the shared skill for Codex:
+Install the shared skill for compatible agents:
 
 ```bash
-gh skill install MiguelRodo/projects github-project-admin --agent codex --scope user
+gh skill install MiguelRodo/projects github-project-admin --agent universal --scope user
 ```
 
 Then ask for the outcome you want. The skill handles field lookup, safety checks and checking the result.
@@ -33,7 +33,7 @@ The short guide inside the skill explains [setup, updates and repository-specifi
 Create an environment for `MiguelRodo/projects` and put this in its setup-script box:
 
 ```bash
-bash skills/github-project-admin/scripts/setup.sh --install-skill-from . --agent codex --scope user
+bash skills/github-project-admin/scripts/setup.sh --install-skill-from .
 ```
 
 Add `GH_TOKEN` as an environment variable with access to this repository and its GitHub Project. Do not add it as a setup-only secret because Codex needs it while doing the task. Allow agent internet access to `github.com` and `api.github.com`.

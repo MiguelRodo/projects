@@ -102,9 +102,9 @@ grep -Fq 'Verified Project: octo-org/12.' "$test_tmp_dir/setup.log"
 PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
   GH_SKILL_LOG="$test_tmp_dir/local-skill.log" \
   bash "$setup" --skip-install --no-contract --no-repository \
-  --install-skill-from "$test_dir/fixtures/single" --agent codex \
+  --install-skill-from "$test_dir/fixtures/single" \
   >"$test_tmp_dir/local-skill-output.log" 2>&1
-grep -Fq -- "skill install $test_dir/fixtures/single github-project-admin --agent codex --scope user --force --from-local" \
+grep -Fq -- "skill install $test_dir/fixtures/single github-project-admin --agent universal --scope user --force --from-local" \
   "$test_tmp_dir/local-skill.log"
 
 PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \

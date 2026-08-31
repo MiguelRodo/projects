@@ -14,10 +14,10 @@ The skill checks the current Project before changing anything and checks the res
 
 The repository needs a `.projects/project.md` file describing its Project and field names.
 
-Install the skill for Codex:
+Install the skill for compatible agents:
 
 ```bash
-gh skill install MiguelRodo/projects github-project-admin --agent codex --scope user
+gh skill install MiguelRodo/projects github-project-admin --agent universal --scope user
 ```
 
 Then run its setup from the repository you want to use:
@@ -29,7 +29,7 @@ bash "$HOME/.agents/skills/github-project-admin/scripts/setup.sh"
 For the `MiguelRodo/projects` repository itself, use the checked-in copy:
 
 ```bash
-bash skills/github-project-admin/scripts/setup.sh --install-skill-from . --agent codex --scope user
+bash skills/github-project-admin/scripts/setup.sh --install-skill-from .
 ```
 
 In Codex Cloud, put the same command in the environment's setup-script box. Add `GH_TOKEN` as an environment variable so it is available while Codex is working, and allow access to `github.com` and `api.github.com`. Do not print the token or commit it to the repository.

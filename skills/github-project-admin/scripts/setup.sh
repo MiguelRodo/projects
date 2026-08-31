@@ -6,7 +6,7 @@ set +x
 set -Eeuo pipefail
 
 readonly GH_CLI_VERSION="2.98.0"
-readonly GH_CLI_MINIMUM="2.90.0"
+readonly GH_CLI_MINIMUM="2.96.0"
 readonly GH_CLI_SHA256_AMD64="3b8ac6b30336802fc1a858d7c084e11cdf24ac1a761ca90b68022d7d729208de"
 readonly GH_CLI_SHA256_ARM64="cf689084f3a3618f7eae4a2420d335d74626d65f5e594b9828d125d69f800d86"
 
@@ -44,7 +44,7 @@ Options:
   --no-contract              Skip automatic local contract validation.
   --skip-install             Do not install or upgrade gh.
   --install-skill-from REPO  Install github-project-admin from REPO.
-  --agent AGENT              Agent adapter for --install-skill-from.
+  --agent AGENT              Override the universal agent adapter.
   --scope SCOPE              Skill scope: user or project (default: user).
   --help                     Show this help.
 EOF
@@ -154,9 +154,10 @@ fi
   die "--repository must use OWNER/REPO form"
 [[ "$skill_scope" == "user" || "$skill_scope" == "project" ]] ||
   die "--scope must be user or project"
-if [[ -n "$skill_source" || -n "$skill_agent" ]]; then
-  [[ -n "$skill_source" && -n "$skill_agent" ]] ||
-    die "--install-skill-from and --agent must be supplied together"
+if [[ -n "$skill_source" && -z "$skill_agent" ]]; then
+  skill_agent="universal"
+elif [[ -z "$skill_source" && -n "$skill_agent" ]]; then
+  die "--agent requires --install-skill-from"
 fi
 
 if [[ "${GITHUB_PROJECT_ADMIN_SETUP_ACTIVE:-}" == "1" ]]; then
