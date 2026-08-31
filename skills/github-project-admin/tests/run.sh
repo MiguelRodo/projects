@@ -11,6 +11,7 @@ bash -n "$validator"
 bash -n "$setup"
 
 bash "$validator" "$test_dir/fixtures/single"
+bash "$validator" "$test_dir/fixtures/single-user"
 bash "$validator" "$test_dir/fixtures/dispatcher"
 if bash "$validator" "$test_dir/fixtures/invalid" >/dev/null 2>&1; then
   echo "ERROR: lossy Priority mapping unexpectedly validated" >&2
@@ -51,11 +52,22 @@ case "${1:-}" in
   api)
     if [[ "${2:-}" == "user" ]]; then
       echo "octocat"
+    elif [[ "${2:-}" == users/* ]]; then
+      case "${2#users/}" in
+        octo-user) echo "User" ;;
+        octo-org) echo "Organization" ;;
+        *) exit 2 ;;
+      esac
     elif [[ "${2:-}" == "graphql" ]]; then
-      if [[ "$*" == *"| length"* ]]; then
-        echo "1"
-      else
+      if [[ "$*" == *"user(login:"* && "$*" == *"organization(login:"* ]]; then
+        echo "combined owner query is forbidden" >&2
+        exit 90
+      elif [[ "$*" == *".number"* ]]; then
+        if [[ "$*" == *"organization(login:"* ]]; then echo "12"; else echo "4"; fi
+      elif [[ "$*" == *"organization(login:"* ]]; then
         echo "Example planning"
+      else
+        echo "User planning"
       fi
     else
       exit 2
@@ -63,7 +75,11 @@ case "${1:-}" in
     ;;
   repo)
     [[ "${2:-}" == "view" ]]
-    echo "octo-org/example"
+    if [[ "$*" == *"octo-user/example"* ]]; then
+      echo "octo-user/example"
+    else
+      echo "octo-org/example"
+    fi
     ;;
   issue)
     [[ "${2:-}" == "list" ]]
@@ -86,7 +102,7 @@ secret_value="test-token-must-not-appear"
 PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
   bash -x "$setup" --skip-install --no-contract \
   --repository octo-org/example \
-  --project-owner octo-org --project-number 12 \
+  --project-owner octo-org --project-owner-type organization --project-number 12 \
   --project-title "Example planning" \
   --install-skill-from octo-org/project-skills --agent codex \
   >"$test_tmp_dir/setup.log" 2>&1
@@ -98,6 +114,13 @@ fi
 grep -Fq 'preflight passed' "$test_tmp_dir/setup.log"
 grep -Fq 'Verified repository: octo-org/example.' "$test_tmp_dir/setup.log"
 grep -Fq 'Verified Project: octo-org/12.' "$test_tmp_dir/setup.log"
+
+PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
+  bash "$setup" --skip-install --no-contract --no-repository \
+  --project-owner octo-user --project-number 4 \
+  --project-title "User planning" \
+  >"$test_tmp_dir/discovered-user.log" 2>&1
+grep -Fq 'Verified Project: octo-user/4.' "$test_tmp_dir/discovered-user.log"
 
 PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
   GH_SKILL_LOG="$test_tmp_dir/local-skill.log" \
@@ -113,6 +136,13 @@ PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
   >"$test_tmp_dir/contract-setup.log" 2>&1
 grep -Fq 'Verified repository: octo-org/example.' "$test_tmp_dir/contract-setup.log"
 grep -Fq 'Verified Project: octo-org/12.' "$test_tmp_dir/contract-setup.log"
+
+PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
+  bash "$setup" --skip-install \
+  --contract-root "$test_dir/fixtures/single-user" \
+  >"$test_tmp_dir/user-contract-setup.log" 2>&1
+grep -Fq 'Verified repository: octo-user/example.' "$test_tmp_dir/user-contract-setup.log"
+grep -Fq 'Verified Project: octo-user/4.' "$test_tmp_dir/user-contract-setup.log"
 
 mkdir -p "$test_tmp_dir/extend/.projects"
 cat >"$test_tmp_dir/extend/.projects/setup.sh" <<'EOF'
