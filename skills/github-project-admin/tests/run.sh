@@ -59,6 +59,9 @@ case "${1:-}" in
         *) exit 2 ;;
       esac
     elif [[ "${2:-}" == "graphql" ]]; then
+      if [[ -n "${GH_GRAPHQL_LOG:-}" ]]; then
+        printf '%s\n' "$*" >>"$GH_GRAPHQL_LOG"
+      fi
       if [[ "$*" == *"user(login:"* && "$*" == *"organization(login:"* ]]; then
         echo "combined owner query is forbidden" >&2
         exit 90
@@ -121,6 +124,20 @@ PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
   --project-title "User planning" \
   >"$test_tmp_dir/discovered-user.log" 2>&1
 grep -Fq 'Verified Project: octo-user/4.' "$test_tmp_dir/discovered-user.log"
+
+if PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
+  GH_GRAPHQL_LOG="$test_tmp_dir/mismatch-graphql.log" \
+  bash "$setup" --skip-install --no-contract --no-repository \
+  --project-owner octo-user --project-owner-type organization --project-number 4 \
+  >"$test_tmp_dir/mismatch.log" 2>&1; then
+  echo "ERROR: mismatched declared owner type unexpectedly passed" >&2
+  exit 1
+fi
+grep -Fq 'declared Project owner type disagrees with GitHub' "$test_tmp_dir/mismatch.log"
+if [[ -s "$test_tmp_dir/mismatch-graphql.log" ]]; then
+  echo "ERROR: mismatched owner type reached the Project GraphQL query" >&2
+  exit 1
+fi
 
 PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
   GH_SKILL_LOG="$test_tmp_dir/local-skill.log" \

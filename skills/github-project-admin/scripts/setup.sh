@@ -39,7 +39,7 @@ Options:
   --repository OWNER/REPO    Verify access to this repository.
   --no-repository            Do not discover or verify a repository.
   --project-owner LOGIN      Verify this user or organisation Project owner.
-  --project-owner-type TYPE  Owner type: user or organization.
+  --project-owner-type TYPE  Optional owner-type assertion: user or organization.
   --project-number NUMBER    Verify this Project number.
   --project-title TITLE      Also verify the exact Project title.
   --contract-root DIRECTORY  Validate DIRECTORY/.projects/project.md.
@@ -228,7 +228,9 @@ if [[ "$contract_root" != "-" && -f "$main_contract" ]]; then
       die "--project-title disagrees with $main_contract"
 
     project_owner="$contract_owner"
-    project_owner_type="$contract_owner_type"
+    if [[ -z "$project_owner_type" ]]; then
+      project_owner_type="$contract_owner_type"
+    fi
     project_number="$contract_number"
     project_title="$contract_title"
   fi
@@ -368,15 +370,17 @@ if [[ -n "$repository" ]]; then
 fi
 
 if [[ -n "$project_owner" ]]; then
-  if [[ -z "$project_owner_type" ]]; then
-    observed_owner_type="$(gh api "users/$project_owner" --jq .type 2>/dev/null)" ||
-      die "could not discover the Project owner type"
-    case "$observed_owner_type" in
-      User) project_owner_type="user" ;;
-      Organization) project_owner_type="organization" ;;
-      *) die "unsupported GitHub Project owner type: $observed_owner_type" ;;
-    esac
+  observed_owner_type="$(gh api "users/$project_owner" --jq .type 2>/dev/null)" ||
+    die "could not discover the Project owner type"
+  case "$observed_owner_type" in
+    User) discovered_owner_type="user" ;;
+    Organization) discovered_owner_type="organization" ;;
+    *) die "unsupported GitHub Project owner type: $observed_owner_type" ;;
+  esac
+  if [[ -n "$project_owner_type" && "$project_owner_type" != "$discovered_owner_type" ]]; then
+    die "declared Project owner type disagrees with GitHub"
   fi
+  project_owner_type="$discovered_owner_type"
 
   case "$project_owner_type" in
     user)

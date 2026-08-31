@@ -6,7 +6,6 @@
 | Mode | single |
 | Issue repository | octo-user/example |
 | Project owner | octo-user |
-| Owner type | user |
 | Project number | 4 |
 | Project title | User planning |
 | Routing | linked repository |

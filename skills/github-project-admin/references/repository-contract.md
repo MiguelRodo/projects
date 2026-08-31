@@ -27,7 +27,6 @@ Use this form when one repository resolves to one Project:
 | Mode | single |
 | Issue repository | octo-org/example |
 | Project owner | octo-org |
-| Owner type | organization |
 | Project number | 12 |
 | Project title | Example planning |
 | Routing | linked repository |
@@ -58,7 +57,7 @@ Use this form when one repository resolves to one Project:
 - Keep private material out of this repository.
 ```
 
-Use GitHub's provider spelling `organization` in the `Owner type` row. `Routing` may name a linked repository, one exact routing label, or another deterministic repository-specific rule.
+Setup discovers whether `Project owner` is a user or organisation from GitHub. An optional `Owner type` row may assert `user` or GitHub's provider spelling `organization`; setup fails if that assertion disagrees with the live owner. `Routing` may name a linked repository, one exact routing label, or another deterministic repository-specific rule.
 
 ## Multi-Project form
 
