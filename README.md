@@ -33,7 +33,7 @@ The short guide inside the skill explains [setup, updates and repository-specifi
 Create an environment for `MiguelRodo/projects` and put this in its setup-script box:
 
 ```bash
-bash skills/github-project-admin/scripts/setup.sh
+bash skills/github-project-admin/scripts/setup.sh --install-skill-from . --agent codex --scope user
 ```
 
 Add `GH_TOKEN` as an environment variable with access to this repository and its GitHub Project. Do not add it as a setup-only secret because Codex needs it while doing the task. Allow agent internet access to `github.com` and `api.github.com`.
