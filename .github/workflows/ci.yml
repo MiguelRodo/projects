@@ -30,10 +30,16 @@ jobs:
           test -f LICENSE
           test -f docs/architecture/v1-boundaries.md
           test -f skills/github-project-admin/SKILL.md
+          test -f AGENTS.md
+          test -f .projects/project.md
 
       - name: Test github-project-admin skill
         shell: bash
         run: bash skills/github-project-admin/tests/run.sh
+
+      - name: Validate this repository's Project contract
+        shell: bash
+        run: bash skills/github-project-admin/scripts/validate-contract.sh .
 
       - name: Verify pre-CLI boundary
         shell: bash
