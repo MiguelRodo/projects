@@ -18,6 +18,9 @@ project_title=""
 contract_root=""
 discover_repository=true
 skip_install=false
+skill_source=""
+skill_agent=""
+skill_scope="user"
 
 die() {
   echo "ERROR: $*" >&2
@@ -37,6 +40,9 @@ Options:
   --contract-root DIRECTORY  Validate DIRECTORY/.projects/project.md.
   --no-contract              Skip automatic local contract validation.
   --skip-install             Do not install or upgrade gh.
+  --install-skill-from REPO  Install github-project-admin from REPO.
+  --agent AGENT              Agent adapter for --install-skill-from.
+  --scope SCOPE              Skill scope: user or project (default: user).
   --help                     Show this help.
 EOF
 }
@@ -81,6 +87,21 @@ while (($#)); do
       skip_install=true
       shift
       ;;
+    --install-skill-from)
+      (($# >= 2)) || die "--install-skill-from requires a repository or directory"
+      skill_source="$2"
+      shift 2
+      ;;
+    --agent)
+      (($# >= 2)) || die "--agent requires an agent name"
+      skill_agent="$2"
+      shift 2
+      ;;
+    --scope)
+      (($# >= 2)) || die "--scope requires user or project"
+      skill_scope="$2"
+      shift 2
+      ;;
     --help|-h)
       usage
       exit 0
@@ -99,6 +120,12 @@ fi
   die "--project-number must be a positive integer"
 [[ -z "$repository" || "$repository" =~ ^[^/[:space:]]+/[^/[:space:]]+$ ]] ||
   die "--repository must use OWNER/REPO form"
+[[ "$skill_scope" == "user" || "$skill_scope" == "project" ]] ||
+  die "--scope must be user or project"
+if [[ -n "$skill_source" || -n "$skill_agent" ]]; then
+  [[ -n "$skill_source" && -n "$skill_agent" ]] ||
+    die "--install-skill-from and --agent must be supplied together"
+fi
 
 cleanup() {
   if [[ -n "$setup_tmp_dir" && "$setup_tmp_dir" != "/" && -d "$setup_tmp_dir" ]]; then
@@ -238,6 +265,11 @@ if [[ -n "$project_owner" ]]; then
     [[ "$observed_title" == "$project_title" ]] ||
       die "Project title mismatch"
   fi
+fi
+
+if [[ -n "$skill_source" ]]; then
+  gh skill install "$skill_source" github-project-admin \
+    --agent "$skill_agent" --scope "$skill_scope"
 fi
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

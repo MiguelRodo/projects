@@ -61,6 +61,9 @@ case "${1:-}" in
     [[ "${2:-}" == "list" ]]
     echo "[]"
     ;;
+  skill)
+    [[ "${2:-}" == "install" ]]
+    ;;
   *)
     exit 2
     ;;
@@ -74,6 +77,7 @@ PATH="$test_tmp_dir/bin:$PATH" GH_TOKEN="$secret_value" \
   --repository octo-org/example \
   --project-owner octo-org --project-number 12 \
   --project-title "Example planning" \
+  --install-skill-from octo-org/project-skills --agent codex \
   >"$test_tmp_dir/setup.log" 2>&1
 
 if grep -Fq "$secret_value" "$test_tmp_dir/setup.log"; then

@@ -32,6 +32,15 @@ bash skills/github-project-admin/scripts/setup.sh --repository OWNER/REPO
 
 The host supplies credentials and network access. The setup installs or verifies `gh`, checks authentication and optional runtime context, and does not require a repository's language toolchain.
 
+For a fresh environment where the skill is not installed yet, a downloaded copy of the same setup script can install it after bootstrapping `gh`:
+
+```bash
+bash setup.sh --no-contract \
+  --repository OWNER/REPO \
+  --install-skill-from MiguelRodo/projects \
+  --agent codex --scope user
+```
+
 ## Repository contract
 
 Each participating repository keeps only its local topology and mappings under `.projects/`:
