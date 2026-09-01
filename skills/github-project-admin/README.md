@@ -114,14 +114,13 @@ Class or Issue Type says what kind of work item this is. A useful starter set is
 | Task | YELLOW |
 | Bug | RED |
 | Enhancement | GREEN |
-| Raw data | PINK |
-| Processed data | PURPLE |
+| Data | PINK |
 | Analysis | PURPLE |
 | Deliverable | ORANGE |
 | Documentation | GRAY |
 | Epic | BLUE |
 
-`Task` is the ordinary fallback when no more informative type adds useful meaning. `Deliverable` supersedes `Report`: use it for one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output, including reports, manuscripts, presentations, posters, protocols, handovers and software releases.
+`Task` is the ordinary fallback when no more informative type adds useful meaning. `Data` covers source-data acquisition and stewardship as well as transformation, validation and production of derived analysis-ready data. `Deliverable` supersedes `Report`: use it for one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output, including reports, manuscripts, presentations, posters, grant applications, protocols, handovers and software releases.
 
 `Epic` is not the default for every top-level issue or every parent. A Task, Deliverable, Analysis or other type can have sub-issues and remain that type. Use Epic only when the broader coordination outcome is useful in its own right.
 
@@ -143,7 +142,7 @@ Each resolved Project contract can tune issue drafting with an optional metadata
 | Issue write-up style | tidy |
 ```
 
-Use `unrestricted` when the agent may add useful grounded detail, `tidy` for light expansion and cleanup, or `minimal` for minimal and direct wording. `tidy` is the default when the row is absent, and an explicit instruction in the current request overrides the setting. In a multi-Project repository, put the row in the relevant `.projects/projects/*.md` child contract.
+Use `unrestricted` when the agent may add useful grounded detail, `tidy` when it may reword and organise supplied material without adding substantive information, or `direct` when it should do only the structural work needed to create the issue plus spelling and grammar corrections. `tidy` is the default when the row is absent, and an explicit instruction in the current request overrides the setting. In a multi-Project repository, put the row in the relevant `.projects/projects/*.md` child contract.
 
 If the repository needs extra tools, add `.projects/setup.sh`. It runs automatically after the shared setup and is not replaced when the skill is updated.
 

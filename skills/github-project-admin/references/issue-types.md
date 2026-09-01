@@ -9,8 +9,7 @@ The default vocabulary is deliberately rich enough to distinguish common kinds o
 | Task | YELLOW | The ordinary fallback: a specific piece of work when no more informative type adds useful meaning. |
 | Bug | RED | An unexpected fault, regression or incorrect behaviour. |
 | Enhancement | GREEN | A bounded improvement to existing work, material, method, process or software. |
-| Raw data | PINK | Acquisition, intake or stewardship of source data. |
-| Processed data | PURPLE | Transformation, validation or production of derived, analysis-ready data. |
+| Data | PINK | Acquisition, intake, stewardship, transformation or validation of source or derived data, including production of analysis-ready data. |
 | Analysis | PURPLE | Work whose main output is a quantitative or analytical result, inference, evaluation or reproducible computation. |
 | Deliverable | ORANGE | One bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output. |
 | Documentation | GRAY | Durable guidance, records or reference material rather than a substantive project output. |
@@ -18,7 +17,9 @@ The default vocabulary is deliberately rich enough to distinguish common kinds o
 
 `Task` is intentionally the fallback category. The more specific types are specialisations of ordinary work, not philosophically disjoint categories. Use a specific type only when it makes the issue easier to understand, filter or manage.
 
-`Deliverable` supersedes the narrower `Report` name. It includes reports, manuscripts, presentations, posters, submissions, assessments, registered protocols, handovers, release packages and software releases. Supporting work remains its own type: for example, fixing a figure can be a Task or Enhancement while the final submitted manuscript is a Deliverable.
+`Data` combines source-data and processed-data work because both have a dataset or data state as their main output. Use `Analysis` instead when the main output is a result, inference, evaluation or reproducible computation based on data.
+
+`Deliverable` supersedes the narrower `Report` name. It includes reports, manuscripts, presentations, posters, submissions, assessments, grant applications, registered protocols, handovers, release packages and software releases. Supporting work remains its own type: for example, fixing a figure can be a Task or Enhancement while the final submitted manuscript is a Deliverable.
 
 `Research` is not part of the default vocabulary. Exploratory or decision-oriented work can normally be a Task; work whose main outcome is an analytical result can be Analysis; work that develops or improves an existing method or system can be Enhancement. A repository may deliberately retain another local type when it carries a useful stable distinction.
 
@@ -60,6 +61,7 @@ Preferred colours make repeated types easier to recognise across Projects, but c
 When standardising an existing Project, inspect the actual issues first and prefer useful distinctions over cosmetic churn.
 
 - Map `Report` to `Deliverable` when the existing value represents formal outputs.
+- Map `Raw data` and `Processed data` to `Data` unless the repository deliberately retains that distinction as useful local vocabulary.
 - If an older Project uses `Research`, classify each affected issue as Task, Analysis or Enhancement according to the work rather than applying a blind one-to-one rename.
 - Keep useful repository-specific Issue Types when they genuinely improve planning.
 - Migrate or remove a legacy Workstream field only when that migration is explicitly authorised. Read current values before removal and verify the resulting Project and issue state afterwards.
