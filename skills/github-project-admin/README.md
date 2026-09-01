@@ -73,7 +73,7 @@ Create or open a [ChatGPT Project](https://chatgpt.com/projects), make the repos
 >
 > Treat my prompt as the desired outcome. If this chat cannot make a required GitHub change, return the smallest safe command block for me to paste into a terminal, including a check of the result.
 
-Ask for the outcome you want. The chat should propose broad organisation first. After you approve, it can make supported changes or return a short terminal-ready command block.
+Ask for the outcome you want. The chat should propose broad organisation first. After you approve, it can make supported changes or return a short terminal-ready command block. Paste-ready command handoffs should use ordinary commands and should not change interactive shell options such as `set -e`, `set -u` or `pipefail`.
 
 ## 4. Use it from an execution-capable agent
 
@@ -106,6 +106,14 @@ The initializer offers one shared, proposal-only first request after the chat an
 It does not authorise changes until you approve the proposal. After approval, an execution-capable agent can apply and verify it; a chat that cannot write returns minimal commands with readback. To add another Project later, rerun the initializer.
 
 ## Repository-specific setup
+
+Each resolved Project contract can tune issue drafting with an optional metadata row:
+
+```text
+| Issue write-up style | tidy |
+```
+
+Use `unrestricted` when the agent may add useful grounded detail, `tidy` for light expansion and cleanup, or `minimal` for minimal and direct wording. `tidy` is the default when the row is absent, and an explicit instruction in the current request overrides the setting. In a multi-Project repository, put the row in the relevant `.projects/projects/*.md` child contract.
 
 If the repository needs extra tools, add `.projects/setup.sh`. It runs automatically after the shared setup and is not replaced when the skill is updated.
 

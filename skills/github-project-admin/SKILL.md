@@ -31,6 +31,18 @@ A request such as `Set example#313 to P2.` supplies an exact target and desired 
 
 Ask a question only when a missing fact would change the target or outcome. Do not ask the user to restate fresh inspection, narrow mutation, preservation, stale checks or readback requirements.
 
+## Write issues at the configured level
+
+The latest explicit user instruction about how much to write always overrides the repository setting for that request.
+
+For issue creation or a substantial issue-body rewrite, read the optional `Issue write-up style` value from the resolved Project contract. If it is absent, use `tidy`. Supported values are:
+
+- `unrestricted`: add useful grounded structure, context, implementation detail, acceptance criteria or decomposition when that materially improves the issue. Do not invent unsupported people, deadlines, scope, rationale or technical decisions.
+- `tidy`: the default. Clean up wording and structure and make only small clarifications or expansions that follow directly from the request or required project sources. Do not introduce new scope, rationale, technical choices, people, deadlines, extra subtasks or acceptance criteria unless they were supplied or are necessary to preserve meaning.
+- `minimal`: keep the issue minimal and direct. Correct obvious wording errors and use only enough structure to make the requested work readable. Do not add contextual paragraphs, inferred rationale, implementation ideas, acceptance criteria, extra subtasks, people, deadlines or technical decisions that the user did not state.
+
+If a contract supplies any other value, stop and identify the unsupported setting instead of silently choosing a style.
+
 Use this default common Priority vocabulary unless the resolved contract declares a complete override:
 
 | Common value | Provider value |
@@ -57,6 +69,8 @@ Use the first capable surface:
 The future CLI is optional and does not exist merely because this skill mentions it. Until it is available, use the direct operations in [the GitHub operations reference](references/github-operations.md).
 
 If the current surface cannot perform an authorised mutation, inspect as far as safely possible and return the smallest executable command block that completes the operation. Use placeholders only for facts that cannot be discovered. Do not claim that returned commands ran.
+
+Copy-and-paste command handoffs must be safe to paste into an interactive shell. Do not include command-wide shell-option changes such as `set -e`, `set -u`, `set -o pipefail`, `set -euo pipefail`, or combined variants. Prefer ordinary commands that leave the caller's shell behaviour unchanged. If a shell-state change is genuinely required, scope it to a subprocess so it does not persist after the command finishes.
 
 Run `scripts/setup.sh` when preparing an environment or when `gh` prerequisites are missing. The host must provide credentials and network access. Never print, persist, transform or request a token in a prompt.
 
