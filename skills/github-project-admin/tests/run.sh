@@ -221,8 +221,8 @@ printf '# Existing repository guidance\n\nKeep this text.\n' >"$test_tmp_dir/ini
     >"$test_tmp_dir/init-output.log" 2>&1 <<'EOF'
 
 
-12
 
+12
 
 
 1
@@ -236,6 +236,7 @@ grep -Fq '<!-- github-project-admin:start -->' "$test_tmp_dir/init-single/AGENTS
 grep -Fq '| Issue repository | octo-org/example |' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fq '| Project title | Example planning |' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fq '| Class | organization issue type | Issue Type |' "$test_tmp_dir/init-single/.projects/project.md"
+grep -Fq 'This is a personal Project.' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fq 'suggest sensible Class' "$test_tmp_dir/init-output.log"
 
 init_contract_sha="$(sha256sum "$test_tmp_dir/init-single/.projects/project.md" | awk '{print $1}')"
@@ -253,13 +254,47 @@ mkdir -p "$test_tmp_dir/init-multiple"
 git -C "$test_tmp_dir/init-multiple" init -q
 if (
   cd "$test_tmp_dir/init-multiple"
-  printf 'n\n' | PATH="$test_tmp_dir/bin:$PATH" bash "$initializer" \
+  printf '\nn\n' | PATH="$test_tmp_dir/bin:$PATH" bash "$initializer" \
     >"$test_tmp_dir/init-multiple.log" 2>&1
 ); then
   echo "ERROR: multi-Project onboarding unexpectedly generated a contract" >&2
   exit 1
 fi
 test ! -e "$test_tmp_dir/init-multiple/.projects/project.md"
-grep -Fq 'Multi-Project setup needs a routing decision.' "$test_tmp_dir/init-multiple.log"
+grep -Fq 'personal, multi-Project repository' "$test_tmp_dir/init-multiple.log"
+
+mkdir -p "$test_tmp_dir/init-collaborative-multiple"
+git -C "$test_tmp_dir/init-collaborative-multiple" init -q
+if (
+  cd "$test_tmp_dir/init-collaborative-multiple"
+  printf 'y\nn\n' | PATH="$test_tmp_dir/bin:$PATH" bash "$initializer" \
+    >"$test_tmp_dir/init-collaborative-multiple.log" 2>&1
+); then
+  echo "ERROR: collaborative multi-Project onboarding unexpectedly generated a contract" >&2
+  exit 1
+fi
+test ! -e "$test_tmp_dir/init-collaborative-multiple/.projects/project.md"
+grep -Fq 'collaborative, multi-Project repository' "$test_tmp_dir/init-collaborative-multiple.log"
+
+mkdir -p "$test_tmp_dir/init-collaborative-single"
+git -C "$test_tmp_dir/init-collaborative-single" init -q
+(
+  cd "$test_tmp_dir/init-collaborative-single"
+  PATH="$test_tmp_dir/bin:$PATH" bash "$initializer" \
+    >"$test_tmp_dir/init-collaborative-single.log" 2>&1 <<'EOF'
+y
+
+
+12
+
+
+1
+1
+
+EOF
+)
+bash "$validator" "$test_tmp_dir/init-collaborative-single"
+grep -Fq 'This is a collaborative Project.' \
+  "$test_tmp_dir/init-collaborative-single/.projects/project.md"
 
 echo "github-project-admin tests passed"
