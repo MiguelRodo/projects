@@ -43,6 +43,16 @@ For issue creation or a substantial issue-body rewrite, read the optional `Issue
 
 If a contract supplies any other value, stop and identify the unsupported setting instead of silently choosing a style.
 
+## Use Class and Workstream for different questions
+
+When creating, refining or applying Class or Issue Type and Workstream values, follow [the Class and Workstream design reference](references/class-and-workstreams.md).
+
+- Class answers what kind of work item this is. `Task` is the normal default when no more specific type adds value.
+- `Epic` is a broad coordination outcome, not a synonym for top-level issue or parent issue. Parenthood and Class are independent, so a Task, Deliverable, Analysis or other type may have sub-issues without becoming an Epic.
+- Workstream answers which stable functional lane the issue belongs to. Do not use it to duplicate Class, Priority, Status, one-off milestones, routing labels or sub-project labels.
+- Prefer a concise, stable vocabulary and preserve useful existing local distinctions. Starter profiles and preferred colours are guidance, not a requirement to rewrite every Project.
+- Colour is presentational. Reuse provider-supported colours when categories outnumber distinct colours; colour uniqueness must not block ordinary administration unless the local contract explicitly makes a palette exact.
+
 Use this default common Priority vocabulary unless the resolved contract declares a complete override:
 
 | Common value | Provider value |
