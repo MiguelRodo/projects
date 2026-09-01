@@ -18,13 +18,19 @@ The repository being managed keeps its own Project details in:
 .projects/project.md
 ```
 
-Install the shared skill for compatible agents:
+From the repository you want to configure, install the shared skill into that repository:
 
 ```bash
-gh skill install MiguelRodo/projects github-project-admin --agent universal --scope user
+gh skill install MiguelRodo/projects github-project-admin --agent universal --scope project
 ```
 
-Then ask for the outcome you want. The skill handles field lookup, safety checks and checking the result.
+Then answer the guided setup questions:
+
+```bash
+bash .agents/skills/github-project-admin/scripts/init-project.sh
+```
+
+Commit the installed skill, generated `.projects/project.md`, and small `AGENTS.md` update. Cloud agents can then start from the repository itself. Afterwards, ask for the outcome you want; the skill handles field lookup, safety checks and checking the result.
 
 The short guide inside the skill explains [setup, updates and repository-specific setup](skills/github-project-admin/README.md).
 
