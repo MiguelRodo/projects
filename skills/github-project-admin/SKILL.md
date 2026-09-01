@@ -20,7 +20,7 @@ Read [the repository contract reference](references/repository-contract.md) when
 ## Resolve exactly one context
 
 - A `single` contract resolves directly.
-- A `dispatcher` contract must resolve exactly one row by an explicit Project number, routing label, Project key, or other exact identifier supplied by the request or live issue state. Then read the referenced `.projects/projects/*.md` contract.
+- A `dispatcher` contract must resolve exactly one row by an explicit Project number, routing label, Project key, or other exact identifier supplied by the request or live issue state. Then read the referenced `.projects/projects/*.md` contract. A zero-route dispatcher is a valid onboarding state, not an operational Project context; for ordinary administration, stop and tell the operator to rerun the initializer and add a Project.
 - All identifiers supplied by the user, contract, issue and Project must agree. Stop on zero matches, multiple matches, or disagreement.
 - Treat live GitHub as authority for current issue, membership, field, option and hierarchy state. Treat `.projects/` as authority for topology, mappings, governance and source requirements.
 - Retrieve an external source only when the local contract requires it for this operation. An exact requested change is not a scope-design task.
@@ -60,7 +60,7 @@ If the current surface cannot perform an authorised mutation, inspect as far as 
 
 Run `scripts/setup.sh` when preparing an environment or when `gh` prerequisites are missing. The host must provide credentials and network access. Never print, persist, transform or request a token in a prompt.
 
-When adopting the skill in a repository that does not yet have `.projects/project.md`, run `scripts/init-project.sh` from that repository. It discovers live GitHub facts, asks only for local choices, writes the first single-Project contract and adds a bounded `AGENTS.md` routing section. It never mutates live issues or Projects. For a multi-Project answer, it prepares the repository and gives an agent handoff instead of inventing routing.
+When adopting the skill in a repository that does not yet have `.projects/project.md`, run `scripts/init-project.sh` from that repository. It discovers live GitHub facts, asks only for local choices, writes the first single-Project contract or an empty multi-Project dispatcher, and adds a bounded `AGENTS.md` routing section. For a dispatcher, it offers to add Projects one at a time, discovering each live Project and asking only for its routing identity. Rerunning it can add another Project without replacing current routes. It never mutates live issues, labels or Projects.
 
 ## Inspect and plan
 

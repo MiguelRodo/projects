@@ -48,7 +48,7 @@ https://github.com/users/example/projects/40       Project number 40
 https://github.com/orgs/example-org/projects/12    Project number 12
 ```
 
-If one repository manages several Projects, have each Project number available for the later routing step.
+If one repository manages several Projects, have the first Project number ready. The initializer will add it and then ask whether you want to add another.
 
 ## 2. Install the skill in the repository
 
@@ -63,19 +63,19 @@ Before the questions begin, the initializer explains what it will configure. It 
 
 - whether other people work with you on the Project;
 - whether the repository uses one Project or several;
-- for a single Project, its owner and number.
+- for each Project you add, its owner, number, Project key and routing label.
 
 This covers personal or collaborative repositories with one Project or several. Repository and Project privacy are discovered separately from GitHub.
 
 For one Project, it creates `.projects/project.md` and adds a small starting section to `AGENTS.md`. It does not print the whole contract or ask you to edit either file.
 
-For several Projects, it installs the skill and adds the `AGENTS.md` starting point, then gives you a request for an agent to finish the routing. Project routing is a real repository decision and is not guessed.
+For several Projects, it creates a validated dispatcher first. It then offers to add one Project, discovers the live Project, asks for the routing identity, creates its child contract and asks whether to add another. If you stop before adding one, the empty dispatcher is saved safely but cannot yet resolve ordinary Project requests. Rerun the initializer to continue.
 
 The initializer never changes live issues, fields or Project options. In particular, it leaves Priority exactly as it is. The initial contract marks its location and meaning as pending until an agent inspects the existing field and records a complete mapping. It will not add P3 or any other option during onboarding.
 
-Finally, it asks whether it may stage, commit and push only these onboarding files. If committing or pushing fails, the local work is kept and the initializer prints the command to continue. Saying no simply leaves the files for you to review.
+Finally, it asks whether it may stage, commit and push only these onboarding files. If committing or pushing fails, the local work is kept and the initializer prints the command to continue. Saying no simply leaves the files for you to review. Commit and push the installed skill and configuration before expecting a remote chat or agent to retrieve them.
 
-## 3. Set up ChatGPT
+## 3. Set up a chat interface
 
 Create or open a [ChatGPT Project](https://chatgpt.com/projects), make the GitHub repository available to it, and paste this into the Project instructions:
 
@@ -83,11 +83,11 @@ Create or open a [ChatGPT Project](https://chatgpt.com/projects), make the GitHu
 >
 > Treat my prompt as the desired outcome. If this chat cannot make a required GitHub change, return the smallest safe command block for me to paste into a terminal, including a check of the result.
 
-You can then ask for the result you want. ChatGPT will do what its GitHub connection allows and give you terminal commands for anything it cannot do directly.
+You can then ask for the result you want. The chat can inspect and propose the work. After you approve the proposal, it will do what its GitHub connection allows and give you terminal commands for anything it cannot do directly.
 
-## 4. Set up Codex cloud
+## 4. Set up an execution-capable agent
 
-Open [Codex environments](https://chatgpt.com/codex/settings/environments), create an environment and choose the repository.
+Codex cloud is one execution-capable option. Open [Codex environments](https://chatgpt.com/codex/settings/environments), create an environment and choose the repository.
 
 Use this setup command:
 
@@ -107,23 +107,11 @@ Environment variables remain available while the agent works, whereas setup-only
 
 ## 5. Give it a useful first request
 
-After ChatGPT or Codex is ready, the initializer gives you a request tailored to the repository.
+After the chat interface or execution-capable agent is ready, the initializer gives you one proposal-only request tailored to a resolved Project.
 
-For a single Project, it can ask the agent to inspect existing issues, confirm the pending Priority location and mapping without changing the live field, propose useful Issue Type or Class and Workstream values, add sensible colours, organise the issues and build useful native parent/sub-issue relationships.
+The request asks the surface to inspect existing issues, confirm the pending Priority location and mapping without changing the live field, propose useful Issue Type or Class and Workstream values, preserve useful definitions and colours, organise the issues, build useful native parent/sub-issue relationships and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal.
 
-You choose whether the request ends with:
-
-> Give me an overview of what you plan to do based on this request. Do not make changes until I approve the plan.
-
-or:
-
-> Do this now, then independently verify and summarise the changes.
-
-For several Projects, the first request completes the dispatcher and routing contracts. Once that is committed, ask the agent to organise the issues across the resolved Projects.
-
-To add another Project later, use a request such as:
-
-> Start from `AGENTS.md`. Add Project 12 owned by `example-org` to this repository's existing multi-Project configuration. Preserve current routes, ask me only for the new routing decision, and validate the result.
+After approval, an execution-capable agent can apply and verify the proposal. A chat interface that cannot write should return the smallest safe command block with independent readback. To add another Project later, rerun the initializer; it preserves every current route and contract.
 
 ## Update the installed skill
 
