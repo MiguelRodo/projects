@@ -336,7 +336,7 @@ grep -Fq '  .projects/projects/example-planning.md' \
   "$test_tmp_dir/init-multiple.log"
 grep -Fq 'Use the same first request in a chat interface or an execution-capable agent' \
   "$test_tmp_dir/init-multiple.log"
-grep -Fq 'Suggest optional sub-project labels only where they are' \
+grep -Fq 'optional sub-project labels only where they are genuinely useful.' \
   "$test_tmp_dir/init-multiple.log"
 if grep -Fq 'Finish the multi-Project routing' "$test_tmp_dir/init-multiple.log"; then
   echo "ERROR: multi-Project onboarding printed the removed handoff" >&2
