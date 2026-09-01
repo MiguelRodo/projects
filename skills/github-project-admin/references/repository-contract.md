@@ -31,6 +31,7 @@ Use this form when one repository resolves to one Project:
 | Project title | Example planning |
 | Routing | linked repository |
 | Privacy | repository |
+| Issue write-up style | tidy |
 
 ## Field locations
 
@@ -85,6 +86,18 @@ Use `.projects/project.md` as a dispatcher:
 Each referenced file uses the single-Project form with `Mode` set to `project` and adds a `Project key` metadata row. Its key, `label:` routing value, Project number and issue repository must match the dispatcher row exactly. Route keys, routing labels and Project numbers must each be unique. A supplied label, key and number must resolve to the same row.
 
 The guided initializer may create this dispatcher with only the route-table header. That zero-route form is a valid saved onboarding state, but it cannot resolve ordinary administration. Rerun the initializer to add one Project at a time. Each addition discovers the live Project, writes one child contract, updates the dispatcher and validates the combined result before preserving it. Onboarding records routing labels in the contracts but does not create or apply them on GitHub.
+
+## Issue write-up style
+
+A resolved Project contract may contain an `Issue write-up style` metadata row. This controls how much an agent expands issue titles and bodies when creating an issue or substantially rewriting one. It does not override a more recent explicit user instruction.
+
+Supported values are:
+
+- `unrestricted`: the agent may add useful grounded structure, context, implementation detail, acceptance criteria or decomposition when helpful;
+- `tidy`: light expansion and tidying only, and the default when the row is absent;
+- `minimal`: minimal and direct wording, with no inferred context, rationale, implementation detail, acceptance criteria or extra subtasks.
+
+For a multi-Project repository, put the setting in the resolved `.projects/projects/*.md` child contract so different Projects can use different defaults. Users may edit this row directly when they want a different style.
 
 ## Field locations and mappings
 
