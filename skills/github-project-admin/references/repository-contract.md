@@ -99,6 +99,20 @@ Supported values are:
 
 For a multi-Project repository, put the setting in the resolved `.projects/projects/*.md` child contract so different Projects can use different defaults. Users may edit this row directly when they want a different style.
 
+## Class and Workstream vocabularies
+
+Class or Issue Type describes the kind of work item. Workstream describes the stable functional lane. Follow [the Class and Workstream design reference](class-and-workstreams.md) when proposing or refining these values.
+
+The shared profiles are defaults and examples, not implicit contract values. A repository may keep a smaller or more domain-specific vocabulary. Existing useful local values should not be renamed merely to match the examples.
+
+Important defaults are:
+
+- `Task` is the ordinary fallback Class.
+- `Epic` is reserved for a broad coordination outcome. Top-level placement or having children does not by itself make an item an Epic.
+- A Task, Deliverable, Analysis or other type may have sub-issues and remain that type.
+- Workstreams should be stable lanes and should not duplicate Class, Priority, Status, one-off milestones, routing labels or sub-project labels.
+- A contract may list exact Class or Workstream values when the Project genuinely requires them; otherwise the agent should inspect the issue set and propose a concise vocabulary before live changes.
+
 ## Field locations and mappings
 
 For each dimension, record the semantic name, provider location and exact provider field name. Typical locations are:
@@ -139,9 +153,11 @@ A repository may make a single-select palette exact by using an `Option` and `Co
 | Documentation | GREEN |
 ```
 
-Supported colours are `BLUE`, `GRAY`, `GREEN`, `ORANGE`, `PINK`, `PURPLE`, `RED` and `YELLOW`. Reusing a colour is allowed.
+Supported GitHub colours are `BLUE`, `GRAY`, `GREEN`, `ORANGE`, `PINK`, `PURPLE`, `RED` and `YELLOW`. Reusing a colour is allowed.
 
-If a contract lists values without colours, colour is not a contract constraint. When creating or organising a Project, an agent may choose stable colours without asking if the choice is purely presentational. Prefer familiar meanings where they fit: red for bugs or blocked work, blue for epics or enhancements, yellow or orange for ordinary work in progress, green for documentation or reports, purple or pink for research and data, and grey for neutral governance. Preserve useful existing colours unless the requested outcome includes changing them.
+If a contract lists values without colours, colour is not a contract constraint. When creating or organising a Project, an agent may choose stable colours without asking if the choice is purely presentational. The preferred colours in [the Class and Workstream design reference](class-and-workstreams.md) are reusable defaults, not semantic state.
+
+If there are more categories than distinct provider colours, reuse colours. If another provider exposes additional colours, those may be used. A lack of unique colours must not block ordinary administration or classification. Only an explicitly declared exact palette is a local contract constraint. Preserve useful existing colours unless the requested outcome includes changing them.
 
 ## Governance and source rules
 

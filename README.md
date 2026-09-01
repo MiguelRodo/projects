@@ -113,6 +113,22 @@ The request asks the surface to inspect existing issues, confirm the pending Pri
 
 After approval, an execution-capable agent can apply and verify the proposal. A chat interface that cannot write should return the smallest safe command block with independent readback. To add another Project later, rerun the initializer; it preserves every current route and contract.
 
+## Class and Workstream defaults
+
+The skill has reusable defaults for organising Projects without forcing every Project into the same taxonomy.
+
+**Class or Issue Type** describes what kind of item it is. The starter vocabulary is `Epic`, `Task`, `Deliverable`, `Analysis`, `Research`, `Enhancement`, `Bug` and `Documentation`, each with a preferred colour. `Task` is the ordinary fallback.
+
+`Epic` is deliberately narrow: use it for a broad coordination outcome that stays useful while several distinct pieces of work are managed separately. Top-level issues do not need to be Epics, and parenthood does not imply Epic. A Deliverable, Analysis or Task may have children and keep its own type.
+
+**Workstream** describes the stable functional lane. Starter profiles are provided for research/scientific, teaching, personal/household and software/product Projects. Examples include research lanes such as Data, Methods, Analysis, Validation and Reporting; teaching lanes such as Delivery, Assessment and Materials; and software lanes such as Design, Implementation, Integrations and Testing.
+
+Workstreams should not merely repeat Class, Priority, Status, a one-off milestone or a sub-project label. Prefer a concise stable set. Milestone-specific names such as individual proposal, presentation, write-up or poster stages can usually share a `Reporting` workstream while the actual issues are typed as Deliverables.
+
+Preferred colours make repeated names easier to recognise, but colour is presentational. Reuse provider-supported colours when there are more categories than distinct colours. A category does not need a unique colour for the system to work.
+
+See the full [Class and Workstream design guide](skills/github-project-admin/references/class-and-workstreams.md) for the standard profiles, preferred colours, Epic heuristics and migration guidance.
+
 ## Update the installed skill
 
 Run this in the repository and commit the changed files:
