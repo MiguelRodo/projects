@@ -38,8 +38,8 @@ The latest explicit user instruction about how much to write always overrides th
 For issue creation or a substantial issue-body rewrite, read the optional `Issue write-up style` value from the resolved Project contract. If it is absent, use `tidy`. Supported values are:
 
 - `unrestricted`: add useful grounded structure, context, implementation detail, acceptance criteria or decomposition when that materially improves the issue. Do not invent unsupported people, deadlines, scope, rationale or technical decisions.
-- `tidy`: the default. Clean up wording and structure and make only small clarifications or expansions that follow directly from the request or required project sources. Do not introduce new scope, rationale, technical choices, people, deadlines, extra subtasks or acceptance criteria unless they were supplied or are necessary to preserve meaning.
-- `minimal`: keep the issue minimal and direct. Correct obvious wording errors and use only enough structure to make the requested work readable. Do not add contextual paragraphs, inferred rationale, implementation ideas, acceptance criteria, extra subtasks, people, deadlines or technical decisions that the user did not state.
+- `tidy`: the default. Reword and organise the supplied material, using required project context only to express it faithfully. Do not add substantive information, including new scope, rationale, technical choices, people, deadlines, subtasks or acceptance criteria. Ask only when genuine ambiguity would change the issue's meaning.
+- `direct`: do only the structural work needed to create the issue. Derive a concise title and, when the supplied material supports one, a description; correct spelling and grammar. Do not otherwise reword, reorganise, expand or add substantive information.
 
 If a contract supplies any other value, stop and identify the unsupported setting instead of silently choosing a style.
 
@@ -48,8 +48,9 @@ If a contract supplies any other value, stop and identify the unsupported settin
 When creating, refining or applying Class or Issue Type values, follow [the Issue Type and Class design reference](references/issue-types.md).
 
 - `Task` is the ordinary fallback when no more informative type adds useful meaning.
-- The reusable default vocabulary is `Task`, `Bug`, `Enhancement`, `Raw data`, `Processed data`, `Analysis`, `Deliverable`, `Documentation` and `Epic`. A repository may keep a smaller or deliberately local vocabulary.
-- `Deliverable` means one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output. It includes reports, manuscripts, presentations, posters, submissions, protocols, handovers and software releases.
+- The reusable default vocabulary is `Task`, `Bug`, `Enhancement`, `Data`, `Analysis`, `Deliverable`, `Documentation` and `Epic`. A repository may keep a smaller or deliberately local vocabulary.
+- `Data` covers source-data acquisition and stewardship as well as transformation, validation and production of derived analysis-ready data.
+- `Deliverable` means one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output. It includes reports, manuscripts, presentations, posters, submissions, grant applications, protocols, handovers and software releases.
 - `Epic` is a broad coordination outcome, not a synonym for top-level issue or parent issue. Parenthood and Class are independent, so a Task, Deliverable, Analysis or other type may have sub-issues without becoming an Epic.
 - `Research` is not a default type. Use Task for ordinary exploratory or decision work, Analysis when the main output is an analytical result, or Enhancement when the work develops or improves an existing method or system, unless the repository deliberately retains another local type.
 - Workstream is not a standard semantic dimension. If an older Project still has a custom field named `Workstream`, treat it as legacy or unmanaged state unless the resolved repository contract deliberately documents it as non-standard metadata. Do not require or populate it merely because it exists.

@@ -94,10 +94,10 @@ A resolved Project contract may contain an `Issue write-up style` metadata row. 
 Supported values are:
 
 - `unrestricted`: the agent may add useful grounded structure, context, implementation detail, acceptance criteria or decomposition when helpful;
-- `tidy`: light expansion and tidying only, and the default when the row is absent;
-- `minimal`: minimal and direct wording, with no inferred context, rationale, implementation detail, acceptance criteria or extra subtasks.
+- `tidy`: the default when the row is absent; the agent may reword and organise supplied material and use required project context to express it faithfully, but may not add substantive information;
+- `direct`: the agent performs only the structural work needed to derive a title and, when supported by the supplied material, a description, plus spelling and grammar corrections. It does not otherwise reword, reorganise, expand or add substantive information.
 
-For a multi-Project repository, put the setting in the resolved `.projects/projects/*.md` child contract so different Projects can use different defaults. Users may edit this row directly when they want a different style.
+For `tidy`, ask only when genuine ambiguity would change the issue's meaning. For a multi-Project repository, put the setting in the resolved `.projects/projects/*.md` child contract so different Projects can use different defaults. Users may edit this row directly when they want a different style. Replace the retired `minimal` value with `direct` in an existing contract.
 
 ## Class / Issue Type vocabulary
 
@@ -108,10 +108,9 @@ The shared vocabulary is a default, not an implicit contract. A repository may k
 - `Task`: ordinary fallback for a specific piece of work;
 - `Bug`: fault, regression or incorrect behaviour;
 - `Enhancement`: bounded improvement to existing work, material, method, process or software;
-- `Raw data`: acquisition, intake or stewardship of source data;
-- `Processed data`: transformation, validation or production of derived analysis-ready data;
+- `Data`: acquisition, intake, stewardship, transformation or validation of source or derived data, including production of analysis-ready data;
 - `Analysis`: quantitative or analytical result, inference, evaluation or reproducible computation;
-- `Deliverable`: one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed, including software releases;
+- `Deliverable`: one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed, including grant applications and software releases;
 - `Documentation`: durable guidance, records or reference material;
 - `Epic`: a broad coordination outcome that remains useful as a planning object across several independently meaningful pieces of work.
 

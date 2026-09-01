@@ -115,9 +115,9 @@ After approval, an execution-capable agent can apply and verify the proposal. A 
 
 ## Issue Type / Class defaults
 
-The skill uses one classification dimension for the kind of work. The starter vocabulary is `Task`, `Bug`, `Enhancement`, `Raw data`, `Processed data`, `Analysis`, `Deliverable`, `Documentation` and `Epic`.
+The skill uses one classification dimension for the kind of work. The starter vocabulary is `Task`, `Bug`, `Enhancement`, `Data`, `Analysis`, `Deliverable`, `Documentation` and `Epic`.
 
-`Task` is the ordinary fallback. Use a more specific type when the distinction improves planning. `Deliverable` supersedes `Report` and means one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output. That includes reports, manuscripts, presentations, posters, submissions, protocols, handovers and software releases.
+`Task` is the ordinary fallback. Use a more specific type when the distinction improves planning. `Data` covers source-data acquisition and stewardship as well as transformation, validation and production of derived analysis-ready data. `Deliverable` supersedes `Report` and means one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output. That includes reports, manuscripts, presentations, posters, submissions, grant applications, protocols, handovers and software releases.
 
 `Epic` is deliberately narrow: use it for a broad coordination outcome that stays useful while several independently meaningful pieces of work are managed separately. Top-level issues do not need to be Epics, and parenthood does not imply Epic. A Deliverable, Analysis or Task may have children and keep its own type.
 
@@ -130,6 +130,16 @@ GitHub Milestones are optional for genuine shared checkpoints such as releases o
 Preferred colours make repeated types easier to recognise, but colour is presentational. Reuse provider-supported colours when there are more categories than distinct colours.
 
 See the full [Issue Type and Class design guide](skills/github-project-admin/references/issue-types.md) for type meanings, hierarchy rules and migration guidance.
+
+## Issue write-up styles
+
+A resolved Project contract may set how much the agent reshapes an issue during creation or a substantial rewrite:
+
+- `direct` derives the title and, when the supplied material supports one, a description, and fixes spelling and grammar without further rewriting or expansion;
+- `tidy`, the default, may reword and organise supplied material but cannot add substantive information;
+- `unrestricted` may add useful detail grounded in the request and required project sources.
+
+The latest explicit instruction in the current request takes precedence. Existing contracts that use the retired `minimal` name should change it to `direct`.
 
 ## Update the installed skill
 

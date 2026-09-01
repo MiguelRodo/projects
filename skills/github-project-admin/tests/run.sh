@@ -32,14 +32,24 @@ if bash "$validator" "$test_dir/fixtures/invalid-pending" >/dev/null 2>&1; then
   echo "ERROR: mixed pending and partial Priority mapping unexpectedly validated" >&2
   exit 1
 fi
+if bash "$validator" "$test_dir/fixtures/invalid-writeup" >/dev/null 2>&1; then
+  echo "ERROR: retired minimal issue write-up style unexpectedly validated" >&2
+  exit 1
+fi
 
 grep -Fqx 'name: github-project-admin' "$skill_dir/SKILL.md"
 test -f "$skill_dir/README.md"
 test -f "$skill_dir/references/issue-types.md"
 grep -Fq 'Set example#313 to P2.' "$test_dir/short-requests.md"
+grep -Fq '## Issue creation styles' "$test_dir/short-requests.md"
 grep -Fq 'P3 | Low' "$skill_dir/SKILL.md"
 grep -Fq 'Priority mapping status: pending' "$skill_dir/SKILL.md"
 grep -Fq 'Deliverable' "$skill_dir/references/issue-types.md"
+grep -Fq '`Task`, `Bug`, `Enhancement`, `Data`, `Analysis`, `Deliverable`, `Documentation` and `Epic`' \
+  "$skill_dir/SKILL.md"
+grep -Fq '| Data | PINK |' "$skill_dir/references/issue-types.md"
+grep -Fq '`direct`: do only the structural work needed to create the issue' "$skill_dir/SKILL.md"
+grep -Fq '`tidy`: the default. Reword and organise the supplied material' "$skill_dir/SKILL.md"
 grep -Fq 'Workstream is not a standard semantic dimension' "$skill_dir/SKILL.md"
 grep -Fq 'gh auth login --web --scopes "project,read:org"' "$skill_dir/README.md"
 grep -Fq 'https://chatgpt.com/codex/settings/environments' "$skill_dir/README.md"
