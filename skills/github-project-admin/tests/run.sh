@@ -35,9 +35,12 @@ fi
 
 grep -Fqx 'name: github-project-admin' "$skill_dir/SKILL.md"
 test -f "$skill_dir/README.md"
+test -f "$skill_dir/references/issue-types.md"
 grep -Fq 'Set example#313 to P2.' "$test_dir/short-requests.md"
 grep -Fq 'P3 | Low' "$skill_dir/SKILL.md"
 grep -Fq 'Priority mapping status: pending' "$skill_dir/SKILL.md"
+grep -Fq 'Deliverable' "$skill_dir/references/issue-types.md"
+grep -Fq 'Workstream is not a standard semantic dimension' "$skill_dir/SKILL.md"
 grep -Fq 'gh auth login --web --scopes "project,read:org"' "$skill_dir/README.md"
 grep -Fq 'https://chatgpt.com/codex/settings/environments' "$skill_dir/README.md"
 if grep -Eq '\$\{[^}]+(,,|\^\^)\}|(^|[^[:alnum:]_])(mapfile|readarray)([^[:alnum:]_]|$)|declare[[:space:]]+-A' \
@@ -68,7 +71,7 @@ case "${1:-}" in
     elif [[ "${2:-}" == "list" ]]; then
       echo '{"projects":[]}'
     elif [[ "${2:-}" == "field-list" ]]; then
-      printf 'Status\nPriority\nWorkstream\n'
+      printf 'Status\nPriority\n'
     else
       exit 2
     fi
@@ -251,6 +254,10 @@ grep -Fq '| Priority | pending live inspection | Priority |' "$test_tmp_dir/init
 grep -Fq '| Routing | Project membership; no routing label |' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fxq 'Priority mapping status: pending' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fq 'This is a personal Project.' "$test_tmp_dir/init-single/.projects/project.md"
+if grep -Fq '| Workstream |' "$test_tmp_dir/init-single/.projects/project.md"; then
+  echo "ERROR: initializer generated a standard Workstream dimension" >&2
+  exit 1
+fi
 grep -Fq 'I will ask a few questions to configure' "$test_tmp_dir/init-output.log"
 awk '
   previous == "No live issue or Project value will be changed during this setup." &&
@@ -266,7 +273,7 @@ grep -Fq 'I will now show two ways to use the repository' "$test_tmp_dir/init-ou
 grep -Fq 'Use the repository with a chat interface' "$test_tmp_dir/init-output.log"
 grep -Fq 'Use the repository with an execution-capable agent' "$test_tmp_dir/init-output.log"
 grep -Fq 'https://chatgpt.com/codex/settings/environments' "$test_tmp_dir/init-output.log"
-grep -Fq 'Issue Type and' "$test_tmp_dir/init-output.log"
+grep -Fq 'Issue Type from the issue evidence' "$test_tmp_dir/init-output.log"
 grep -Fq 'do not change' "$test_tmp_dir/init-output.log"
 grep -Fq 'until I approve them' "$test_tmp_dir/init-output.log"
 grep -Fq 'committed and pushed' "$test_tmp_dir/init-output.log"
@@ -316,6 +323,10 @@ grep -Fq '| Owner type | organization |' \
   "$test_tmp_dir/init-multiple/.projects/projects/example-planning.md"
 grep -Fq '| Routing | label:project:example-planning |' \
   "$test_tmp_dir/init-multiple/.projects/projects/example-planning.md"
+if grep -Fq '| Workstream |' "$test_tmp_dir/init-multiple/.projects/projects/example-planning.md"; then
+  echo "ERROR: dispatcher child generated a standard Workstream dimension" >&2
+  exit 1
+fi
 test -e "$test_tmp_dir/init-multiple/.projects/projects/.gitkeep"
 grep -Fq 'Add Projects' "$test_tmp_dir/init-multiple.log"
 grep -Fq 'Added Project octo-org/12 as route example-planning.' \
