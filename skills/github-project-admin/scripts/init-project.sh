@@ -123,13 +123,26 @@ repository_owner="${repository%%/*}"
 
 echo "Repository: $repository"
 echo
+if ask_yes_no "Will people other than you collaborate on Projects managed from this repository?" no; then
+  governance="collaborative"
+else
+  governance="personal"
+fi
+
 if ! ask_yes_no "Does this repository use exactly one GitHub Project?" yes; then
   echo
-  echo "No files were changed. Multi-Project setup needs a routing decision."
+  echo "This is a $governance, multi-Project repository."
+  echo "No repository configuration was generated because each issue needs one"
+  echo "deterministic route to the correct Project. An agent can set that up without"
+  echo "asking you to hand-write dispatcher files."
+  echo
   echo "Ask ChatGPT or Codex:"
   echo
-  echo "  Start from AGENTS.md and set up this repository for multiple GitHub Projects."
-  echo "  Ask me about routing only where GitHub cannot determine it."
+  echo "  Set up $repository as a $governance multi-Project repository. Use the"
+  echo "  installed github-project-admin skill, preserve the existing AGENTS.md,"
+  echo "  discover what GitHub can, and ask me only for Project numbers and routing"
+  echo "  choices that cannot be determined safely. Do not change live issues or"
+  echo "  Projects until I approve the generated repository configuration."
   exit 2
 fi
 
@@ -174,12 +187,6 @@ if [[ -n "$field_names" ]]; then
   echo "Current Project fields: $field_names"
 fi
 echo
-
-if ask_yes_no "Will people other than you collaborate on this Project?" no; then
-  governance="shared"
-else
-  governance="personal"
-fi
 
 if [[ "$project_owner_type" == "organization" ]] &&
    ask_yes_no "Does this Project use organisation Issue Type and Priority fields?" yes; then

@@ -1,75 +1,102 @@
 # GitHub Project admin
 
-This skill lets an agent manage GitHub issues and Projects from ordinary requests.
+This skill lets an agent manage GitHub issues and Projects from ordinary requests. It checks the current state before changing anything and checks the result afterwards.
 
-You can ask things like:
+## Set up a repository
 
-- `Set example#313 to P2.`
-- `What should I work on next?`
-- `Add these issues to the Project and organise them.`
+### 1. Create or find the GitHub Project
 
-The skill checks the current Project before changing anything and checks the result afterwards. You do not need to put those instructions in every request.
+Open the **Projects** tab on your GitHub profile or organisation. Create the Project if it does not exist yet.
 
-## Set it up in a repository
+The Project number is the number after `/projects/` in its web address. For example, these are Project 40 and Project 12:
 
-From the repository you want to use, install the skill into the repository:
-
-Install the skill for compatible agents:
-
-```bash
-gh skill install MiguelRodo/projects github-project-admin --agent universal --scope project
+```text
+https://github.com/users/example/projects/40
+https://github.com/orgs/example-org/projects/12
 ```
 
-Run the friendly onboarding questions:
+Have the number for each relevant Project ready before starting.
+
+### 2. Install the skill and answer the questions
+
+From the repository, run:
 
 ```bash
+gh skill install MiguelRodo/projects github-project-admin \
+  --agent universal \
+  --scope project
+
 bash .agents/skills/github-project-admin/scripts/init-project.sh
 ```
 
-The script discovers the repository and live Project details, creates `.projects/project.md`, and adds a small routing section to `AGENTS.md`. It does not change live issues or Project fields. At the end it can give you a short request for ChatGPT or Codex to suggest sensible Class and Workstream values.
+The initializer asks whether the setup is personal or collaborative and whether the repository uses one or several Projects. It discovers privacy, repository identity, Project title and owner type from GitHub.
 
-Review and commit `.agents/skills/github-project-admin/`, `.projects/project.md`, and the `AGENTS.md` change. A fresh cloud agent can then discover the same skill from the repository.
+- For one Project, it generates and validates `.projects/project.md` and adds a bounded `AGENTS.md` section.
+- For several Projects, it returns a tailored request for an agent to ask only for the Project numbers and routing choices it cannot discover safely.
 
-For an ordinary ChatGPT Project, keep its standing instruction generic:
+It also asks whether ChatGPT or Codex should leave existing issues alone, suggest Class and Workstream values, or propose them and wait for approval before applying them. The initializer itself never changes live issues or Project fields.
 
-> For work concerning a GitHub repository, especially reading or updating GitHub issues or Projects, first retrieve and follow the target repository's `AGENTS.md`. Follow the skill and configuration it references.
+Review and commit:
 
-Run the environment preflight when needed:
+```text
+.agents/skills/github-project-admin/
+.projects/
+AGENTS.md
+```
+
+### 3. Choose how you want to use it
+
+#### ChatGPT or another conversational service
+
+Create a provider Project or workspace with access to the repository. Use this standing instruction:
+
+> For work concerning a GitHub repository, especially reading or updating GitHub issues or Projects, first retrieve and follow the target repository's `AGENTS.md`. Follow the skill and configuration files it references. If the repository or `AGENTS.md` is unavailable, say so rather than guessing.
+
+Ask for the result you want. If the service cannot make the change, it should return a concise command block for you to paste into a terminal.
+
+#### Codex Cloud or another shell-capable agent
+
+Create an environment for the repository and use:
 
 ```bash
 bash .agents/skills/github-project-admin/scripts/setup.sh
 ```
 
-For the `MiguelRodo/projects` repository itself, use the checked-in copy:
+Provide `GH_TOKEN` as an environment variable with repository and Project access. Allow `github.com` and `api.github.com`. The agent can then run and verify the commands directly.
 
-```bash
-bash skills/github-project-admin/scripts/setup.sh --install-skill-from .
-```
+## Repository shapes
 
-In Codex Cloud, put the repository-local preflight command in the environment's setup-script box. Add `GH_TOKEN` as an environment variable so it is available while Codex is working, and allow access to `github.com` and `api.github.com`. Do not print the token or commit it to the repository.
+The onboarding flow handles all four combinations:
 
-## Add repository-specific setup
+| Governance | Topology | Onboarding result |
+| --- | --- | --- |
+| Personal | One Project | Generate the contract directly |
+| Collaborative | One Project | Generate the contract directly |
+| Personal | Several Projects | Give a personal multi-Project routing handoff |
+| Collaborative | Several Projects | Give a collaborative multi-Project routing handoff |
 
-If a repository needs extra tools, add `.projects/setup.sh`. It runs automatically after the shared setup.
+Privacy is discovered separately from GitHub. A private repository can still be collaborative, and a public repository can still use a Project managed by one person.
 
-If the repository needs to replace the shared setup completely, put this near the top of that file:
+## Repository-specific setup
+
+If the repository needs extra tools, add `.projects/setup.sh`. It runs automatically after the shared setup and is not replaced when the skill is updated.
+
+To replace common setup completely, place this within the first 20 lines:
 
 ```bash
 # github-project-admin: override
 ```
 
-Keep repository-specific files under `.projects/`. Updating the installed skill will not replace them.
-
 ## Update the skill
+
+Run this inside the repository, then commit the changed skill files:
 
 ```bash
 gh skill update github-project-admin
 ```
 
-Commit the updated `.agents/skills/github-project-admin/` files so cloud agents receive the same version.
+## If something fails
 
-## If a command fails
+Paste the terminal output into the chat, or say which command failed. The agent should inspect what already succeeded and give you only the corrected or remaining commands.
 
-Paste the terminal output back into the chat, or say which command failed. The agent should check what already succeeded and give you only the corrected or remaining commands to paste.
-
-If the failure looks reusable, the agent may offer to improve this repository. It should open a pull request only after you agree.
+If the failure is reusable, the agent may offer to improve `MiguelRodo/projects`. It should open an issue or pull request only after you agree.
