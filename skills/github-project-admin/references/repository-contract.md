@@ -72,6 +72,7 @@ Use `.projects/project.md` as a dispatcher:
 | Mode | dispatcher |
 | Issue repository | octo-user/issues |
 | Privacy | private repository |
+| Governance | collaborative |
 
 ## Routes
 
@@ -82,6 +83,8 @@ Use `.projects/project.md` as a dispatcher:
 ```
 
 Each referenced file uses the single-Project form with `Mode` set to `project` and adds a `Project key` metadata row. Its key, `label:` routing value, Project number and issue repository must match the dispatcher row exactly. Route keys, routing labels and Project numbers must each be unique. A supplied label, key and number must resolve to the same row.
+
+The guided initializer may create this dispatcher with only the route-table header. That zero-route form is a valid saved onboarding state, but it cannot resolve ordinary administration. Rerun the initializer to add one Project at a time. Each addition discovers the live Project, writes one child contract, updates the dispatcher and validates the combined result before preserving it. Onboarding records routing labels in the contracts but does not create or apply them on GitHub.
 
 ## Field locations and mappings
 
