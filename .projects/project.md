@@ -19,7 +19,6 @@
 | Class | project field | Class |
 | Priority | project field | Priority |
 | Status | project field | Status |
-| Workstream | project field | Workstream |
 | Due date | project field | Target date |
 | Parent | native issue relationship | Parent issue |
 
@@ -38,12 +37,15 @@ This Project uses the common names directly.
 
 | Option | Colour |
 | --- | --- |
-| Epic | BLUE |
 | Task | YELLOW |
 | Bug | RED |
-| Enhancement | BLUE |
-| Research | PURPLE |
-| Documentation | GREEN |
+| Enhancement | GREEN |
+| Raw data | PINK |
+| Processed data | PURPLE |
+| Analysis | PURPLE |
+| Deliverable | ORANGE |
+| Documentation | GRAY |
+| Epic | BLUE |
 
 ## Status mapping
 
@@ -53,32 +55,20 @@ This Project uses the common names directly.
 | In progress | In progress |
 | Done | Done |
 
-## Workstream values
-
-| Option | Colour |
-| --- | --- |
-| Shared skill | PURPLE |
-| Repository contracts | BLUE |
-| Agent distribution | GREEN |
-| Provider integration | PINK |
-| CLI | YELLOW |
-| User interface | ORANGE |
-| Testing and pilots | RED |
-| Governance and documentation | GRAY |
-
 ## Bootstrap target
 
-- Class and Workstream are required single-select Project fields with the exact values and colours above.
+- Class is a required single-select Project field with the exact values and colours above.
 - Priority requires the P0, P1, P2 and P3 options. Add P3 if live discovery confirms that only P0 to P2 exist.
 - Target date is optional and remains blank unless an issue has a real deadline.
-- Use native parent and sub-issue relationships for the roadmap hierarchy.
-- Bringing the Project into line with this contract may add the declared missing fields or options and populate them, but must not delete or rename unrelated Project fields.
+- Use native parent and sub-issue relationships for roadmap hierarchy. Parenthood does not imply Epic.
+- Workstream is not part of the active contract. A legacy field with that name may remain live until an explicitly authorised migration removes it.
+- Bringing the Project into line with this contract may add the declared missing Class or Priority options and populate them, but must not delete or rename unrelated Project fields unless that migration is separately authorised.
 
 ## Governance
 
 - The repository is public and the Project is private. Keep private material out of issues, pull requests, commits, logs and public reports.
 - Project membership is the routing mechanism. Do not add a label merely to duplicate membership.
-- Labels must not duplicate Class, Priority, Status or Workstream.
+- Labels must not duplicate Class, Priority or Status.
 - Assignment is explicit only.
 - Read issue #1 for the roadmap and issue #67 for the current architecture before inventing scope or changing roadmap meaning.
 - Exact requested administration and organising existing issues to this declared shape require no external source.

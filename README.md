@@ -109,25 +109,27 @@ Environment variables remain available while the agent works, whereas setup-only
 
 After the chat interface or execution-capable agent is ready, the initializer gives you one proposal-only request tailored to a resolved Project.
 
-The request asks the surface to inspect existing issues, confirm the pending Priority location and mapping without changing the live field, propose useful Issue Type or Class and Workstream values, preserve useful definitions and colours, organise the issues, build useful native parent/sub-issue relationships and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal.
+The request asks the surface to inspect existing issues, confirm the pending Priority location and mapping without changing the live field, propose useful Issue Type or Class values, preserve useful definitions and colours, organise the issues, build useful native parent/sub-issue relationships and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal.
 
 After approval, an execution-capable agent can apply and verify the proposal. A chat interface that cannot write should return the smallest safe command block with independent readback. To add another Project later, rerun the initializer; it preserves every current route and contract.
 
-## Class and Workstream defaults
+## Issue Type / Class defaults
 
-The skill has reusable defaults for organising Projects without forcing every Project into the same taxonomy.
+The skill uses one classification dimension for the kind of work. The starter vocabulary is `Task`, `Bug`, `Enhancement`, `Raw data`, `Processed data`, `Analysis`, `Deliverable`, `Documentation` and `Epic`.
 
-**Class or Issue Type** describes what kind of item it is. The starter vocabulary is `Epic`, `Task`, `Deliverable`, `Analysis`, `Research`, `Enhancement`, `Bug` and `Documentation`, each with a preferred colour. `Task` is the ordinary fallback.
+`Task` is the ordinary fallback. Use a more specific type when the distinction improves planning. `Deliverable` supersedes `Report` and means one bounded formal output or event that is handed over, submitted, presented, released, assessed or otherwise consumed as an output. That includes reports, manuscripts, presentations, posters, submissions, protocols, handovers and software releases.
 
-`Epic` is deliberately narrow: use it for a broad coordination outcome that stays useful while several distinct pieces of work are managed separately. Top-level issues do not need to be Epics, and parenthood does not imply Epic. A Deliverable, Analysis or Task may have children and keep its own type.
+`Epic` is deliberately narrow: use it for a broad coordination outcome that stays useful while several independently meaningful pieces of work are managed separately. Top-level issues do not need to be Epics, and parenthood does not imply Epic. A Deliverable, Analysis or Task may have children and keep its own type.
 
-**Workstream** describes the stable functional lane. Starter profiles are provided for research/scientific, teaching, personal/household and software/product Projects. Examples include research lanes such as Data, Methods, Analysis, Validation and Reporting; teaching lanes such as Delivery, Assessment and Materials; and software lanes such as Design, Implementation, Integrations and Testing.
+`Research` is not a default type. Ordinary exploratory or decision work can normally be a Task, analytical investigation can be Analysis, and work developing an existing method or system can be Enhancement. Repositories may still keep a deliberate local type when it adds useful meaning.
 
-Workstreams should not merely repeat Class, Priority, Status, a one-off milestone or a sub-project label. Prefer a concise stable set. Milestone-specific names such as individual proposal, presentation, write-up or poster stages can usually share a `Reporting` workstream while the actual issues are typed as Deliverables.
+The active model does **not** use Workstream as a standard dimension. Routing or sub-project labels answer where the issue belongs; Issue Type/Class says what kind of work it is; native parent/sub-issue relationships carry scope and decomposition; Priority, Status and Due date carry planning state. Existing custom Workstream fields in older Projects are legacy/unmanaged unless a repository deliberately keeps them as non-standard metadata.
 
-Preferred colours make repeated names easier to recognise, but colour is presentational. Reuse provider-supported colours when there are more categories than distinct colours. A category does not need a unique colour for the system to work.
+GitHub Milestones are optional for genuine shared checkpoints such as releases or submissions. They are not a replacement Workstream taxonomy, and a single formal output often needs only a Deliverable issue plus a due date.
 
-See the full [Class and Workstream design guide](skills/github-project-admin/references/class-and-workstreams.md) for the standard profiles, preferred colours, Epic heuristics and migration guidance.
+Preferred colours make repeated types easier to recognise, but colour is presentational. Reuse provider-supported colours when there are more categories than distinct colours.
+
+See the full [Issue Type and Class design guide](skills/github-project-admin/references/issue-types.md) for type meanings, hierarchy rules and migration guidance.
 
 ## Update the installed skill
 
