@@ -12,7 +12,7 @@ Treat the user's request as the desired outcome. Do not require the user to repe
 1. Find the target repository root.
 2. If `.projects/skills/github-project-admin/SKILL.md` exists there and is not this skill, load that deliberate local replacement and stop applying this copy. Do not merge two skill definitions implicitly.
 3. Otherwise use this canonical skill.
-4. Read `.projects/project.md`. If it is missing, stop and identify the missing repository contract. Do not infer topology from a repository name, issue title, Project title, or previous run.
+4. Read `.projects/project.md`. If it is missing during ordinary administration, stop and identify the missing repository contract. For an explicit setup or adoption request, create it through the onboarding workflow and repository-contract reference instead of guessing topology from a repository name, issue title, Project title or previous run.
 5. In a shell-capable environment, run `scripts/validate-contract.sh REPOSITORY_ROOT` before relying on the contract.
 
 Read [the repository contract reference](references/repository-contract.md) when creating, migrating, validating, or interpreting `.projects/` files.
@@ -42,6 +42,8 @@ Use this default common Priority vocabulary unless the resolved contract declare
 
 Mappings must be one-to-one. Never collapse two provider values into one common value or use different read and write mappings. Discover the exact live provider option before a write and stop if it does not match the contract.
 
+An initial repository contract may instead say `Priority mapping status: pending`. This preserves the Project's existing field and options during onboarding. Do not rank, interpret or change Priority while that marker remains. Confirm the provider location, inspect the live options, propose a complete one-to-one mapping, and record both in the contract before any Priority operation. Changing the live option set is a separate mutation and requires explicit authority.
+
 For single-select option colours, follow any exact palette in the repository contract. If none is declared and the choice is only presentational, choose stable colours that fit the option meanings without asking the user to design a palette. Preserve useful existing colours. Read [the repository contract reference](references/repository-contract.md) when creating or changing option definitions.
 
 ## Choose an execution surface
@@ -58,7 +60,7 @@ If the current surface cannot perform an authorised mutation, inspect as far as 
 
 Run `scripts/setup.sh` when preparing an environment or when `gh` prerequisites are missing. The host must provide credentials and network access. Never print, persist, transform or request a token in a prompt.
 
-When adopting the skill in a repository that does not yet have `.projects/project.md`, run `scripts/init-project.sh` from that repository. It discovers live GitHub facts, asks only for local choices, writes the first single-Project contract and adds a bounded `AGENTS.md` routing section. It never mutates live issues or Projects. For a multi-Project answer, it stops with an agent handoff instead of inventing routing.
+When adopting the skill in a repository that does not yet have `.projects/project.md`, run `scripts/init-project.sh` from that repository. It discovers live GitHub facts, asks only for local choices, writes the first single-Project contract and adds a bounded `AGENTS.md` routing section. It never mutates live issues or Projects. For a multi-Project answer, it prepares the repository and gives an agent handoff instead of inventing routing.
 
 ## Inspect and plan
 
