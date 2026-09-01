@@ -6,9 +6,11 @@ test_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 skill_dir="$(cd "$test_dir/.." && pwd)"
 validator="$skill_dir/scripts/validate-contract.sh"
 setup="$skill_dir/scripts/setup.sh"
+initializer="$skill_dir/scripts/init-project.sh"
 
 bash -n "$validator"
 bash -n "$setup"
+bash -n "$initializer"
 
 bash "$validator" "$test_dir/fixtures/single"
 bash "$validator" "$test_dir/fixtures/single-user"
@@ -48,7 +50,13 @@ case "${1:-}" in
     echo "gh version 2.98.0 (test)"
     ;;
   project)
-    [[ "${2:-}" == "--help" ]]
+    if [[ "${2:-}" == "--help" ]]; then
+      exit 0
+    elif [[ "${2:-}" == "field-list" ]]; then
+      printf 'Status\nPriority\nWorkstream\n'
+    else
+      exit 2
+    fi
     ;;
   auth)
     [[ "${2:-}" == "status" ]]
@@ -69,6 +77,8 @@ case "${1:-}" in
       if [[ "$*" == *"user(login:"* && "$*" == *"organization(login:"* ]]; then
         echo "combined owner query is forbidden" >&2
         exit 90
+      elif [[ "$*" == *"@tsv"* ]]; then
+        printf '12\tExample planning\ttrue\n'
       elif [[ "$*" == *".number"* ]]; then
         if [[ "$*" == *"organization(login:"* ]]; then echo "12"; else echo "4"; fi
       elif [[ "$*" == *"organization(login:"* ]]; then
@@ -82,7 +92,9 @@ case "${1:-}" in
     ;;
   repo)
     [[ "${2:-}" == "view" ]]
-    if [[ "$*" == *"octo-user/example"* ]]; then
+    if [[ "$*" == *"nameWithOwner,visibility"* ]]; then
+      printf 'octo-org/example\tPUBLIC\n'
+    elif [[ "$*" == *"octo-user/example"* ]]; then
       echo "octo-user/example"
     else
       echo "octo-org/example"
@@ -199,5 +211,55 @@ if grep -Fq 'preflight passed' "$test_tmp_dir/override-output.log"; then
   echo "ERROR: override setup unexpectedly ran the shared preflight" >&2
   exit 1
 fi
+
+mkdir -p "$test_tmp_dir/init-single"
+git -C "$test_tmp_dir/init-single" init -q
+printf '# Existing repository guidance\n\nKeep this text.\n' >"$test_tmp_dir/init-single/AGENTS.md"
+(
+  cd "$test_tmp_dir/init-single"
+  PATH="$test_tmp_dir/bin:$PATH" bash "$initializer" \
+    >"$test_tmp_dir/init-output.log" 2>&1 <<'EOF'
+
+
+12
+
+
+
+1
+2
+
+EOF
+)
+bash "$validator" "$test_tmp_dir/init-single"
+grep -Fq 'Keep this text.' "$test_tmp_dir/init-single/AGENTS.md"
+grep -Fq '<!-- github-project-admin:start -->' "$test_tmp_dir/init-single/AGENTS.md"
+grep -Fq '| Issue repository | octo-org/example |' "$test_tmp_dir/init-single/.projects/project.md"
+grep -Fq '| Project title | Example planning |' "$test_tmp_dir/init-single/.projects/project.md"
+grep -Fq '| Class | organization issue type | Issue Type |' "$test_tmp_dir/init-single/.projects/project.md"
+grep -Fq 'suggest sensible Class' "$test_tmp_dir/init-output.log"
+
+init_contract_sha="$(sha256sum "$test_tmp_dir/init-single/.projects/project.md" | awk '{print $1}')"
+init_agents_sha="$(sha256sum "$test_tmp_dir/init-single/AGENTS.md" | awk '{print $1}')"
+(
+  cd "$test_tmp_dir/init-single"
+  PATH="$test_tmp_dir/bin:$PATH" bash "$initializer" \
+    >"$test_tmp_dir/init-rerun.log" 2>&1
+)
+grep -Fq 'It was not changed.' "$test_tmp_dir/init-rerun.log"
+[[ "$(sha256sum "$test_tmp_dir/init-single/.projects/project.md" | awk '{print $1}')" == "$init_contract_sha" ]]
+[[ "$(sha256sum "$test_tmp_dir/init-single/AGENTS.md" | awk '{print $1}')" == "$init_agents_sha" ]]
+
+mkdir -p "$test_tmp_dir/init-multiple"
+git -C "$test_tmp_dir/init-multiple" init -q
+if (
+  cd "$test_tmp_dir/init-multiple"
+  printf 'n\n' | PATH="$test_tmp_dir/bin:$PATH" bash "$initializer" \
+    >"$test_tmp_dir/init-multiple.log" 2>&1
+); then
+  echo "ERROR: multi-Project onboarding unexpectedly generated a contract" >&2
+  exit 1
+fi
+test ! -e "$test_tmp_dir/init-multiple/.projects/project.md"
+grep -Fq 'Multi-Project setup needs a routing decision.' "$test_tmp_dir/init-multiple.log"
 
 echo "github-project-admin tests passed"

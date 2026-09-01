@@ -2,25 +2,23 @@
 
 Use this reference when configuring an ordinary ChatGPT Project or another provider's persistent instruction surface.
 
-Keep the instructions small. They route to the canonical skill and repository contract; they do not repeat the procedure.
+Keep the instructions small. They route to the target repository's own starting point; they do not repeat the procedure.
 
 Suggested text:
 
 ```text
-For GitHub issue or Project-administration requests, first look for
-.projects/skills/github-project-admin/SKILL.md in the target repository. If it
-exists, retrieve and follow that deliberate local replacement. Otherwise
-retrieve and follow the canonical github-project-admin skill from
-MiguelRodo/projects/skills/github-project-admin/. Always read the target
-repository's .projects/project.md and any contract it resolves.
+For work concerning a GitHub repository, especially reading or updating GitHub
+issues or Projects, first retrieve and follow the target repository's
+AGENTS.md. Follow the skill and configuration files it references. If the
+repository or AGENTS.md is unavailable, say so rather than guessing.
 
 Treat the user's prompt as the desired outcome. If this surface cannot perform
-the required GitHub mutation, apply the same skill and return the smallest
-executable gh command block, including independent readback. Do not ask the
-user to restate the skill's operating procedure.
+the required GitHub change, follow the same repository instructions and return
+the smallest executable gh command block, including independent readback. Do
+not ask the user to restate the skill's operating procedure.
 ```
 
-Replace the canonical repository only when the organisation has intentionally forked the specification. Do not select a local skill merely because `.projects/` exists.
+Each repository normally installs the shared skill under `.agents/skills/` and routes to it from `AGENTS.md`. A repository may deliberately point elsewhere, but provider instructions should not hard-code that internal path.
 
 Routine prompts should remain short:
 

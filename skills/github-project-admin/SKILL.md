@@ -58,6 +58,8 @@ If the current surface cannot perform an authorised mutation, inspect as far as 
 
 Run `scripts/setup.sh` when preparing an environment or when `gh` prerequisites are missing. The host must provide credentials and network access. Never print, persist, transform or request a token in a prompt.
 
+When adopting the skill in a repository that does not yet have `.projects/project.md`, run `scripts/init-project.sh` from that repository. It discovers live GitHub facts, asks only for local choices, writes the first single-Project contract and adds a bounded `AGENTS.md` routing section. It never mutates live issues or Projects. For a multi-Project answer, it stops with an agent handoff instead of inventing routing.
+
 ## Inspect and plan
 
 For every target issue, read the current:
