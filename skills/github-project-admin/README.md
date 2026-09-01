@@ -100,10 +100,44 @@ The initializer offers one shared, proposal-only first request after the chat an
 
 - confirm the local Priority location and mapping from the existing live field without changing it;
 - set up or refine Issue Type or Class and Workstream, with sensible colours;
-- organise existing issues and useful native parent/sub-issue relationships.
+- organise existing issues and useful native parent/sub-issue relationships;
 - suggest optional sub-project labels only where they add value.
 
 It does not authorise changes until you approve the proposal. After approval, an execution-capable agent can apply and verify it; a chat that cannot write returns minimal commands with readback. To add another Project later, rerun the initializer.
+
+## Class and Workstream
+
+Class or Issue Type and Workstream deliberately answer different questions.
+
+**Class / Issue Type** says what kind of item it is. A useful starter set is:
+
+| Class | Preferred colour |
+| --- | --- |
+| Epic | BLUE |
+| Task | YELLOW |
+| Deliverable | ORANGE |
+| Analysis | PURPLE |
+| Research | PINK |
+| Enhancement | GREEN |
+| Bug | RED |
+| Documentation | GRAY |
+
+`Task` is the ordinary default. `Epic` is not the default for every top-level issue or every parent. A Task, Deliverable, Analysis or other type can have sub-issues and remain that type. Use Epic only when the broader coordination outcome is useful in its own right.
+
+**Workstream** says which stable functional lane the item belongs to. It should not simply repeat Class, Priority, Status, a one-off milestone, a routing label or a sub-project. Prefer a small stable set and choose the issue's primary lane.
+
+Starter profiles include:
+
+- **Research/scientific:** Study design, Data, Methods, Implementation, Analysis, Validation, Reporting, Administration; optionally Simulation or Collaboration.
+- **Teaching:** Delivery, Assessment, Materials, Student support, Administration; optionally Supervision.
+- **Personal/household:** Finance, Administration, Communication, Digital, Maintenance.
+- **Software/product:** Design, Implementation, Integrations, Testing, Documentation, Release / operations, Governance, User experience.
+
+These are reusable defaults, not a requirement to rename useful local values. Avoid proliferating workstreams for one-off milestones or scenarios. For example, several proposal/presentation/write-up/poster milestones can normally share a `Reporting` workstream while the issues themselves are `Deliverable` items.
+
+Preferred colours help repeated names look familiar across Projects, but colour is presentational. If there are more categories than distinct colours, reuse provider-supported colours. Lack of a unique colour does not break the model.
+
+See [Class and Workstream design](references/class-and-workstreams.md) for the full profiles, colour suggestions and migration rules.
 
 ## Repository-specific setup
 
