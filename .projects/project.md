@@ -54,15 +54,14 @@ This Project uses the common names directly.
 | In progress | In progress |
 | Done | Done |
 
-## Bootstrap target
+## Live target
 
-- Class is a required single-select Project field with the exact values and colours above.
-- Priority requires the P0, P1, P2 and P3 options. Add P3 if live discovery confirms that only P0 to P2 exist.
+- Class is a required single-select Project field with exactly the values and colours above.
+- Priority is a required single-select Project field with exactly P0, P1, P2 and P3.
 - Target date is optional and remains blank unless an issue has a real deadline.
 - Use native parent and sub-issue relationships for roadmap hierarchy. Parenthood does not imply Epic.
-- In an authorised live migration, map both retired `Raw data` and `Processed data` values to `Data` before removing the old options.
-- Workstream is not part of the active contract. A legacy field with that name may remain live until an explicitly authorised migration removes it.
-- Bringing the Project into line with this contract may add the declared missing Class or Priority options and populate them, but must not delete or rename unrelated Project fields unless that migration is separately authorised.
+- `Research`, `Raw data` and `Processed data` are retired Class values and are not part of the active vocabulary.
+- Workstream is not part of the active contract and no live Workstream field is expected.
 
 ## Governance
 
