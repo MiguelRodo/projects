@@ -1,8 +1,12 @@
 ---
-name: github-project-admin
 description: Administer GitHub issues and Projects from short outcome requests. Use for Project-aware inspection, prioritisation, creation, updates, assignment, routing, hierarchy, field changes, or when a surface must return minimal executable gh commands instead of writing directly.
+metadata:
+    github-path: skills/github-project-admin
+    github-ref: refs/heads/main
+    github-repo: https://github.com/MiguelRodo/projects
+    github-tree-sha: 5ae534caba0224987735235bec8a818146e6c63b
+name: github-project-admin
 ---
-
 # GitHub Project administration
 
 Treat the user's request as the desired outcome. Do not require the user to repeat the operating procedure in this skill.
