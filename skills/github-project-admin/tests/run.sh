@@ -262,6 +262,7 @@ grep -Fq '| Project title | Example planning |' "$test_tmp_dir/init-single/.proj
 grep -Fq '| Class | organization issue type | Issue Type |' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fq '| Priority | pending live inspection | Priority |' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fq '| Routing | Project membership; no routing label |' "$test_tmp_dir/init-single/.projects/project.md"
+grep -Fq '| Issue write-up style | tidy |' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fxq 'Priority mapping status: pending' "$test_tmp_dir/init-single/.projects/project.md"
 grep -Fq 'This is a personal Project.' "$test_tmp_dir/init-single/.projects/project.md"
 if grep -Fq '| Workstream |' "$test_tmp_dir/init-single/.projects/project.md"; then
@@ -332,6 +333,8 @@ grep -Fq '| Project key | example-planning |' \
 grep -Fq '| Owner type | organization |' \
   "$test_tmp_dir/init-multiple/.projects/projects/example-planning.md"
 grep -Fq '| Routing | label:project:example-planning |' \
+  "$test_tmp_dir/init-multiple/.projects/projects/example-planning.md"
+grep -Fq '| Issue write-up style | tidy |' \
   "$test_tmp_dir/init-multiple/.projects/projects/example-planning.md"
 if grep -Fq '| Workstream |' "$test_tmp_dir/init-multiple/.projects/projects/example-planning.md"; then
   echo "ERROR: dispatcher child generated a standard Workstream dimension" >&2
