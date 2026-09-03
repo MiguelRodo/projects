@@ -69,6 +69,8 @@ When creating, refining or applying Class or Issue Type values, follow [the Issu
 - Routing remains separate through repository/Project topology and declared `project:*` or `subproject:*` labels where applicable. Native parent/sub-issue relationships carry hierarchy. Milestones are optional temporal or checkpoint groupings, not a replacement classification dimension.
 - Colour is presentational. Reuse provider-supported colours when categories outnumber distinct colours; colour uniqueness must not block ordinary administration unless the local contract explicitly makes a palette exact.
 
+When the user explicitly asks to bootstrap, migrate or substantially reorganise a whole Project, also follow the whole-Project organisation guidance in [the Issue Type and Class design reference](references/issue-types.md). Do not use that guidance to restructure a routine or narrowly requested change. In broad organisation work, treat the Project as the container, prefer independently meaningful top-level outcomes, and choose body checkboxes versus sub-issues according to whether the work needs independent planning state.
+
 Use this default common Priority vocabulary unless the resolved contract declares a complete override:
 
 | Common value | Provider value |
