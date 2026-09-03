@@ -266,6 +266,7 @@ EOF
 | Project title | $project_title |
 | Routing | $routing |
 | Privacy | $privacy |
+| Issue write-up style | tidy |
 
 ## Field locations
 
