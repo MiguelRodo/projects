@@ -141,6 +141,16 @@ A resolved Project contract may set how much the agent reshapes an issue during 
 
 The latest explicit instruction in the current request takes precedence. Existing contracts that use the retired `minimal` name should change it to `direct`.
 
+## Issue prose style
+
+A separate contract row controls how issue prose reads, regardless of the write-up level:
+
+```text
+| Issue prose style | natural-direct |
+```
+
+`natural-direct` is the default. It keeps GitHub titles and bodies plain, individual and easy to scan: UK English, natural sentence length, useful rather than templated Markdown, no added certainty, and no generic AI preambles or inflated wording. `Issue write-up style` still controls whether the agent is `direct`, `tidy` or `unrestricted`; the prose rule applies after that content boundary is respected.
+
 ## Update the installed skill
 
 Run this in the repository and commit the changed files:

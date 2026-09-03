@@ -267,6 +267,7 @@ EOF
 | Routing | $routing |
 | Privacy | $privacy |
 | Issue write-up style | tidy |
+| Issue prose style | natural-direct |
 
 ## Field locations
 

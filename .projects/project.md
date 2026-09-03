@@ -11,6 +11,7 @@
 | Routing | Project 40 membership; no routing label |
 | Privacy | public repository with a private user Project; public issue content only |
 | Issue write-up style | tidy |
+| Issue prose style | natural-direct |
 
 ## Field locations
 
