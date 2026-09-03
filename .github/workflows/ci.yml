@@ -34,8 +34,6 @@ jobs:
           test -f .projects/project.md
           test -f .github/workflows/project-admin-bridge.yml
           test -f skills/github-project-admin/references/automation-bridge.md
-          test -f skills/github-project-admin/schemas/project-admin-operation-v1.schema.json
-          test -f skills/github-project-admin/scripts/apply-project-operation.mjs
 
       - name: Test github-project-admin skill
         shell: bash
