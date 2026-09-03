@@ -47,6 +47,14 @@ For issue creation or a substantial issue-body rewrite, read the optional `Issue
 
 If a contract supplies any other value, stop and identify the unsupported setting instead of silently choosing a style.
 
+## Write issues in the configured prose style
+
+`Issue write-up style` controls how much an agent may reshape or expand the material. `Issue prose style` is separate: it controls how the resulting GitHub title and body read, regardless of whether the write-up style is `direct`, `tidy` or `unrestricted`.
+
+For issue creation or a substantial issue-body rewrite, read the optional `Issue prose style` value from the resolved Project contract. If it is absent, use `natural-direct`. For `natural-direct`, follow the prose rules in [the repository contract reference](references/repository-contract.md): preserve the supplied meaning and uncertainty, use plain and natural UK English, keep GitHub Markdown useful rather than templated, and avoid generic AI phrasing or inflated language.
+
+If a contract supplies another prose-style value, stop and identify the unsupported setting instead of silently choosing a style.
+
 ## Use Issue Type or Class for the kind of work
 
 When creating, refining or applying Class or Issue Type values, follow [the Issue Type and Class design reference](references/issue-types.md).
