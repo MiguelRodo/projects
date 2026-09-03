@@ -82,9 +82,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh label create 'automation:running' --color fbca04 --description 'Project administration operation is running' 2>/dev/null || true
-          gh label create 'automation:done' --color 0e8a16 --description 'Project administration operation completed and verified' 2>/dev/null || true
-          gh label create 'automation:blocked' --color d93f0b --description 'Project administration operation stopped safely' 2>/dev/null || true
+          gh label create 'automation:running' --repo "$GITHUB_REPOSITORY" --color fbca04 --description 'Project administration operation is running' 2>/dev/null || true
+          gh label create 'automation:done' --repo "$GITHUB_REPOSITORY" --color 0e8a16 --description 'Project administration operation completed and verified' 2>/dev/null || true
+          gh label create 'automation:blocked' --repo "$GITHUB_REPOSITORY" --color d93f0b --description 'Project administration operation stopped safely' 2>/dev/null || true
 
       - name: Claim operation
         if: steps.preflight.outputs.ok == 'true'
@@ -93,10 +93,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ inputs.issue_number || github.event.issue.number }}
         run: |
-          gh issue edit "$ISSUE_NUMBER" \
+          gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --remove-label 'automation:project-admin' \
             --add-label 'automation:running'
-          gh issue edit "$ISSUE_NUMBER" --remove-label 'automation:blocked' 2>/dev/null || true
+          gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label 'automation:blocked' 2>/dev/null || true
 
       - name: Build Codex prompt
         if: steps.preflight.outputs.ok == 'true'
@@ -149,22 +149,22 @@ jobs:
           CODEX_OUTCOME: ${{ steps.codex.outcome }}
           APPLY_OUTCOME: ${{ steps.apply.outcome }}
         run: |
-          gh label create 'automation:blocked' --color d93f0b --description 'Project administration operation stopped safely' 2>/dev/null || true
-          gh label create 'automation:done' --color 0e8a16 --description 'Project administration operation completed and verified' 2>/dev/null || true
+          gh label create 'automation:blocked' --repo "$GITHUB_REPOSITORY" --color d93f0b --description 'Project administration operation stopped safely' 2>/dev/null || true
+          gh label create 'automation:done' --repo "$GITHUB_REPOSITORY" --color 0e8a16 --description 'Project administration operation completed and verified' 2>/dev/null || true
 
           if [ "$PREFLIGHT_OK" = "true" ] && [ "$CODEX_OUTCOME" = "success" ] && [ "$APPLY_OUTCOME" = "success" ]; then
-            gh issue edit "$ISSUE_NUMBER" --remove-label 'automation:running' --add-label 'automation:done'
+            gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label 'automation:running' --add-label 'automation:done'
             {
               printf 'Project administration operation completed with independent readback.\n\n```json\n'
               cat target/.project-admin-report.json
               printf '```\n'
             } > target/.project-admin-comment.md
-            gh issue comment "$ISSUE_NUMBER" --body-file target/.project-admin-comment.md
-            gh issue close "$ISSUE_NUMBER" --reason completed
+            gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file target/.project-admin-comment.md
+            gh issue close "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --reason completed
             exit 0
           fi
 
-          gh issue edit "$ISSUE_NUMBER" \
+          gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --remove-label 'automation:project-admin' \
             --remove-label 'automation:running' \
             --add-label 'automation:blocked' 2>/dev/null || true
@@ -179,4 +179,4 @@ jobs:
 
           printf 'Project administration operation blocked safely.\n\n%s\n\nCorrect the problem, remove `automation:blocked`, then re-apply `automation:project-admin` to retry.\n' "$reason" \
             > target/.project-admin-comment.md
-          gh issue comment "$ISSUE_NUMBER" --body-file target/.project-admin-comment.md
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file target/.project-admin-comment.md
