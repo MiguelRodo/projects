@@ -1,0 +1,72 @@
+name: Apply issue 118 contract default
+
+on:
+  push:
+    branches:
+      - issue-118-explicit-tidy
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'Apply issue 118 generated contract default'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-118-explicit-tidy
+
+      - name: Make tidy explicit in generated contracts
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          init_paths = [
+              Path('skills/github-project-admin/scripts/init-project.sh'),
+              Path('.agents/skills/github-project-admin/scripts/init-project.sh'),
+          ]
+          old = '| Privacy | $privacy |\n\n## Field locations'
+          new = '| Privacy | $privacy |\n| Issue write-up style | tidy |\n\n## Field locations'
+          for path in init_paths:
+              text = path.read_text()
+              if '| Issue write-up style | tidy |' not in text:
+                  assert text.count(old) == 1, f'unexpected initializer shape in {path}'
+                  text = text.replace(old, new, 1)
+                  path.write_text(text)
+
+          test_paths = [
+              Path('skills/github-project-admin/tests/run.sh'),
+              Path('.agents/skills/github-project-admin/tests/run.sh'),
+          ]
+          single = "grep -Fq '| Routing | Project membership; no routing label |' \"$test_tmp_dir/init-single/.projects/project.md\"\n"
+          single_check = "grep -Fq '| Issue write-up style | tidy |' \"$test_tmp_dir/init-single/.projects/project.md\"\n"
+          multi = "grep -Fq '| Routing | label:project:example-planning |' \\\n  \"$test_tmp_dir/init-multiple/.projects/projects/example-planning.md\"\n"
+          multi_check = "grep -Fq '| Issue write-up style | tidy |' \\\n  \"$test_tmp_dir/init-multiple/.projects/projects/example-planning.md\"\n"
+          for path in test_paths:
+              text = path.read_text()
+              if single_check not in text:
+                  assert single in text, f'missing single initializer assertion anchor in {path}'
+                  text = text.replace(single, single + single_check, 1)
+              if multi_check not in text:
+                  assert multi in text, f'missing multi initializer assertion anchor in {path}'
+                  text = text.replace(multi, multi + multi_check, 1)
+              path.write_text(text)
+          PY
+
+      - name: Run shared skill tests
+        run: bash skills/github-project-admin/tests/run.sh
+
+      - name: Commit generated-default changes
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add skills/github-project-admin/scripts/init-project.sh \
+            .agents/skills/github-project-admin/scripts/init-project.sh \
+            skills/github-project-admin/tests/run.sh \
+            .agents/skills/github-project-admin/tests/run.sh
+          git diff --cached --quiet && exit 0
+          git commit -m 'Apply issue 118 generated contract default'
+          git push origin HEAD:issue-118-explicit-tidy
