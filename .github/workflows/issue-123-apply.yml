@@ -1,0 +1,107 @@
+name: Apply issue 123 project organisation guidance
+
+on:
+  push:
+    branches:
+      - issue-project-organisation-guidance
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-project-organisation-guidance
+          fetch-depth: 0
+
+      - name: Apply guidance changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f"expected exactly one match in {path}, found {text.count(old)}")
+              p.write_text(text.replace(old, new, 1))
+
+          issue_types = Path("skills/github-project-admin/references/issue-types.md")
+          marker = "A Project may have several top-level issues and no single root Epic.\n\n"
+          addition = """A Project may have several top-level issues and no single root Epic.\n\n## Organising a whole Project\n\nApply this guidance only when the user explicitly authorises broad organisation, such as bootstrapping a new Project, migrating an existing task system, or substantially restructuring a poorly organised Project. Do not use it to silently reshape a Project during routine issue creation or a narrow field/body update.\n\n- Treat the GitHub Project as the container. Do not manufacture a root issue whose outcome is merely to \"do\", \"complete\" or \"manage\" the Project, and do not make all other work descend from such an issue.\n- Prefer top-level issues that describe independently meaningful outcomes, deliverables, analyses, decisions or bounded improvements. They should be useful to prioritise, defer, complete or cancel without referring to the whole Project.\n- Use parent/sub-issue hierarchy for genuine scope containment. A child should materially contribute to completing its parent, and the parent should remain a useful planning object in its own right. Avoid category-only wrappers such as generic \"Deliverables\", \"Analysis\", \"Supervision\" or \"Project management\" issues when the children already stand on their own.\n- Do not create standing issues for activity that is intrinsic to running the Project, such as \"supervise the project\", \"keep the project moving\" or \"maintain the analysis\". Create a concrete issue when there is a specific review, decision, change or output to track.\n- Separate producing a result from reporting that result when they have different lifecycles. An Analysis issue can produce the scientific or quantitative result while a reporting task sits under the relevant Deliverable and links back to that analysis.\n- Keep hierarchy as shallow as the work allows. Several top-level Epics or other outcomes are fine; there is no requirement for one root Epic. Add another level only when it makes planning clearer rather than merely making the tree look complete.\n- Use body checkboxes for small, local steps where only completion within the parent matters and the step does not need its own priority, status, assignee, due date, discussion, dependency or relationship. Use a sub-issue when the work is independently actionable, substantial enough to track separately, or benefits from any of that independent planning state. If a checkbox grows into separately managed work, promote it to a sub-issue and remove or replace the old checkbox so the same work is not tracked twice.\n- When repairing an imported Project, preserve useful history and meaning. Propose retiring or closing generic wrapper/standing issues only after their useful children, links and current state are represented directly.\n\n"""
+          text = issue_types.read_text()
+          if "## Organising a whole Project" not in text:
+              if text.count(marker) != 1:
+                  raise SystemExit("could not locate hierarchy insertion point")
+              issue_types.write_text(text.replace(marker, addition, 1))
+
+          replace_once(
+              "skills/github-project-admin/SKILL.md",
+              "- Colour is presentational. Reuse provider-supported colours when categories outnumber distinct colours; colour uniqueness must not block ordinary administration unless the local contract explicitly makes a palette exact.\n\nUse this default common Priority vocabulary unless the resolved contract declares a complete override:",
+              "- Colour is presentational. Reuse provider-supported colours when categories outnumber distinct colours; colour uniqueness must not block ordinary administration unless the local contract explicitly makes a palette exact.\n\nWhen the user explicitly asks to bootstrap, migrate or substantially reorganise a whole Project, also follow the whole-Project organisation guidance in [the Issue Type and Class design reference](references/issue-types.md). Do not use that guidance to restructure a routine or narrowly requested change. In broad organisation work, treat the Project as the container, prefer independently meaningful top-level outcomes, and choose body checkboxes versus sub-issues according to whether the work needs independent planning state.\n\nUse this default common Priority vocabulary unless the resolved contract declares a complete override:"
+          )
+
+          replace_once(
+              "skills/github-project-admin/scripts/init-project.sh",
+              "  Project fields and useful native parent/sub-issue relationships. Suggest\n  optional sub-project labels only where they are genuinely useful. Show me\n",
+              "  Project fields and useful native parent/sub-issue relationships. Treat the\n  Project itself as the container rather than creating a generic root issue;\n  prefer independently meaningful top-level outcomes, propose retiring empty\n  category or standing wrappers where appropriate, and use body checkboxes for\n  small local steps versus sub-issues for independently trackable work. Suggest\n  optional sub-project labels only where they are genuinely useful. Show me\n"
+          )
+
+          replace_once(
+              "skills/github-project-admin/README.md",
+              "- organise existing issues and useful native parent/sub-issue relationships;\n- suggest optional sub-project labels only where they add value.\n",
+              "- organise existing issues and useful native parent/sub-issue relationships;\n- repair generic project-root, category-wrapper or standing issues where the existing structure obscures real outcomes;\n- use body checkboxes for small local steps and sub-issues when work needs independent planning state;\n- suggest optional sub-project labels only where they add value.\n"
+          )
+
+          replace_once(
+              "README.md",
+              "organise the issues, build useful native parent/sub-issue relationships and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal.",
+              "organise the issues, build useful native parent/sub-issue relationships, repair generic root or category-wrapper issues, choose checkboxes versus sub-issues based on whether work needs independent planning state, and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal."
+          )
+
+          replace_once(
+              "skills/github-project-admin/tests/run.sh",
+              "grep -Fq 'Deliverable' \"$skill_dir/references/issue-types.md\"\n",
+              "grep -Fq 'Deliverable' \"$skill_dir/references/issue-types.md\"\ngrep -Fq 'Treat the GitHub Project as the container.' \"$skill_dir/references/issue-types.md\"\ngrep -Fq 'use body checkboxes for' \"$initializer\"\n"
+          )
+
+          # Keep the repository-installed copy byte-for-byte aligned for changed skill files.
+          for rel in [
+              "SKILL.md",
+              "README.md",
+              "references/issue-types.md",
+              "scripts/init-project.sh",
+              "tests/run.sh",
+          ]:
+              src = Path("skills/github-project-admin") / rel
+              dst = Path(".agents/skills/github-project-admin") / rel
+              dst.parent.mkdir(parents=True, exist_ok=True)
+              dst.write_bytes(src.read_bytes())
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          bash skills/github-project-admin/tests/run.sh
+          diff -u skills/github-project-admin/SKILL.md .agents/skills/github-project-admin/SKILL.md
+          diff -u skills/github-project-admin/README.md .agents/skills/github-project-admin/README.md
+          diff -u skills/github-project-admin/references/issue-types.md .agents/skills/github-project-admin/references/issue-types.md
+          diff -u skills/github-project-admin/scripts/init-project.sh .agents/skills/github-project-admin/scripts/init-project.sh
+          diff -u skills/github-project-admin/tests/run.sh .agents/skills/github-project-admin/tests/run.sh
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md skills/github-project-admin .agents/skills/github-project-admin
+          git commit -m "Add project organisation guidance"
+          git push origin HEAD:issue-project-organisation-guidance
