@@ -32,16 +32,16 @@ jobs:
           test -f skills/github-project-admin/SKILL.md
           test -f AGENTS.md
           test -f .projects/project.md
-          test -f .github/workflows/project-admin-bridge.yml
-          test -f skills/github-project-admin/references/automation-bridge.md
+          test -f skills/github-project-admin/references/local-implementation-queue.md
+          test ! -e .github/workflows/project-admin-bridge.yml
 
       - name: Test github-project-admin skill
         shell: bash
         run: bash skills/github-project-admin/tests/run.sh
 
-      - name: Test Project administration bridge
+      - name: Test local implementation queue
         shell: bash
-        run: bash skills/github-project-admin/tests/project-admin-bridge-static.sh
+        run: bash skills/github-project-admin/tests/local-implementation-queue-static.sh
 
       - name: Validate this repository's Project contract
         shell: bash
