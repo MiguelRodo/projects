@@ -109,7 +109,7 @@ Environment variables remain available while the agent works, whereas setup-only
 
 After the chat interface or execution-capable agent is ready, the initializer gives you one proposal-only request tailored to a resolved Project.
 
-The request asks the surface to inspect existing issues, confirm the pending Priority location and mapping without changing the live field, propose useful Issue Type or Class values, preserve useful definitions and colours, organise the issues, build useful native parent/sub-issue relationships and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal.
+The request asks the surface to inspect existing issues, confirm the pending Priority location and mapping without changing the live field, propose useful Issue Type or Class values, preserve useful definitions and colours, organise the issues, build useful native parent/sub-issue relationships, repair generic root or category-wrapper issues, choose checkboxes versus sub-issues based on whether work needs independent planning state, and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal.
 
 After approval, an execution-capable agent can apply and verify the proposal. A chat interface that cannot write should return the smallest safe command block with independent readback. To add another Project later, rerun the initializer; it preserves every current route and contract.
 

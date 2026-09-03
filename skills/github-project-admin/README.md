@@ -101,6 +101,8 @@ The initializer offers one shared, proposal-only first request after the chat an
 - confirm the local Priority location and mapping from the existing live field without changing it;
 - set up or refine Issue Type or Class, with sensible colours;
 - organise existing issues and useful native parent/sub-issue relationships;
+- repair generic project-root, category-wrapper or standing issues where the existing structure obscures real outcomes;
+- use body checkboxes for small local steps and sub-issues when work needs independent planning state;
 - suggest optional sub-project labels only where they add value.
 
 It does not authorise changes until you approve the proposal. After approval, an execution-capable agent can apply and verify it; a chat that cannot write returns minimal commands with readback. To add another Project later, rerun the initializer.

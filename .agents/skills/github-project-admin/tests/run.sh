@@ -49,6 +49,8 @@ grep -Fq '## Issue creation styles' "$test_dir/short-requests.md"
 grep -Fq 'P3 | Low' "$skill_dir/SKILL.md"
 grep -Fq 'Priority mapping status: pending' "$skill_dir/SKILL.md"
 grep -Fq 'Deliverable' "$skill_dir/references/issue-types.md"
+grep -Fq 'Treat the GitHub Project as the container.' "$skill_dir/references/issue-types.md"
+grep -Fq 'use body checkboxes for' "$initializer"
 grep -Fq '`Task`, `Bug`, `Enhancement`, `Data`, `Analysis`, `Deliverable`, `Documentation` and `Epic`' \
   "$skill_dir/SKILL.md"
 grep -Fq '| Data | PINK |' "$skill_dir/references/issue-types.md"
