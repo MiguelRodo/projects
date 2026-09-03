@@ -46,6 +46,17 @@ Queue mode is cross-repository. From the shared workspace:
 
 Do not scan arbitrary unrelated repositories merely because they are accessible to the GitHub account. The local `.projects` contracts define the managed set.
 
+### Optional repository selector
+
+A queue-processing request may include one optional repository selector to narrow step 2 before label creation or issue search.
+
+- A selector containing `/`, such as `MiguelRodo/issues`, matches that exact managed `owner/repo` value case-insensitively.
+- A bare repository name, such as `issues`, matches every managed issue repository whose repository-name component is exactly `issues`, regardless of owner. It is valid for this to match more than one managed repository, for example both `MiguelRodo/issues` and `SATVILab/issues`.
+- Never broaden the selector into fuzzy or substring matching and never use it to scan repositories outside the managed set discovered from local contracts.
+- If the selector matches no managed issue repository, stop without mutation and report the unmatched selector.
+
+When no selector is supplied, retain the ordinary cross-repository behaviour above.
+
 ## Trusted items
 
 For a queue issue that satisfies both trusted-author rules above:
