@@ -1,0 +1,210 @@
+name: Apply issue 120 prose style
+
+on:
+  push:
+    branches:
+      - issue-120-natural-direct-prose
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-120-natural-direct-prose
+          fetch-depth: 0
+
+      - name: Add natural-direct prose style
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+
+          root = Path('.')
+          canonical = root / 'skills/github-project-admin'
+          installed = root / '.agents/skills/github-project-admin'
+
+          def replace_once(path, old, new):
+              text = path.read_text()
+              if new in text:
+                  return
+              if old not in text:
+                  raise SystemExit(f'needle not found in {path}: {old[:80]!r}')
+              path.write_text(text.replace(old, new, 1))
+
+          def add_after(path, needle, addition):
+              text = path.read_text()
+              if addition.strip() in text:
+                  return
+              if needle not in text:
+                  raise SystemExit(f'needle not found in {path}: {needle[:80]!r}')
+              path.write_text(text.replace(needle, needle + addition, 1))
+
+          # The projects Project itself uses the new prose style explicitly.
+          add_after(
+              Path('.projects/project.md'),
+              '| Issue write-up style | tidy |\n',
+              '| Issue prose style | natural-direct |\n',
+          )
+
+          prose_skill = '''\n## Write issues in the configured prose style\n\n`Issue write-up style` controls how much an agent may reshape or expand the material. `Issue prose style` is separate: it controls how the resulting GitHub title and body read, regardless of whether the write-up style is `direct`, `tidy` or `unrestricted`.\n\nFor issue creation or a substantial issue-body rewrite, read the optional `Issue prose style` value from the resolved Project contract. If it is absent, use `natural-direct`. For `natural-direct`, follow the prose rules in [the repository contract reference](references/repository-contract.md): preserve the supplied meaning and uncertainty, use plain and natural UK English, keep GitHub Markdown useful rather than templated, and avoid generic AI phrasing or inflated language.\n\nIf a contract supplies another prose-style value, stop and identify the unsupported setting instead of silently choosing a style.\n'''
+
+          for base in (canonical, installed):
+              skill = base / 'SKILL.md'
+              marker = '\n## Use Issue Type or Class for the kind of work\n'
+              text = skill.read_text()
+              if '## Write issues in the configured prose style' not in text:
+                  if marker not in text:
+                      raise SystemExit(f'marker not found in {skill}')
+                  skill.write_text(text.replace(marker, prose_skill + marker, 1))
+
+              init = base / 'scripts/init-project.sh'
+              add_after(
+                  init,
+                  '| Issue write-up style | tidy |\n',
+                  '| Issue prose style | natural-direct |\n',
+              )
+
+              validator = base / 'scripts/validate-contract.sh'
+              validator_text = validator.read_text()
+              if 'validate_issue_prose_style()' not in validator_text:
+                  fn_marker = '''validate_issue_writeup_style() {\n  local file="$1" style\n  style="$(table_value "$file" "Issue write-up style")"\n  case "$style" in\n    ""|direct|tidy|unrestricted) ;;\n    *) die "$file has unsupported Issue write-up style '$style'; use direct, tidy or unrestricted" ;;\n  esac\n}\n'''
+                  prose_fn = '''\nvalidate_issue_prose_style() {\n  local file="$1" style\n  style="$(table_value "$file" "Issue prose style")"\n  case "$style" in\n    ""|natural-direct) ;;\n    *) die "$file has unsupported Issue prose style '$style'; use natural-direct" ;;\n  esac\n}\n'''
+                  if fn_marker not in validator_text:
+                      raise SystemExit(f'write-up validator marker not found in {validator}')
+                  validator_text = validator_text.replace(fn_marker, fn_marker + prose_fn, 1)
+                  call_marker = '  validate_issue_writeup_style "$file"\n'
+                  if call_marker not in validator_text:
+                      raise SystemExit(f'validator call marker not found in {validator}')
+                  validator_text = validator_text.replace(
+                      call_marker,
+                      call_marker + '  validate_issue_prose_style "$file"\n',
+                      1,
+                  )
+                  validator.write_text(validator_text)
+
+              reference = base / 'references/repository-contract.md'
+              add_after(
+                  reference,
+                  '| Issue write-up style | tidy |\n',
+                  '| Issue prose style | natural-direct |\n',
+              )
+              reference_text = reference.read_text()
+              if '## Issue prose style' not in reference_text:
+                  marker = '\n## Class / Issue Type vocabulary\n'
+                  prose_reference = '''\n## Issue prose style\n\nA resolved Project contract may also contain an `Issue prose style` row. This is independent of `Issue write-up style`: the write-up setting controls how much content may be reshaped or added, while the prose setting controls how the resulting GitHub issue is written. A more recent explicit user instruction still takes precedence.\n\n`natural-direct` is the default when the row is absent. For this style:\n\n- Write the title and body like an individual person recording real work for collaborators, rather than polished generic AI prose. Use a concise title that names the actual task, problem or outcome.\n- Preserve the supplied argument, scope and uncertainty. Do not introduce new claims or make the issue sound more certain than the source material.\n- Prefer plain, precise words over elaborate wording. Use UK English. Vary sentence length naturally; short sentences are fine.\n- Use GitHub Markdown when it makes the issue easier to scan. Headings should name real parts of the issue, bullets should represent real lists, and checklists should represent genuine trackable items. Do not force generic headings, summaries, conclusions, symmetrical sections or boilerplate templates.\n- Do not make every paragraph perfectly balanced or neatly structured. Minor unevenness is fine when it sounds natural, provided the grammar remains correct.\n- Avoid repeated three-part lists. Do not repeatedly join clauses with `and`.\n- Avoid stock constructions such as `not only X, but also Y`, `it is not X, it is Y`, and `from X to Y`.\n- Use commas, semicolons and parentheses where they genuinely help, without over-punctuating.\n- Avoid vague preambles such as `It is important to note`, `In today’s world`, `At its core`, `Ultimately` and `This highlights`.\n- Avoid inflated words such as `delve`, `nuanced`, `multifaceted`, `pivotal`, `robust`, `foster`, `leverage`, `landscape`, `tapestry` and `underscores`.\n\nFor a multi-Project repository, put the row in the resolved `.projects/projects/*.md` child contract rather than the dispatcher root.\n'''
+                  if marker not in reference_text:
+                      raise SystemExit(f'class marker not found in {reference}')
+                  reference.write_text(reference_text.replace(marker, prose_reference + marker, 1))
+
+              readme = base / 'README.md'
+              add_after(
+                  readme,
+                  '| Issue write-up style | tidy |\n',
+                  '| Issue prose style | natural-direct |\n',
+              )
+              readme_text = readme.read_text()
+              prose_paragraph = '''\n`Issue prose style` is separate from that content-level setting. `natural-direct` keeps titles and bodies plain, human-sounding and easy to scan in GitHub, with UK English, useful Markdown, preserved uncertainty and no generic AI scaffolding or inflated language. It applies regardless of whether the write-up style is `direct`, `tidy` or `unrestricted`.\n'''
+              if prose_paragraph.strip() not in readme_text:
+                  needle = '`tidy` is the default when the row is absent, and an explicit instruction in the current request overrides the setting. In a multi-Project repository, put the row in the relevant `.projects/projects/*.md` child contract.\n'
+                  if needle not in readme_text:
+                      raise SystemExit(f'README setting paragraph not found in {readme}')
+                  readme.write_text(readme_text.replace(needle, needle + prose_paragraph, 1))
+
+              tests = base / 'tests/run.sh'
+              tests_text = tests.read_text()
+              if 'invalid-prose' not in tests_text:
+                  marker = '''if bash "$validator" "$test_dir/fixtures/invalid-writeup" >/dev/null 2>&1; then\n  echo "ERROR: retired minimal issue write-up style unexpectedly validated" >&2\n  exit 1\nfi\n'''
+                  block = '''if bash "$validator" "$test_dir/fixtures/invalid-prose" >/dev/null 2>&1; then\n  echo "ERROR: unsupported issue prose style unexpectedly validated" >&2\n  exit 1\nfi\n'''
+                  if marker not in tests_text:
+                      raise SystemExit(f'invalid-writeup marker not found in {tests}')
+                  tests_text = tests_text.replace(marker, marker + block, 1)
+              if "grep -Fq '`natural-direct`' \"$skill_dir/SKILL.md\"" not in tests_text:
+                  marker = 'grep -Fq \'`tidy`: the default. Reword and organise the supplied material\' "$skill_dir/SKILL.md"\n'
+                  if marker not in tests_text:
+                      raise SystemExit(f'tidy skill grep marker not found in {tests}')
+                  tests_text = tests_text.replace(
+                      marker,
+                      marker + 'grep -Fq \'`natural-direct`\' "$skill_dir/SKILL.md"\n',
+                      1,
+                  )
+              single_marker = "grep -Fq '| Issue write-up style | tidy |' \"$test_tmp_dir/init-single/.projects/project.md\"\n"
+              if "Issue prose style | natural-direct" not in tests_text:
+                  if single_marker not in tests_text:
+                      raise SystemExit(f'single initializer marker not found in {tests}')
+                  tests_text = tests_text.replace(
+                      single_marker,
+                      single_marker + "grep -Fq '| Issue prose style | natural-direct |' \"$test_tmp_dir/init-single/.projects/project.md\"\n",
+                      1,
+                  )
+                  multi_marker = "grep -Fq '| Issue write-up style | tidy |' \\\n  \"$test_tmp_dir/init-multiple/.projects/projects/example-planning.md\"\n"
+                  if multi_marker not in tests_text:
+                      raise SystemExit(f'multi initializer marker not found in {tests}')
+                  tests_text = tests_text.replace(
+                      multi_marker,
+                      multi_marker + "grep -Fq '| Issue prose style | natural-direct |' \\\n  \"$test_tmp_dir/init-multiple/.projects/projects/example-planning.md\"\nif grep -Fq '| Issue prose style |' \"$test_tmp_dir/init-multiple/.projects/project.md\"; then\n  echo \"ERROR: dispatcher root unexpectedly received an Issue prose style\" >&2\n  exit 1\nfi\n",
+                      1,
+                  )
+              tests.write_text(tests_text)
+
+              invalid = base / 'tests/fixtures/invalid-prose/.projects/project.md'
+              invalid.parent.mkdir(parents=True, exist_ok=True)
+              if not invalid.exists():
+                  source = (base / 'tests/fixtures/single/.projects/project.md').read_text()
+                  source = source.replace(
+                      '| Issue write-up style | direct |\n',
+                      '| Issue write-up style | direct |\n| Issue prose style | corporate-polished |\n',
+                      1,
+                  )
+                  invalid.write_text(source)
+
+          # Public README: explain the second, orthogonal setting.
+          public = Path('README.md')
+          public_text = public.read_text()
+          if '## Issue prose style' not in public_text:
+              marker = '\n## Update the installed skill\n'
+              prose_public = '''\n## Issue prose style\n\nA separate contract row controls how issue prose reads, regardless of the write-up level:\n\n```text\n| Issue prose style | natural-direct |\n```\n\n`natural-direct` is the default. It keeps GitHub titles and bodies plain, individual and easy to scan: UK English, natural sentence length, useful rather than templated Markdown, no added certainty, and no generic AI preambles or inflated wording. `Issue write-up style` still controls whether the agent is `direct`, `tidy` or `unrestricted`; the prose rule applies after that content boundary is respected.\n'''
+              if marker not in public_text:
+                  raise SystemExit('public README update marker not found')
+              public.write_text(public_text.replace(marker, prose_public + marker, 1))
+
+          # The canonical and installed copies touched here must remain identical.
+          for rel in [
+              'SKILL.md',
+              'README.md',
+              'references/repository-contract.md',
+              'scripts/init-project.sh',
+              'scripts/validate-contract.sh',
+              'tests/run.sh',
+              'tests/fixtures/invalid-prose/.projects/project.md',
+          ]:
+              a = (canonical / rel).read_text()
+              b = (installed / rel).read_text()
+              if a != b:
+                  raise SystemExit(f'canonical/installed copies differ: {rel}')
+          PY
+
+      - name: Run shared skill tests
+        shell: bash
+        run: bash skills/github-project-admin/tests/run.sh
+
+      - name: Commit prose-style changes
+        shell: bash
+        run: |
+          git config user.name "Miguel Rodo"
+          git config user.email "miguel.rodo@outlook.com"
+          git add \
+            .projects/project.md \
+            README.md \
+            skills/github-project-admin \
+            .agents/skills/github-project-admin
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git commit -m "Add natural-direct issue prose style"
+          git push origin HEAD:issue-120-natural-direct-prose
