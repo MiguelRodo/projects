@@ -722,7 +722,7 @@ Use the same first request in a chat interface or an execution-capable agent:
   definitions while choosing sensible colours; and organise the issues using
   Project fields and useful native parent/sub-issue relationships. Treat the
   Project itself as the container rather than creating a generic root issue;
-  prefer independently meaningful top-level outcomes, propose retiring empty
+  prefer independently meaningful top-level outcomes, propose retiring generic
   category or standing wrappers where appropriate, and use body checkboxes for
   small local steps versus sub-issues for independently trackable work. Suggest
   optional sub-project labels only where they are genuinely useful. Show me
