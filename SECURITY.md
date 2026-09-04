@@ -2,9 +2,8 @@
 
 ## Supported versions
 
-No public version has been released yet. The repository is in pre-v1 architecture and contract design.
-
-Security and privacy reports are still welcome, but there is currently no supported binary or contract version.
+The project is still pre-v1. Only the latest published CLI release and the
+current repository skill are supported while the interface settles.
 
 ## Reporting a vulnerability
 

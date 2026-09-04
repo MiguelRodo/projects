@@ -31,6 +31,21 @@ gh api user --jq .login
 
 The commands in this guide work in Bash, Git Bash and WSL. They also work from PowerShell when `bash` is installed and available as a command.
 
+## Optional `projects` CLI
+
+The `projects` Go CLI gives agents one tested command for supported repeated
+operations. Its first release validates `.projects/` contracts and reads a
+complete Project item set with a count check:
+
+```text
+projects contract validate
+projects project item-list --format json
+```
+
+It is optional. The scripts below and direct GitHub operations remain supported.
+Installation, APT setup and update checks are documented in the
+[`projects` CLI guide](https://github.com/MiguelRodo/projects/blob/main/docs/cli.md).
+
 ## 1. Create or find the GitHub Project
 
 Open the **Projects** tab on your GitHub profile or organisation. Create the Project if needed.

@@ -1,4 +1,4 @@
-name: Baseline
+name: CI
 
 on:
   push:
@@ -12,12 +12,18 @@ permissions:
   contents: read
 
 jobs:
-  repository-baseline:
-    name: Repository baseline
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
 
       - name: Verify required public files
         shell: bash
@@ -35,6 +41,24 @@ jobs:
           test -f skills/github-project-admin/references/local-implementation-queue.md
           test ! -e .github/workflows/project-admin-bridge.yml
 
+      - name: Test projects CLI
+        run: go test -race ./...
+
+      - name: Check Go formatting
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l cmd internal)"
+          if [ -n "$unformatted" ]; then
+            printf 'Run gofmt on:\n%s\n' "$unformatted" >&2
+            exit 1
+          fi
+
+      - name: Vet projects CLI
+        run: go vet ./...
+
+      - name: Build projects CLI
+        run: go build ./cmd/projects
+
       - name: Test github-project-admin skill
         shell: bash
         run: bash skills/github-project-admin/tests/run.sh
@@ -46,14 +70,6 @@ jobs:
       - name: Validate this repository's Project contract
         shell: bash
         run: bash skills/github-project-admin/scripts/validate-contract.sh .
-
-      - name: Verify pre-CLI boundary
-        shell: bash
-        run: |
-          set -euo pipefail
-          test ! -e cmd/projects
-          test ! -e cmd/projectscli
-          test ! -e projects.go
 
       - name: Check whitespace
         run: git diff --check
