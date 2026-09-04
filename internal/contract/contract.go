@@ -31,19 +31,66 @@ type Configuration struct {
 	Routes     []Route  `json:"routes,omitempty"`
 }
 
+// FieldLocation defines where a dimension lives on the provider.
+type FieldLocation struct {
+	Location string `json:"location"`
+	Field    string `json:"field"`
+}
+
 // Project contains the stable values needed to identify one GitHub Project.
 type Project struct {
-	Key          string            `json:"key,omitempty"`
-	Owner        string            `json:"owner"`
-	OwnerType    string            `json:"ownerType,omitempty"`
-	Number       int               `json:"number"`
-	Title        string            `json:"title"`
-	Repository   string            `json:"repository"`
-	Routing      string            `json:"routing"`
-	Privacy      string            `json:"privacy"`
-	ContractPath string            `json:"contractPath"`
-	Priority     map[string]string `json:"priority,omitempty"`
-	Pending      bool              `json:"priorityPending"`
+	Key            string                   `json:"key,omitempty"`
+	Owner          string                   `json:"owner"`
+	OwnerType      string                   `json:"ownerType,omitempty"`
+	Number         int                      `json:"number"`
+	Title          string                   `json:"title"`
+	Repository     string                   `json:"repository"`
+	Routing        string                   `json:"routing"`
+	Privacy        string                   `json:"privacy"`
+	ContractPath   string                   `json:"contractPath"`
+	Priority       map[string]string        `json:"priority,omitempty"`
+	Pending        bool                     `json:"priorityPending"`
+	FieldLocations map[string]FieldLocation `json:"fieldLocations,omitempty"`
+	ClassValues    []string                 `json:"classValues,omitempty"`
+	StatusValues   map[string]string        `json:"statusValues,omitempty"`
+}
+
+// ResolvePriority maps common P0..P3 to the provider's option name.
+func (p Project) ResolvePriority(common string) (string, error) {
+	if p.Pending {
+		return "", fmt.Errorf("%s has Priority mapping status: pending", p.ContractPath)
+	}
+	commonUpper := strings.ToUpper(strings.TrimSpace(common))
+	val, ok := p.Priority[commonUpper]
+	if !ok {
+		return "", fmt.Errorf("unknown priority %q; supported values are P0, P1, P2, P3", common)
+	}
+	return val, nil
+}
+
+// ValidateClass validates a class name against contract Class values if declared.
+func (p Project) ValidateClass(class string) (string, error) {
+	if len(p.ClassValues) == 0 {
+		return class, nil
+	}
+	for _, valid := range p.ClassValues {
+		if strings.EqualFold(valid, class) {
+			return valid, nil
+		}
+	}
+	return "", fmt.Errorf("invalid class %q; declared options in %s: %s", class, p.ContractPath, strings.Join(p.ClassValues, ", "))
+}
+
+// ResolveStatus maps or validates a status value against the contract.
+func (p Project) ResolveStatus(status string) string {
+	if p.StatusValues != nil {
+		for common, provider := range p.StatusValues {
+			if strings.EqualFold(common, status) {
+				return provider
+			}
+		}
+	}
+	return status
 }
 
 // Route joins one dispatcher selector to its validated child Project.
@@ -350,6 +397,31 @@ func validateProjectDocument(doc *document, expectedMode string) (Project, error
 	}); err != nil {
 		return Project{}, err
 	}
+	project.FieldLocations = make(map[string]FieldLocation)
+	for _, row := range doc.sections["Field locations"] {
+		if len(row) >= 3 && row[0] != "Common dimension" {
+			project.FieldLocations[row[0]] = FieldLocation{
+				Location: row[1],
+				Field:    row[2],
+			}
+		}
+	}
+	if rows, ok := doc.sections["Class values"]; ok {
+		for _, row := range rows {
+			if len(row) >= 1 && row[0] != "Option" && row[0] != "" {
+				project.ClassValues = append(project.ClassValues, row[0])
+			}
+		}
+	}
+	if rows, ok := doc.sections["Status mapping"]; ok {
+		project.StatusValues = make(map[string]string)
+		for _, row := range rows {
+			if len(row) >= 2 && row[0] != "Common value" && row[0] != "" {
+				project.StatusValues[row[0]] = row[1]
+			}
+		}
+	}
+
 	if credentialPattern.MatchString(doc.text) {
 		return Project{}, fmt.Errorf("%s appears to contain a credential", doc.path)
 	}

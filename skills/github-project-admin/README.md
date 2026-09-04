@@ -34,12 +34,16 @@ The commands in this guide work in Bash, Git Bash and WSL. They also work from P
 ## Optional `projects` CLI
 
 The `projects` Go CLI gives agents one tested command for supported repeated
-operations. Its first release validates `.projects/` contracts and reads a
-complete Project item set with a count check:
+operations. It validates `.projects/` contracts, reads complete Project item sets
+with a count check, and supports plan-first issue and Project mutations:
 
 ```text
 projects contract validate
 projects project item-list --format json
+projects issue create --title "Issue title" --apply
+projects issue edit --issue 42 --add-label bug --apply
+projects project item-add --issue 42 --apply
+projects project item-edit --issue 42 --priority P1 --status "In progress" --apply
 ```
 
 It is optional. The scripts below and direct GitHub operations remain supported.
