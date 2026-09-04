@@ -5,6 +5,10 @@ the semantic version tag and its floating aliases, runs GoReleaser, attaches
 checksummed archives and Debian packages to the GitHub Release, then publishes
 the `.deb` files to `MiguelRodo/apt-miguelrodo`.
 
+The shared action currently runs GoReleaser 1.x, so `.goreleaser.yml` uses the
+version 1 configuration format. Do not change it to the version 2 format until
+the shared action is upgraded as well.
+
 ## One-time repository setup
 
 The `projects` repository currently needs two Actions secrets before its first
