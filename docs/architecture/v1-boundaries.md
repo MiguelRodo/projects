@@ -51,9 +51,27 @@ Command data is written to stdout. A few numbered progress messages go to
 stderr, so JSON can be piped safely while a user or agent can still see where a
 slow command has reached. `--quiet` suppresses progress.
 
-Mutating commands plan by default, require `--apply` to execute, re-read
-stale-sensitive state, change only the owned value, and verify it separately.
+Mutating commands plan by default and require `--apply` to execute. Their
+bounded live reads resolve exact-title issue collisions, contract-declared
+field locations, exact Project membership and current values. Membership and
+field inspection start from the one target issue or pull request, so mutation
+commands do not serialise the whole Project. Apply mode re-reads
+stale-sensitive state, changes only the owned value, and verifies it separately.
 A successful provider response alone is never enough.
+
+The CLI packages sequences that have repeatedly been error-prone when assembled
+ad hoc: count-checked Project inventories, target-centred membership
+add/readback, exact field and option resolution, organisation issue-field
+POST/readback, and preservation checks.
+It does not wrap every `gh` command. Unsupported locations or mutations fail
+explicitly and remain the direct adapter's responsibility.
+
+Project membership is a separate mutation. `project item-edit` refuses a
+missing item; `project item-add` is the explicit idempotent membership command.
+Issue creation may add membership because the same creation request explicitly
+selected a Project. Multi-field writes are sequential because GitHub offers no
+atomic operation across these surfaces, so failures identify possible partial
+application and require a fresh inspection before retrying.
 
 ## Existing scripts
 
@@ -102,7 +120,7 @@ GitHub resources.
 | Package | Responsibility |
 | --- | --- |
 | `internal/contract` | Parse, validate and resolve the active Markdown contract. |
-| `internal/githubcli` | Invoke `gh` without a shell, verify Project identity and enforce complete item reads. |
+| `internal/githubcli` | Invoke `gh` without a shell, verify Project identity, provide complete inventories, and use bounded target reads for mutations. |
 | `internal/cli` | Parse commands, keep stdout and stderr separate, render text or JSON, and map failures to exit codes. |
 | `internal/update` | Perform the read-only latest-release comparison. |
 | `internal/buildinfo` | Hold version, commit and build date supplied by GoReleaser. |

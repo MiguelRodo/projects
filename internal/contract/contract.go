@@ -81,16 +81,33 @@ func (p Project) ValidateClass(class string) (string, error) {
 	return "", fmt.Errorf("invalid class %q; declared options in %s: %s", class, p.ContractPath, strings.Join(p.ClassValues, ", "))
 }
 
-// ResolveStatus maps or validates a status value against the contract.
-func (p Project) ResolveStatus(status string) string {
-	if p.StatusValues != nil {
-		for common, provider := range p.StatusValues {
-			if strings.EqualFold(common, status) {
-				return provider
-			}
+// ResolveStatus maps or validates a status value against the contract. When a
+// mapping is declared, both its common and provider-native names are accepted,
+// but an undeclared value is rejected instead of being passed through to a
+// similarly named live option by accident.
+func (p Project) ResolveStatus(status string) (string, error) {
+	trimmed := strings.TrimSpace(status)
+	if trimmed == "" {
+		return "", errors.New("status must not be empty")
+	}
+	if len(p.StatusValues) == 0 {
+		return trimmed, nil
+	}
+
+	commonValues := make([]string, 0, len(p.StatusValues))
+	for common, provider := range p.StatusValues {
+		commonValues = append(commonValues, common)
+		if strings.EqualFold(common, trimmed) || strings.EqualFold(provider, trimmed) {
+			return provider, nil
 		}
 	}
-	return status
+	sort.Strings(commonValues)
+	return "", fmt.Errorf(
+		"unknown status %q; declared common values in %s: %s",
+		status,
+		p.ContractPath,
+		strings.Join(commonValues, ", "),
+	)
 }
 
 // Route joins one dispatcher selector to its validated child Project.
@@ -551,6 +568,9 @@ func validateDispatcher(root string, doc *document) (*Configuration, error) {
 	}
 	if _, err := requiredMetadata(doc, "Privacy"); err != nil {
 		return nil, err
+	}
+	if credentialPattern.MatchString(doc.text) {
+		return nil, fmt.Errorf("%s appears to contain a credential", doc.path)
 	}
 	rows, ok := doc.sections["Routes"]
 	if !ok {

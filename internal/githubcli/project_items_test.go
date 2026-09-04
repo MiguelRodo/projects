@@ -15,6 +15,7 @@ import (
 
 type fakeResponse struct {
 	args   []string
+	input  []byte
 	output []byte
 	err    error
 }
@@ -27,6 +28,16 @@ type fakeRunner struct {
 
 func (f *fakeRunner) Run(_ context.Context, args ...string) ([]byte, error) {
 	f.t.Helper()
+	return f.next(nil, args...)
+}
+
+func (f *fakeRunner) RunInput(_ context.Context, input []byte, args ...string) ([]byte, error) {
+	f.t.Helper()
+	return f.next(input, args...)
+}
+
+func (f *fakeRunner) next(input []byte, args ...string) ([]byte, error) {
+	f.t.Helper()
 	if f.calls >= len(f.responses) {
 		f.t.Fatalf("unexpected call: %v", args)
 	}
@@ -34,6 +45,9 @@ func (f *fakeRunner) Run(_ context.Context, args ...string) ([]byte, error) {
 	f.calls++
 	if !reflect.DeepEqual(args, response.args) {
 		f.t.Fatalf("call %d args = %v, want %v", f.calls, args, response.args)
+	}
+	if !reflect.DeepEqual(input, response.input) {
+		f.t.Fatalf("call %d input = %s, want %s", f.calls, input, response.input)
 	}
 	return response.output, response.err
 }

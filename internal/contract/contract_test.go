@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -9,6 +10,38 @@ import (
 func fixtureRoot(t *testing.T, name string) string {
 	t.Helper()
 	return filepath.Join("..", "..", "skills", "github-project-admin", "tests", "fixtures", name)
+}
+
+func TestDispatcherRejectsCredentialLikeContent(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	projectsDir := filepath.Join(root, ".projects")
+	if err := os.MkdirAll(projectsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	document := `# Dispatcher
+
+| Key | Value |
+| --- | --- |
+| Contract version | 1 |
+| Mode | dispatcher |
+| Issue repository | octo-org/issues |
+| Privacy | private repository |
+
+## Routes
+
+| Project key | Routing label | Project number | Contract |
+| --- | --- | --- | --- |
+
+GH_TOKEN=secret-value-that-must-not-be-accepted
+`
+	if err := os.WriteFile(filepath.Join(projectsDir, "project.md"), []byte(document), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Load(root)
+	if err == nil || !strings.Contains(err.Error(), "credential") {
+		t.Fatalf("error = %v, want credential rejection", err)
+	}
 }
 
 func TestLoadMatchesShellFixtureValidity(t *testing.T) {
@@ -152,7 +185,14 @@ func TestProjectFieldLocationsAndHelpers(t *testing.T) {
 	}
 
 	// Status mapping
-	if val := p.ResolveStatus("Todo"); val != "Todo" {
-		t.Fatalf("ResolveStatus(Todo) = %q, want Todo", val)
+	if val, err := p.ResolveStatus("Todo"); err != nil || val != "Todo" {
+		t.Fatalf("ResolveStatus(Todo) = %q, err = %v, want Todo", val, err)
+	}
+	p.StatusValues = map[string]string{"Queued": "Backlog"}
+	if val, err := p.ResolveStatus("backlog"); err != nil || val != "Backlog" {
+		t.Fatalf("ResolveStatus(backlog) = %q, err = %v, want Backlog", val, err)
+	}
+	if _, err := p.ResolveStatus("Done"); err == nil {
+		t.Fatal("ResolveStatus(Done) error = nil")
 	}
 }

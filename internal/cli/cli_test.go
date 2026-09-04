@@ -35,6 +35,12 @@ func (r *runner) Run(_ context.Context, args ...string) ([]byte, error) {
 	return []byte(response.output), response.err
 }
 
+func (r *runner) RunInput(_ context.Context, input []byte, args ...string) ([]byte, error) {
+	r.t.Helper()
+	r.t.Fatalf("unexpected gh input call: %v (input %s)", args, input)
+	return nil, nil
+}
+
 func fixture(t *testing.T, name string) string {
 	t.Helper()
 	return filepath.Join("..", "..", "skills", "github-project-admin", "tests", "fixtures", name)

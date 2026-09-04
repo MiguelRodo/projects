@@ -112,7 +112,10 @@ gh auth status
 
 ## Create and edit issues
 
-Mutating commands plan by default and require `--apply` to execute. They independently verify changes through separate readback.
+Mutating commands plan by default and require `--apply` to execute. Plans may
+contact GitHub to inspect exact-title collisions, live schema, membership and
+current values, but never write. Apply mode performs fresh inspection and
+independently verifies changes through separate readback.
 
 Create an issue:
 
@@ -120,6 +123,13 @@ Create an issue:
 projects issue create --title "New issue title" --body "Issue description"
 projects issue create --title "New issue title" --body "Issue description" --apply
 ```
+
+Creation scans the complete issue repository for an exact title match and
+stops rather than creating a likely duplicate. If two distinct issues really
+must have the same title, make that choice visible with `--allow-duplicate`;
+the explicit override also skips the otherwise unnecessary repository scan.
+An explicit `--repo` is an assertion and must agree with the contract; it is
+not an escape hatch to mutate another repository.
 
 Optionally specify labels, assignees, milestone, or initial Project fields:
 
@@ -157,6 +167,13 @@ For a dispatcher contract, provide an exact selector:
 projects project item-add --project-key work --issue 42 --apply
 ```
 
+The plan queries the one issue or pull request for its Project memberships. It
+does not download every item in the Project. Apply is idempotent: an existing
+membership is reported as a verified no-op, while a new membership is read back
+independently and its item ID must agree with the mutation result. Use `--url`
+instead of `--issue` for a pull request. The URL repository must agree with the
+contract, and `--url` and `--issue` are mutually exclusive.
+
 Edit Project item fields with verified readback:
 
 ```bash
@@ -164,13 +181,35 @@ projects project item-edit --issue 42 --priority P1 --status "In progress"
 projects project item-edit --issue 42 --priority P1 --status "In progress" --apply
 ```
 
-Priority is mapped through the contract's declared Priority mapping. If the contract declares `Priority mapping status: pending`, the command refuses Priority updates until mapped.
+`item-edit` never adds membership implicitly. Run `project item-add` first when
+membership itself is authorised. Each Project field update uses its declared
+provider field. One bounded final query checks every requested value and
+compares the other scalar Project fields with the pre-write snapshot. A
+multi-field edit therefore does not download the Project or repeat the
+readback after each field.
+
+Priority is mapped through the contract's declared Priority mapping. If the
+contract declares `Priority mapping status: pending`, the command refuses
+Priority updates until mapped. Project-native single-select fields and dates
+are supported. Contract-declared organisation issue types and single-select
+organisation issue fields are also supported for issues, with their own fresh
+definition lookup and preservation-checked readback. Pull requests cannot use
+those issue-only locations.
 
 Clear a field with `--clear`:
 
 ```bash
 projects project item-edit --issue 42 --clear "Target date" --apply
 ```
+
+Clearing is deliberately limited to fields declared by the contract at a
+`project field` location. Dates must be real calendar dates in exact
+`YYYY-MM-DD` form, and declared Status mappings reject unknown values.
+
+Multi-field updates use narrow provider operations rather than a collection
+replacement. GitHub does not make those operations atomic; if a later field
+fails, the command says that an earlier narrow change may have applied and
+requires inspection before retrying.
 
 ## Version and update checks
 

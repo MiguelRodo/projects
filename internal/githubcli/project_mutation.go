@@ -5,8 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"reflect"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MiguelRodo/projects/internal/contract"
 )
@@ -48,6 +52,7 @@ type ProjectItemState struct {
 	IssueNumber int               `json:"issueNumber,omitempty"`
 	URL         string            `json:"url"`
 	Fields      map[string]string `json:"fields"`
+	raw         map[string]json.RawMessage
 }
 
 type graphQLFieldNode struct {
@@ -66,7 +71,10 @@ type graphQLProjectData struct {
 	Number int    `json:"number"`
 	Title  string `json:"title"`
 	Fields struct {
-		Nodes []graphQLFieldNode `json:"nodes"`
+		Nodes    []graphQLFieldNode `json:"nodes"`
+		PageInfo struct {
+			HasNextPage bool `json:"hasNextPage"`
+		} `json:"pageInfo"`
 	} `json:"fields"`
 }
 
@@ -98,6 +106,7 @@ func ProjectSchemaQuery(ownerRoot string) string {
           ... on ProjectV2FieldCommon { id name dataType }
           ... on ProjectV2SingleSelectField { options { id name } }
         }
+        pageInfo { hasNextPage }
       }
     }
   }
@@ -121,7 +130,7 @@ func QueryProjectSchema(ctx context.Context, runner Runner, project contract.Pro
 		ctx,
 		"api", "graphql",
 		"-f", "query="+query,
-		"-F", "login="+project.Owner,
+		"-f", "login="+project.Owner,
 		"-F", "number="+strconv.Itoa(project.Number),
 	)
 	if err != nil {
@@ -144,6 +153,19 @@ func QueryProjectSchema(ctx context.Context, runner Runner, project contract.Pro
 	}
 	if data == nil {
 		return ProjectSchema{}, fmt.Errorf("Project %s/%d not found at %s root", project.Owner, project.Number, ownerRoot)
+	}
+	if data.Number != project.Number || data.Title != project.Title {
+		return ProjectSchema{}, fmt.Errorf(
+			"Project identity disagrees with %s: got number %d title %q, want number %d title %q",
+			project.ContractPath,
+			data.Number,
+			data.Title,
+			project.Number,
+			project.Title,
+		)
+	}
+	if data.Fields.PageInfo.HasNextPage {
+		return ProjectSchema{}, fmt.Errorf("Project %s/%d has more than 100 fields; refusing an incomplete schema", project.Owner, project.Number)
 	}
 
 	schema := ProjectSchema{
@@ -208,37 +230,126 @@ func AddProjectItem(ctx context.Context, runner Runner, projectNumber int, proje
 	return res.ID, nil
 }
 
-type graphQLIssueProjectResponse struct {
+// GitHubItemTarget is a canonical issue or pull-request target.
+type GitHubItemTarget struct {
+	Repository string `json:"repository"`
+	Owner      string `json:"owner"`
+	Repo       string `json:"repo"`
+	Kind       string `json:"kind"`
+	Number     int    `json:"number"`
+	URL        string `json:"url"`
+}
+
+// ResolveGitHubItemTarget validates a contract repository and either an issue
+// number or an exact github.com issue/pull URL. A URL must agree with the
+// contract repository; it cannot silently redirect a contract-bound command.
+func ResolveGitHubItemTarget(repository string, issueNumber int, rawURL string) (GitHubItemTarget, error) {
+	owner, repo, err := splitGitHubRepository(repository)
+	if err != nil {
+		return GitHubItemTarget{}, err
+	}
+	if rawURL == "" {
+		if issueNumber <= 0 {
+			return GitHubItemTarget{}, errors.New("an issue number or URL is required")
+		}
+		return GitHubItemTarget{
+			Repository: repository,
+			Owner:      owner,
+			Repo:       repo,
+			Kind:       "issues",
+			Number:     issueNumber,
+			URL:        fmt.Sprintf("https://github.com/%s/issues/%d", repository, issueNumber),
+		}, nil
+	}
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return GitHubItemTarget{}, fmt.Errorf("parse item URL: %w", err)
+	}
+	if parsed.Scheme != "https" || !strings.EqualFold(parsed.Host, "github.com") || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.User != nil {
+		return GitHubItemTarget{}, fmt.Errorf("item URL must be an exact https://github.com issue or pull-request URL: %q", rawURL)
+	}
+	pathParts := strings.Split(strings.Trim(parsed.Path, "/"), "/")
+	if len(pathParts) != 4 || (pathParts[2] != "issues" && pathParts[2] != "pull") {
+		return GitHubItemTarget{}, fmt.Errorf("item URL must identify one GitHub issue or pull request: %q", rawURL)
+	}
+	number, err := strconv.Atoi(pathParts[3])
+	if err != nil || number <= 0 {
+		return GitHubItemTarget{}, fmt.Errorf("item URL has an invalid issue or pull-request number: %q", rawURL)
+	}
+	urlRepo := pathParts[0] + "/" + pathParts[1]
+	if !strings.EqualFold(urlRepo, repository) {
+		return GitHubItemTarget{}, fmt.Errorf("item URL repository %s disagrees with contract repository %s", urlRepo, repository)
+	}
+	if issueNumber > 0 && (pathParts[2] != "issues" || issueNumber != number) {
+		return GitHubItemTarget{}, fmt.Errorf("item URL disagrees with issue number %d", issueNumber)
+	}
+	return GitHubItemTarget{
+		Repository: repository,
+		Owner:      pathParts[0],
+		Repo:       pathParts[1],
+		Kind:       pathParts[2],
+		Number:     number,
+		URL:        fmt.Sprintf("https://github.com/%s/%s/%s/%d", pathParts[0], pathParts[1], pathParts[2], number),
+	}, nil
+}
+
+func splitGitHubRepository(repository string) (string, string, error) {
+	repoParts := strings.Split(repository, "/")
+	if len(repoParts) != 2 || repoParts[0] == "" || repoParts[1] == "" {
+		return "", "", fmt.Errorf("invalid contract repository %q; expected owner/name", repository)
+	}
+	return repoParts[0], repoParts[1], nil
+}
+
+type graphQLProjectItemFieldValue struct {
+	Typename    string   `json:"__typename"`
+	Date        *string  `json:"date"`
+	Title       *string  `json:"title"`
+	IterationID *string  `json:"iterationId"`
+	Value       *string  `json:"value"`
+	Number      *float64 `json:"number"`
+	Name        *string  `json:"name"`
+	OptionID    *string  `json:"optionId"`
+	Text        *string  `json:"text"`
+	Field       struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		DataType string `json:"dataType"`
+	} `json:"field"`
+}
+
+type graphQLProjectItemNode struct {
+	ID         string `json:"id"`
+	IsArchived bool   `json:"isArchived"`
+	Project    struct {
+		ID     string `json:"id"`
+		Number int    `json:"number"`
+		Title  string `json:"title"`
+		Owner  struct {
+			Login string `json:"login"`
+		} `json:"owner"`
+	} `json:"project"`
+	FieldValues struct {
+		Nodes    []graphQLProjectItemFieldValue `json:"nodes"`
+		PageInfo struct {
+			HasNextPage bool `json:"hasNextPage"`
+		} `json:"pageInfo"`
+	} `json:"fieldValues"`
+}
+
+type graphQLProjectItemResponse struct {
 	Data struct {
-		Repository struct {
-			Issue *struct {
-				ID           string `json:"id"`
-				Number       int    `json:"number"`
+		Repository *struct {
+			Target *struct {
 				URL          string `json:"url"`
 				ProjectItems struct {
-					Nodes []struct {
-						ID      string `json:"id"`
-						Project struct {
-							ID     string `json:"id"`
-							Number int    `json:"number"`
-							Title  string `json:"title"`
-						} `json:"project"`
-						FieldValues struct {
-							Nodes []struct {
-								Typename string `json:"__typename"`
-								Field    struct {
-									ID   string `json:"id"`
-									Name string `json:"name"`
-								} `json:"field"`
-								Name     string `json:"name,omitempty"`     // for single-select
-								OptionID string `json:"optionId,omitempty"` // for single-select
-								Date     string `json:"date,omitempty"`     // for date
-								Text     string `json:"text,omitempty"`     // for text
-							} `json:"nodes"`
-						} `json:"fieldValues"`
-					} `json:"nodes"`
+					Nodes    []graphQLProjectItemNode `json:"nodes"`
+					PageInfo struct {
+						HasNextPage bool `json:"hasNextPage"`
+					} `json:"pageInfo"`
 				} `json:"projectItems"`
-			} `json:"issue"`
+			} `json:"target"`
 		} `json:"repository"`
 	} `json:"data"`
 	Errors []struct {
@@ -246,95 +357,289 @@ type graphQLIssueProjectResponse struct {
 	} `json:"errors"`
 }
 
-// IssueProjectItemQuery is the GraphQL query for reading an issue's project items and field values.
-const IssueProjectItemQuery = `query($owner: String!, $repo: String!, $number: Int!) {
+// ProjectItemQuery returns a target-centred GraphQL query. It reads only the
+// Projects containing one issue or pull request, rather than serialising every
+// item in the selected Project. Scalar Project fields are included so callers
+// can verify requested values and preservation with one bounded readback.
+func ProjectItemQuery(kind string) string {
+	targetField := ""
+	switch kind {
+	case "issues":
+		targetField = "issue"
+	case "pull":
+		targetField = "pullRequest"
+	default:
+		return ""
+	}
+	return fmt.Sprintf(`query($owner: String!, $repo: String!, $number: Int!) {
   repository(owner: $owner, name: $repo) {
-    issue(number: $number) {
-      id
-      number
+    target: %s(number: $number) {
       url
-      projectItems(first: 20) {
+      projectItems(first: 100) {
         nodes {
           id
-          project { id number title }
-          fieldValues(first: 30) {
-            nodes {
-              __typename
-              ... on ProjectV2ItemFieldSingleSelectValue {
-                field { ... on ProjectV2SingleSelectField { id name } }
-                name
-                optionId
-              }
-              ... on ProjectV2ItemFieldDateValue {
-                field { ... on ProjectV2FieldCommon { id name } }
-                date
-              }
-              ... on ProjectV2ItemFieldTextValue {
-                field { ... on ProjectV2FieldCommon { id name } }
-                text
-              }
+          isArchived
+          project {
+            id
+            number
+            title
+            owner {
+              ... on User { login }
+              ... on Organization { login }
             }
           }
+          fieldValues(first: 100) {
+            nodes {
+              __typename
+              ... on ProjectV2ItemFieldDateValue {
+                date
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldIterationValue {
+                title
+                iterationId
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldMultiSelectValue {
+                value
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldNumberValue {
+                number
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldSingleSelectValue {
+                name
+                optionId
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldTextValue {
+                text
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+            }
+            pageInfo { hasNextPage }
+          }
         }
+        pageInfo { hasNextPage }
       }
     }
   }
-}`
+}`, targetField)
+}
 
-// QueryIssueProjectItem checks if an issue is in a Project and returns its item state.
-func QueryIssueProjectItem(ctx context.Context, runner Runner, repoOwner, repoName string, issueNumber, projectNumber int) (*ProjectItemState, error) {
-	query := IssueProjectItemQuery
-
+// QueryProjectItem resolves membership and current scalar Project fields from
+// the target issue or pull request. The query is bounded to at most 100 Project
+// memberships and 100 set field values per membership, and refuses to treat a
+// truncated response as proof.
+func QueryProjectItem(ctx context.Context, runner Runner, project contract.Project, target GitHubItemTarget) (*ProjectItemState, error) {
+	query := ProjectItemQuery(target.Kind)
+	if query == "" {
+		return nil, fmt.Errorf("unsupported GitHub item kind %q", target.Kind)
+	}
 	output, err := runner.Run(
 		ctx,
 		"api", "graphql",
 		"-f", "query="+query,
-		"-F", "owner="+repoOwner,
-		"-F", "repo="+repoName,
-		"-F", "number="+strconv.Itoa(issueNumber),
+		"-f", "owner="+target.Owner,
+		"-f", "repo="+target.Repo,
+		"-F", "number="+strconv.Itoa(target.Number),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("query issue project items for %s/%s#%d: %w", repoOwner, repoName, issueNumber, err)
+		return nil, fmt.Errorf("query Project membership for %s: %w", target.URL, err)
 	}
 
-	var resp graphQLIssueProjectResponse
-	if err := json.Unmarshal(output, &resp); err != nil {
-		return nil, fmt.Errorf("decode issue project response: %w", err)
+	var response graphQLProjectItemResponse
+	if err := json.Unmarshal(output, &response); err != nil {
+		return nil, fmt.Errorf("decode Project membership for %s: %w", target.URL, err)
 	}
-	if len(resp.Errors) > 0 {
-		return nil, fmt.Errorf("GraphQL error: %s", resp.Errors[0].Message)
+	if len(response.Errors) > 0 {
+		return nil, fmt.Errorf("GraphQL error querying Project membership: %s", response.Errors[0].Message)
 	}
-	if resp.Data.Repository.Issue == nil {
-		return nil, fmt.Errorf("issue %s/%s#%d not found", repoOwner, repoName, issueNumber)
+	if response.Data.Repository == nil || response.Data.Repository.Target == nil {
+		return nil, fmt.Errorf("GitHub target %s was not found or is not accessible", target.URL)
+	}
+	observedTarget := response.Data.Repository.Target
+	if !strings.EqualFold(observedTarget.URL, target.URL) {
+		return nil, fmt.Errorf("GitHub target identity disagrees: got %s, want %s", observedTarget.URL, target.URL)
+	}
+	if observedTarget.ProjectItems.PageInfo.HasNextPage {
+		return nil, fmt.Errorf("%s belongs to more than 100 Projects; refusing an incomplete membership read", target.URL)
 	}
 
-	issue := resp.Data.Repository.Issue
-	for _, itemNode := range issue.ProjectItems.Nodes {
-		if itemNode.Project.Number == projectNumber {
-			fields := make(map[string]string)
-			for _, fv := range itemNode.FieldValues.Nodes {
-				fieldName := fv.Field.Name
-				if fieldName == "" {
-					continue
-				}
-				if fv.Name != "" {
-					fields[fieldName] = fv.Name
-				} else if fv.Date != "" {
-					fields[fieldName] = fv.Date
-				} else if fv.Text != "" {
-					fields[fieldName] = fv.Text
-				}
-			}
-			return &ProjectItemState{
-				ItemID:      itemNode.ID,
-				IssueNumber: issue.Number,
-				URL:         issue.URL,
-				Fields:      fields,
-			}, nil
+	var match *graphQLProjectItemNode
+	for index := range observedTarget.ProjectItems.Nodes {
+		node := &observedTarget.ProjectItems.Nodes[index]
+		if !strings.EqualFold(node.Project.Owner.Login, project.Owner) || node.Project.Number != project.Number {
+			continue
 		}
+		if node.Project.Title != project.Title {
+			return nil, fmt.Errorf(
+				"Project identity disagrees with %s: got title %q, want %q",
+				project.ContractPath,
+				node.Project.Title,
+				project.Title,
+			)
+		}
+		if match != nil {
+			return nil, fmt.Errorf("Project %s/%d contains more than one item for %s", project.Owner, project.Number, target.URL)
+		}
+		match = node
+	}
+	if match == nil {
+		return nil, nil
+	}
+	if match.ID == "" || match.Project.ID == "" {
+		return nil, fmt.Errorf("Project item for %s has incomplete node identity", target.URL)
+	}
+	if match.FieldValues.PageInfo.HasNextPage {
+		return nil, fmt.Errorf("Project item %s has more than 100 set fields; refusing an incomplete field read", match.ID)
 	}
 
-	return nil, nil // not in project
+	state, err := decodeGraphQLProjectItem(*match, target)
+	if err != nil {
+		return nil, err
+	}
+	return &state, nil
+}
+
+func decodeGraphQLProjectItem(node graphQLProjectItemNode, target GitHubItemTarget) (ProjectItemState, error) {
+	fields := make(map[string]string)
+	rawFields := make(map[string]json.RawMessage)
+	rawFields["id"] = mustMarshalProjectValue(node.ID)
+	rawFields["content"] = mustMarshalProjectValue(map[string]any{
+		"number":     target.Number,
+		"repository": target.Repository,
+		"type":       target.Kind,
+		"url":        target.URL,
+	})
+	rawFields["project"] = mustMarshalProjectValue(map[string]any{
+		"id":     node.Project.ID,
+		"number": node.Project.Number,
+		"owner":  node.Project.Owner.Login,
+		"title":  node.Project.Title,
+	})
+	rawFields["isArchived"] = mustMarshalProjectValue(node.IsArchived)
+
+	for _, value := range node.FieldValues.Nodes {
+		if value.Field.Name == "" {
+			// Built-in list fields (labels, assignees, reviewers and similar)
+			// are not writable through this CLI's scalar field mutation path.
+			continue
+		}
+		for existing := range rawFields {
+			if strings.EqualFold(existing, value.Field.Name) {
+				return ProjectItemState{}, fmt.Errorf("Project item %s has duplicate set field name %q", node.ID, value.Field.Name)
+			}
+		}
+
+		scalar, present := graphQLProjectScalar(value)
+		canonical := map[string]any{
+			"dataType": value.Field.DataType,
+			"fieldId":  value.Field.ID,
+			"type":     value.Typename,
+		}
+		if present {
+			canonical["value"] = scalar
+			fields[value.Field.Name] = scalar
+		} else {
+			canonical["value"] = nil
+		}
+		if value.OptionID != nil {
+			canonical["optionId"] = *value.OptionID
+		}
+		if value.IterationID != nil {
+			canonical["iterationId"] = *value.IterationID
+		}
+		rawFields[value.Field.Name] = mustMarshalProjectValue(canonical)
+	}
+
+	return ProjectItemState{
+		ItemID:      node.ID,
+		IssueNumber: target.Number,
+		URL:         target.URL,
+		Fields:      fields,
+		raw:         rawFields,
+	}, nil
+}
+
+func graphQLProjectScalar(value graphQLProjectItemFieldValue) (string, bool) {
+	var raw any
+	switch value.Typename {
+	case "ProjectV2ItemFieldDateValue":
+		if value.Date == nil {
+			return "", false
+		}
+		raw = *value.Date
+	case "ProjectV2ItemFieldIterationValue":
+		if value.Title == nil {
+			return "", false
+		}
+		raw = *value.Title
+	case "ProjectV2ItemFieldMultiSelectValue":
+		if value.Value == nil {
+			return "", false
+		}
+		raw = *value.Value
+	case "ProjectV2ItemFieldNumberValue":
+		if value.Number == nil {
+			return "", false
+		}
+		raw = *value.Number
+	case "ProjectV2ItemFieldSingleSelectValue":
+		if value.Name == nil {
+			return "", false
+		}
+		raw = *value.Name
+	case "ProjectV2ItemFieldTextValue":
+		if value.Text == nil {
+			return "", false
+		}
+		raw = *value.Text
+	default:
+		return "", false
+	}
+	encoded, _ := json.Marshal(raw)
+	if stringValue, ok := raw.(string); ok {
+		return stringValue, true
+	}
+	return string(encoded), true
+}
+
+func mustMarshalProjectValue(value any) json.RawMessage {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	return encoded
+}
+
+// EnsureProjectItem adds a missing item and proves membership with a separate,
+// target-centred read. Existing membership is an idempotent no-op.
+func EnsureProjectItem(ctx context.Context, runner Runner, project contract.Project, target GitHubItemTarget) (ProjectItemState, bool, error) {
+	before, err := QueryProjectItem(ctx, runner, project, target)
+	if err != nil {
+		return ProjectItemState{}, false, fmt.Errorf("inspect Project membership: %w", err)
+	}
+	if before != nil {
+		return *before, false, nil
+	}
+
+	itemID, err := AddProjectItem(ctx, runner, project.Number, project.Owner, target.URL)
+	if err != nil {
+		return ProjectItemState{}, false, err
+	}
+	after, err := QueryProjectItem(ctx, runner, project, target)
+	if err != nil {
+		return ProjectItemState{}, true, fmt.Errorf("read back added Project item: %w", err)
+	}
+	if after == nil {
+		return ProjectItemState{}, true, fmt.Errorf("Project item readback failed: %s is not in Project %s/%d", target.URL, project.Owner, project.Number)
+	}
+	if after.ItemID != itemID {
+		return ProjectItemState{}, true, fmt.Errorf("Project item ID readback disagrees: add returned %s, target read found %s", itemID, after.ItemID)
+	}
+	return *after, true, nil
 }
 
 // EditItemFieldInput specifies parameters for editing a Project item field.
@@ -375,17 +680,239 @@ func EditProjectItemField(ctx context.Context, runner Runner, input EditItemFiel
 	return nil
 }
 
+const githubAPIVersion = "2026-03-10"
+
+type organizationIssueField struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	DataType string `json:"data_type"`
+	Options  []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"options"`
+}
+
+type repositoryIssueType struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type issueFieldValue struct {
+	IssueFieldID   int             `json:"issue_field_id"`
+	IssueFieldName string          `json:"issue_field_name"`
+	DataType       string          `json:"data_type"`
+	Value          json.RawMessage `json:"value"`
+	SingleSelect   *struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"single_select_option"`
+}
+
+func apiHeaders() []string {
+	return []string{
+		"-H", "Accept: application/vnd.github+json",
+		"-H", "X-GitHub-Api-Version: " + githubAPIVersion,
+	}
+}
+
+func queryOrganizationIssueFields(ctx context.Context, runner Runner, owner string) ([]organizationIssueField, error) {
+	args := []string{"api", "--paginate", "--slurp"}
+	args = append(args, apiHeaders()...)
+	args = append(args, "orgs/"+owner+"/issue-fields?per_page=100")
+	output, err := runner.Run(ctx, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list organization issue fields for %s: %w", owner, err)
+	}
+	var pages [][]organizationIssueField
+	if err := json.Unmarshal(output, &pages); err != nil {
+		return nil, fmt.Errorf("decode organization issue fields: %w", err)
+	}
+	var result []organizationIssueField
+	for _, page := range pages {
+		result = append(result, page...)
+	}
+	return result, nil
+}
+
+func resolveOrganizationIssueField(ctx context.Context, runner Runner, owner, name, dataType, desired string) (organizationIssueField, error) {
+	fields, err := queryOrganizationIssueFields(ctx, runner, owner)
+	if err != nil {
+		return organizationIssueField{}, err
+	}
+	var matches []organizationIssueField
+	for _, field := range fields {
+		if field.Name == name {
+			matches = append(matches, field)
+		}
+	}
+	if len(matches) != 1 {
+		return organizationIssueField{}, fmt.Errorf("organization issue field %q resolved to %d exact matches for %s", name, len(matches), owner)
+	}
+	field := matches[0]
+	if field.DataType != dataType {
+		return organizationIssueField{}, fmt.Errorf("organization issue field %q has type %s, want %s", name, field.DataType, dataType)
+	}
+	if dataType == "single_select" {
+		optionMatches := 0
+		for _, option := range field.Options {
+			if option.Name == desired {
+				optionMatches++
+			}
+		}
+		if optionMatches != 1 {
+			return organizationIssueField{}, fmt.Errorf("option %q resolved to %d exact matches in organization issue field %q", desired, optionMatches, name)
+		}
+	}
+	return field, nil
+}
+
+func validateRepositoryIssueType(ctx context.Context, runner Runner, repository, desired string) error {
+	args := []string{"api", "--paginate", "--slurp"}
+	args = append(args, apiHeaders()...)
+	args = append(args, fmt.Sprintf("repos/%s/issue-types?per_page=100", repository))
+	output, err := runner.Run(ctx, args...)
+	if err != nil {
+		return fmt.Errorf("list issue types available to %s: %w", repository, err)
+	}
+	var pages [][]repositoryIssueType
+	if err := json.Unmarshal(output, &pages); err != nil {
+		return fmt.Errorf("decode repository issue types: %w", err)
+	}
+	matches := 0
+	for _, page := range pages {
+		for _, issueType := range page {
+			if issueType.Name == desired {
+				matches++
+			}
+		}
+	}
+	if matches != 1 {
+		return fmt.Errorf("issue type %q resolved to %d exact matches for repository %s", desired, matches, repository)
+	}
+	return nil
+}
+
+func queryIssueFieldValues(ctx context.Context, runner Runner, target GitHubItemTarget) ([]issueFieldValue, error) {
+	args := []string{"api", "--paginate", "--slurp"}
+	args = append(args, apiHeaders()...)
+	args = append(args, fmt.Sprintf("repos/%s/issues/%d/issue-field-values?per_page=100", target.Repository, target.Number))
+	output, err := runner.Run(ctx, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list issue field values for %s#%d: %w", target.Repository, target.Number, err)
+	}
+	var pages [][]issueFieldValue
+	if err := json.Unmarshal(output, &pages); err != nil {
+		return nil, fmt.Errorf("decode issue field values: %w", err)
+	}
+	var result []issueFieldValue
+	for _, page := range pages {
+		result = append(result, page...)
+	}
+	return result, nil
+}
+
+func setOrganizationIssueField(ctx context.Context, runner Runner, target GitHubItemTarget, field organizationIssueField, desired string) error {
+	freshField, err := resolveOrganizationIssueField(ctx, runner, target.Owner, field.Name, field.DataType, desired)
+	if err != nil {
+		return fmt.Errorf("re-read organization issue field %q: %w", field.Name, err)
+	}
+	if freshField.ID != field.ID {
+		return fmt.Errorf("organization issue field %q identity changed from %d to %d; retry from a fresh plan", field.Name, field.ID, freshField.ID)
+	}
+	field = freshField
+	before, err := queryIssueFieldValues(ctx, runner, target)
+	if err != nil {
+		return err
+	}
+	if currentIssueFieldValue(before, field.ID) == desired {
+		return nil
+	}
+	body, err := json.Marshal(map[string]any{
+		"issue_field_values": []map[string]any{{"field_id": field.ID, "value": desired}},
+	})
+	if err != nil {
+		return fmt.Errorf("encode issue field update: %w", err)
+	}
+	args := []string{"api", "--method", "POST"}
+	args = append(args, apiHeaders()...)
+	args = append(args, fmt.Sprintf("repos/%s/issues/%d/issue-field-values", target.Repository, target.Number), "--input", "-")
+	stdinRunner, ok := runner.(inputRunner)
+	if !ok {
+		return errors.New("GitHub runner does not support JSON request bodies")
+	}
+	if _, err := stdinRunner.RunInput(ctx, body, args...); err != nil {
+		return fmt.Errorf("set organization issue field %q: %w", field.Name, err)
+	}
+	after, err := queryIssueFieldValues(ctx, runner, target)
+	if err != nil {
+		return fmt.Errorf("read back organization issue field %q: %w", field.Name, err)
+	}
+	if got := currentIssueFieldValue(after, field.ID); got != desired {
+		return fmt.Errorf("organization issue field %q readback disagrees: got %q, want %q", field.Name, got, desired)
+	}
+	if !issueFieldValuesPreserved(before, after, field.ID) {
+		return fmt.Errorf("an unrelated organization issue field changed while setting %q", field.Name)
+	}
+	return nil
+}
+
+func currentIssueFieldValue(values []issueFieldValue, fieldID int) string {
+	for _, value := range values {
+		if value.IssueFieldID != fieldID {
+			continue
+		}
+		if value.SingleSelect != nil {
+			return value.SingleSelect.Name
+		}
+		var text string
+		if err := json.Unmarshal(value.Value, &text); err == nil {
+			return text
+		}
+	}
+	return ""
+}
+
+func issueFieldValuesPreserved(before, after []issueFieldValue, changedID int) bool {
+	canonical := func(values []issueFieldValue) map[int]string {
+		result := make(map[int]string)
+		for _, value := range values {
+			if value.IssueFieldID == changedID {
+				continue
+			}
+			encoded, _ := json.Marshal(value)
+			result[value.IssueFieldID] = string(encoded)
+		}
+		return result
+	}
+	return reflect.DeepEqual(canonical(before), canonical(after))
+}
+
+type projectFieldChange struct {
+	Name     string
+	Field    ProjectField
+	Desired  string
+	OptionID string
+	Clear    bool
+}
+
+type organizationFieldChange struct {
+	Name    string
+	Field   organizationIssueField
+	Desired string
+}
+
 // MutateProjectItemInput defines the full high-level mutation request.
 type MutateProjectItemInput struct {
-	Project     contract.Project
-	Repo        string // "owner/name"
-	IssueNumber int
-	URL         string
-	Priority    string // common value: P0, P1, P2, P3
-	Class       string // common or declared class
-	Status      string // status name
-	TargetDate  string // YYYY-MM-DD
-	ClearFields []string
+	Project      contract.Project
+	Repo         string // "owner/name"
+	IssueNumber  int
+	URL          string
+	Priority     string // common value: P0, P1, P2, P3
+	Class        string // common or declared class
+	Status       string // status name
+	TargetDate   string // YYYY-MM-DD
+	ClearFields  []string
+	AddIfMissing bool // membership is a separate mutation unless explicitly authorised
 }
 
 // MutateProjectItemResult is the verified result after editing Project item fields.
@@ -393,197 +920,471 @@ type MutateProjectItemResult struct {
 	Project ProjectIdentity   `json:"project"`
 	ItemID  string            `json:"itemId"`
 	URL     string            `json:"url"`
+	Added   bool              `json:"added"`
 	Fields  map[string]string `json:"fields"`
 }
 
-// MutateProjectItem performs verified Project item addition and field updates.
-func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectItemInput) (MutateProjectItemResult, error) {
-	if input.Priority != "" {
-		if _, err := input.Project.ResolvePriority(input.Priority); err != nil {
-			return MutateProjectItemResult{}, err
+// ValidateProjectItemMutationConfiguration resolves the live Project schema
+// and any organization-native field definitions without reading or mutating a
+// particular issue. Callers can use it before creating an issue so deterministic
+// configuration failures do not leave a partially configured issue behind.
+func ValidateProjectItemMutationConfiguration(ctx context.Context, runner Runner, input MutateProjectItemInput) error {
+	if err := validateProjectMutationValues(input); err != nil {
+		return err
+	}
+	owner, repo, err := splitGitHubRepository(input.Repo)
+	if err != nil {
+		return err
+	}
+	target := GitHubItemTarget{
+		Repository: input.Repo,
+		Owner:      owner,
+		Repo:       repo,
+		Kind:       "issues",
+	}
+	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
+	if projectMutationNeedsSchema(input) {
+		schema, err = QueryProjectSchema(ctx, runner, input.Project)
+		if err != nil {
+			return err
 		}
 	}
-	if input.Class != "" {
-		if _, err := input.Project.ValidateClass(input.Class); err != nil {
+	_, _, _, err = prepareProjectChanges(ctx, runner, input, target, schema)
+	return err
+}
+
+// InspectProjectItemMutation validates the requested fields against fresh live
+// definitions and returns the current target-centred item state for plan output.
+func InspectProjectItemMutation(ctx context.Context, runner Runner, input MutateProjectItemInput) (*ProjectItemState, error) {
+	target, err := validateProjectMutationInput(input)
+	if err != nil {
+		return nil, err
+	}
+	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
+	if projectMutationNeedsSchema(input) {
+		schema, err = QueryProjectSchema(ctx, runner, input.Project)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if _, _, _, err := prepareProjectChanges(ctx, runner, input, target, schema); err != nil {
+		return nil, err
+	}
+	item, err := QueryProjectItem(ctx, runner, input.Project, target)
+	if err != nil {
+		return nil, err
+	}
+	if item == nil {
+		return nil, fmt.Errorf("%s is not a member of Project %s/%d; run project item-add explicitly", target.URL, input.Project.Owner, input.Project.Number)
+	}
+	return item, nil
+}
+
+// MutateProjectItem performs contract-bound field updates and independently
+// verifies the resulting values plus preservation of unrelated scalar Project
+// fields in one bounded final readback.
+func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectItemInput) (MutateProjectItemResult, error) {
+	target, err := validateProjectMutationInput(input)
+	if err != nil {
+		return MutateProjectItemResult{}, err
+	}
+	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
+	if projectMutationNeedsSchema(input) {
+		schema, err = QueryProjectSchema(ctx, runner, input.Project)
+		if err != nil {
 			return MutateProjectItemResult{}, err
 		}
 	}
 
-	schema, err := QueryProjectSchema(ctx, runner, input.Project)
+	projectChanges, organizationChanges, issueType, err := prepareProjectChanges(ctx, runner, input, target, schema)
 	if err != nil {
 		return MutateProjectItemResult{}, err
 	}
 
-	repoParts := strings.Split(input.Repo, "/")
-	if len(repoParts) != 2 && input.URL != "" {
-		// Try parsing from URL: https://github.com/owner/repo/issues/123
-		parts := strings.Split(strings.TrimPrefix(input.URL, "https://github.com/"), "/")
-		if len(parts) >= 4 && parts[2] == "issues" {
-			repoParts = []string{parts[0], parts[1]}
-			if input.IssueNumber == 0 {
-				input.IssueNumber, _ = strconv.Atoi(parts[3])
-			}
-		}
-	}
-
-	if input.URL == "" && input.IssueNumber > 0 && len(repoParts) == 2 {
-		input.URL = fmt.Sprintf("https://github.com/%s/%s/issues/%d", repoParts[0], repoParts[1], input.IssueNumber)
-	}
-
-	if input.URL == "" {
-		return MutateProjectItemResult{}, errors.New("cannot determine target issue URL")
-	}
-
-	var currentItem *ProjectItemState
-	if len(repoParts) == 2 && input.IssueNumber > 0 {
-		currentItem, err = QueryIssueProjectItem(ctx, runner, repoParts[0], repoParts[1], input.IssueNumber, input.Project.Number)
-		if err != nil {
-			return MutateProjectItemResult{}, fmt.Errorf("check current project item state: %w", err)
-		}
-	}
-
-	itemID := ""
-	if currentItem != nil {
-		itemID = currentItem.ItemID
-	} else {
-		// Add to project
-		addedID, err := AddProjectItem(ctx, runner, input.Project.Number, input.Project.Owner, input.URL)
-		if err != nil {
-			return MutateProjectItemResult{}, fmt.Errorf("add item to project: %w", err)
-		}
-		itemID = addedID
-	}
-
-	// Apply field edits
-	if input.Priority != "" {
-		providerVal, err := input.Project.ResolvePriority(input.Priority)
-		if err != nil {
-			return MutateProjectItemResult{}, err
-		}
-		pField, ok := schema.FindField("Priority")
-		if !ok {
-			return MutateProjectItemResult{}, fmt.Errorf("Priority field not found in Project %s/%d schema", input.Project.Owner, input.Project.Number)
-		}
-		optID, ok := pField.FindOptionID(providerVal)
-		if !ok {
-			return MutateProjectItemResult{}, fmt.Errorf("option %q for Priority not found in Project %s/%d", providerVal, input.Project.Owner, input.Project.Number)
-		}
-		if err := EditProjectItemField(ctx, runner, EditItemFieldInput{
-			ItemID:               itemID,
-			ProjectNodeID:        schema.ID,
-			FieldID:              pField.ID,
-			SingleSelectOptionID: optID,
-		}); err != nil {
-			return MutateProjectItemResult{}, fmt.Errorf("set Priority: %w", err)
-		}
-	}
-
-	if input.Class != "" {
-		validClass, err := input.Project.ValidateClass(input.Class)
-		if err != nil {
-			return MutateProjectItemResult{}, err
-		}
-		// Check where Class lives
-		loc := input.Project.FieldLocations["Class"]
-		if loc.Location == "organization issue type" {
-			// Update issue type via gh issue edit
-			if len(repoParts) == 2 && input.IssueNumber > 0 {
-				_, err := runner.Run(ctx, "issue", "edit", strconv.Itoa(input.IssueNumber), "--repo", input.Repo, "--type", validClass)
-				if err != nil {
-					return MutateProjectItemResult{}, fmt.Errorf("set issue type %q: %w", validClass, err)
-				}
-			}
-		} else {
-			cField, ok := schema.FindField("Class")
-			if !ok {
-				return MutateProjectItemResult{}, fmt.Errorf("Class field not found in Project %s/%d schema", input.Project.Owner, input.Project.Number)
-			}
-			optID, ok := cField.FindOptionID(validClass)
-			if !ok {
-				return MutateProjectItemResult{}, fmt.Errorf("option %q for Class not found in Project %s/%d", validClass, input.Project.Owner, input.Project.Number)
-			}
-			if err := EditProjectItemField(ctx, runner, EditItemFieldInput{
-				ItemID:               itemID,
-				ProjectNodeID:        schema.ID,
-				FieldID:              cField.ID,
-				SingleSelectOptionID: optID,
-			}); err != nil {
-				return MutateProjectItemResult{}, fmt.Errorf("set Class: %w", err)
-			}
-		}
-	}
-
-	if input.Status != "" {
-		statusVal := input.Project.ResolveStatus(input.Status)
-		sField, ok := schema.FindField("Status")
-		if !ok {
-			return MutateProjectItemResult{}, fmt.Errorf("Status field not found in Project %s/%d schema", input.Project.Owner, input.Project.Number)
-		}
-		optID, ok := sField.FindOptionID(statusVal)
-		if !ok {
-			return MutateProjectItemResult{}, fmt.Errorf("option %q for Status not found in Project %s/%d", statusVal, input.Project.Owner, input.Project.Number)
-		}
-		if err := EditProjectItemField(ctx, runner, EditItemFieldInput{
-			ItemID:               itemID,
-			ProjectNodeID:        schema.ID,
-			FieldID:              sField.ID,
-			SingleSelectOptionID: optID,
-		}); err != nil {
-			return MutateProjectItemResult{}, fmt.Errorf("set Status: %w", err)
-		}
-	}
-
-	if input.TargetDate != "" {
-		dateFieldName := "Target date"
-		if loc, ok := input.Project.FieldLocations["Due date"]; ok && loc.Field != "" {
-			dateFieldName = loc.Field
-		}
-		dField, ok := schema.FindField(dateFieldName)
-		if !ok {
-			return MutateProjectItemResult{}, fmt.Errorf("date field %q not found in Project %s/%d", dateFieldName, input.Project.Owner, input.Project.Number)
-		}
-		if err := EditProjectItemField(ctx, runner, EditItemFieldInput{
-			ItemID:        itemID,
-			ProjectNodeID: schema.ID,
-			FieldID:       dField.ID,
-			DateValue:     input.TargetDate,
-		}); err != nil {
-			return MutateProjectItemResult{}, fmt.Errorf("set %s: %w", dateFieldName, err)
-		}
-	}
-
-	for _, clearName := range input.ClearFields {
-		f, ok := schema.FindField(clearName)
-		if !ok {
-			return MutateProjectItemResult{}, fmt.Errorf("cannot clear unknown field %q", clearName)
-		}
-		if err := EditProjectItemField(ctx, runner, EditItemFieldInput{
-			ItemID:        itemID,
-			ProjectNodeID: schema.ID,
-			FieldID:       f.ID,
-			Clear:         true,
-		}); err != nil {
-			return MutateProjectItemResult{}, fmt.Errorf("clear field %q: %w", clearName, err)
-		}
-	}
-
-	// Readback verification
-	afterItem, err := QueryIssueProjectItem(ctx, runner, repoParts[0], repoParts[1], input.IssueNumber, input.Project.Number)
+	current, err := QueryProjectItem(ctx, runner, input.Project, target)
 	if err != nil {
-		return MutateProjectItemResult{}, fmt.Errorf("read back project item: %w", err)
+		return MutateProjectItemResult{}, fmt.Errorf("inspect current Project item: %w", err)
 	}
-	if afterItem == nil {
-		return MutateProjectItemResult{}, fmt.Errorf("project item readback failed: item not found in Project %s/%d", input.Project.Owner, input.Project.Number)
+	added := false
+	if current == nil {
+		if !input.AddIfMissing {
+			return MutateProjectItemResult{}, fmt.Errorf("%s is not a member of Project %s/%d; run project item-add explicitly", target.URL, input.Project.Owner, input.Project.Number)
+		}
+		itemID, err := AddProjectItem(ctx, runner, input.Project.Number, input.Project.Owner, target.URL)
+		if err != nil {
+			return MutateProjectItemResult{}, err
+		}
+		state, err := QueryProjectItem(ctx, runner, input.Project, target)
+		if err != nil {
+			return MutateProjectItemResult{}, fmt.Errorf("read back added Project item: %w", err)
+		}
+		if state == nil {
+			return MutateProjectItemResult{}, fmt.Errorf("Project item readback failed: %s is not in Project %s/%d", target.URL, input.Project.Owner, input.Project.Number)
+		}
+		if state.ItemID != itemID {
+			return MutateProjectItemResult{}, fmt.Errorf("Project item ID readback disagrees: add returned %s, target read found %s", itemID, state.ItemID)
+		}
+		current = state
+		added = true
 	}
 
+	baseline := *current
+	projectMutationApplied := false
+	for _, change := range projectChanges {
+		if projectItemFieldMatches(*current, change) {
+			continue
+		}
+		edit := EditItemFieldInput{
+			ItemID:        current.ItemID,
+			ProjectNodeID: schema.ID,
+			FieldID:       change.Field.ID,
+			Clear:         change.Clear,
+		}
+		if !change.Clear {
+			if change.OptionID != "" {
+				edit.SingleSelectOptionID = change.OptionID
+			} else {
+				edit.DateValue = change.Desired
+			}
+		}
+		if err := EditProjectItemField(ctx, runner, edit); err != nil {
+			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, err)
+		}
+		projectMutationApplied = true
+	}
+
+	nonProjectMutationApplied := false
+	for _, change := range organizationChanges {
+		if err := setOrganizationIssueField(ctx, runner, target, change.Field, change.Desired); err != nil {
+			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, err)
+		}
+		nonProjectMutationApplied = true
+	}
+
+	if issueType != "" {
+		if target.Kind != "issues" {
+			return MutateProjectItemResult{}, errors.New("organization issue types can only be set on issues, not pull requests")
+		}
+		if _, err := EditIssue(ctx, runner, EditIssueInput{
+			Repo:      target.Repository,
+			Number:    target.Number,
+			IssueType: &issueType,
+		}); err != nil {
+			return MutateProjectItemResult{}, partialProjectMutationError("Class", err)
+		}
+		nonProjectMutationApplied = true
+	}
+
+	finalItem := current
+	if projectMutationApplied || nonProjectMutationApplied {
+		finalItem, err = QueryProjectItem(ctx, runner, input.Project, target)
+		if err != nil {
+			return MutateProjectItemResult{}, partialProjectMutationError("final Project readback", err)
+		}
+		if finalItem == nil || finalItem.ItemID != current.ItemID {
+			return MutateProjectItemResult{}, partialProjectMutationError("final Project readback", errors.New("item identity or membership changed"))
+		}
+		for _, change := range projectChanges {
+			if projectItemFieldMatches(*finalItem, change) {
+				continue
+			}
+			got, _ := projectItemFieldValue(*finalItem, change.Field.Name)
+			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, fmt.Errorf("readback disagrees: got %q, want %q", got, change.Desired))
+		}
+		changedFields := make([]string, 0, len(projectChanges))
+		for _, change := range projectChanges {
+			changedFields = append(changedFields, change.Field.Name)
+		}
+		if !projectItemPreserved(baseline, *finalItem, changedFields...) {
+			return MutateProjectItemResult{}, partialProjectMutationError("final Project readback", errors.New("an unrelated scalar Project item value changed"))
+		}
+	}
+
+	resultFields := projectFieldsForResult(*finalItem, schema)
+	for _, change := range organizationChanges {
+		resultFields[change.Field.Name] = change.Desired
+	}
+	if issueType != "" {
+		resultFields["Class"] = issueType
+	}
 	return MutateProjectItemResult{
-		Project: ProjectIdentity{
-			Number: input.Project.Number,
-			Owner:  input.Project.Owner,
-			Title:  input.Project.Title,
-		},
-		ItemID: itemID,
-		URL:    input.URL,
-		Fields: afterItem.Fields,
+		Project: ProjectIdentity{Number: input.Project.Number, Owner: input.Project.Owner, Title: input.Project.Title},
+		ItemID:  finalItem.ItemID,
+		URL:     target.URL,
+		Added:   added,
+		Fields:  resultFields,
 	}, nil
+}
+
+func validateProjectMutationInput(input MutateProjectItemInput) (GitHubItemTarget, error) {
+	target, err := ResolveGitHubItemTarget(input.Repo, input.IssueNumber, input.URL)
+	if err != nil {
+		return GitHubItemTarget{}, err
+	}
+	if err := validateProjectMutationValues(input); err != nil {
+		return GitHubItemTarget{}, err
+	}
+	return target, nil
+}
+
+func validateProjectMutationValues(input MutateProjectItemInput) error {
+	if input.Priority != "" {
+		if _, err := input.Project.ResolvePriority(input.Priority); err != nil {
+			return err
+		}
+	}
+	if input.Class != "" {
+		if _, err := input.Project.ValidateClass(input.Class); err != nil {
+			return err
+		}
+	}
+	if input.Status != "" {
+		if _, err := input.Project.ResolveStatus(input.Status); err != nil {
+			return err
+		}
+	}
+	if input.TargetDate != "" {
+		if err := ValidateISODate(input.TargetDate); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func projectMutationNeedsSchema(input MutateProjectItemInput) bool {
+	requestedDimensions := map[string]bool{
+		"Priority": input.Priority != "",
+		"Class":    input.Class != "",
+		"Status":   input.Status != "",
+	}
+	for dimension, requested := range requestedDimensions {
+		if !requested {
+			continue
+		}
+		if location, ok := input.Project.FieldLocations[dimension]; ok && location.Location == "project field" {
+			return true
+		}
+	}
+	return input.TargetDate != "" || len(input.ClearFields) > 0
+}
+
+func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProjectItemInput, target GitHubItemTarget, schema ProjectSchema) ([]projectFieldChange, []organizationFieldChange, string, error) {
+	var projectChanges []projectFieldChange
+	var organizationChanges []organizationFieldChange
+	issueType := ""
+	setFields := make(map[string]bool)
+
+	addSingleSelect := func(dimension, desired string) error {
+		location, ok := input.Project.FieldLocations[dimension]
+		if !ok || location.Field == "" {
+			return fmt.Errorf("%s does not declare a provider field for %s", input.Project.ContractPath, dimension)
+		}
+		switch location.Location {
+		case "project field":
+			field, ok := schema.FindField(location.Field)
+			if !ok {
+				return fmt.Errorf("declared %s field %q is absent from Project %s/%d", dimension, location.Field, input.Project.Owner, input.Project.Number)
+			}
+			if field.DataType != "SINGLE_SELECT" {
+				return fmt.Errorf("declared %s field %q has type %s, want SINGLE_SELECT", dimension, location.Field, field.DataType)
+			}
+			optionID, ok := field.FindOptionID(desired)
+			if !ok {
+				return fmt.Errorf("option %q for %s is absent from Project field %q", desired, dimension, field.Name)
+			}
+			projectChanges = append(projectChanges, projectFieldChange{Name: dimension, Field: field, Desired: desired, OptionID: optionID})
+			setFields[strings.ToLower(field.Name)] = true
+			return nil
+		case "organization issue field":
+			if target.Kind != "issues" {
+				return fmt.Errorf("%s uses an organization issue field and cannot be set on a pull request", dimension)
+			}
+			field, err := resolveOrganizationIssueField(ctx, runner, target.Owner, location.Field, "single_select", desired)
+			if err != nil {
+				return err
+			}
+			organizationChanges = append(organizationChanges, organizationFieldChange{Name: dimension, Field: field, Desired: desired})
+			setFields[strings.ToLower(field.Name)] = true
+			return nil
+		default:
+			return fmt.Errorf("%s location %q is not supported for %s updates", dimension, location.Location, dimension)
+		}
+	}
+
+	if input.Priority != "" {
+		value, err := input.Project.ResolvePriority(input.Priority)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		if err := addSingleSelect("Priority", value); err != nil {
+			return nil, nil, "", err
+		}
+	}
+	if input.Class != "" {
+		value, err := input.Project.ValidateClass(input.Class)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		location, ok := input.Project.FieldLocations["Class"]
+		if !ok {
+			return nil, nil, "", fmt.Errorf("%s does not declare a Class location", input.Project.ContractPath)
+		}
+		if location.Location == "organization issue type" {
+			if target.Kind != "issues" {
+				return nil, nil, "", errors.New("Class uses an organization issue type and cannot be set on a pull request")
+			}
+			if err := validateRepositoryIssueType(ctx, runner, target.Repository, value); err != nil {
+				return nil, nil, "", err
+			}
+			issueType = value
+			setFields[strings.ToLower(location.Field)] = true
+		} else if err := addSingleSelect("Class", value); err != nil {
+			return nil, nil, "", err
+		}
+	}
+	if input.Status != "" {
+		value, err := input.Project.ResolveStatus(input.Status)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		if err := addSingleSelect("Status", value); err != nil {
+			return nil, nil, "", err
+		}
+	}
+	if input.TargetDate != "" {
+		if err := ValidateISODate(input.TargetDate); err != nil {
+			return nil, nil, "", err
+		}
+		location, ok := input.Project.FieldLocations["Due date"]
+		if !ok || location.Field == "" || location.Location != "project field" {
+			return nil, nil, "", fmt.Errorf("%s must declare Due date as a project field for --target-date", input.Project.ContractPath)
+		}
+		field, ok := schema.FindField(location.Field)
+		if !ok {
+			return nil, nil, "", fmt.Errorf("declared Due date field %q is absent from Project %s/%d", location.Field, input.Project.Owner, input.Project.Number)
+		}
+		if field.DataType != "DATE" {
+			return nil, nil, "", fmt.Errorf("declared Due date field %q has type %s, want DATE", location.Field, field.DataType)
+		}
+		projectChanges = append(projectChanges, projectFieldChange{Name: "Due date", Field: field, Desired: input.TargetDate})
+		setFields[strings.ToLower(field.Name)] = true
+	}
+
+	clearSeen := make(map[string]bool)
+	for _, supplied := range input.ClearFields {
+		name := strings.TrimSpace(supplied)
+		if name == "" {
+			continue
+		}
+		var matchingLocations []contract.FieldLocation
+		for _, location := range input.Project.FieldLocations {
+			if strings.EqualFold(location.Field, name) {
+				matchingLocations = append(matchingLocations, location)
+			}
+		}
+		if len(matchingLocations) == 0 {
+			return nil, nil, "", fmt.Errorf("cannot clear undeclared field %q", name)
+		}
+		if len(matchingLocations) > 1 {
+			return nil, nil, "", fmt.Errorf("cannot clear ambiguous declared field %q", name)
+		}
+		location := matchingLocations[0]
+		if location.Location != "project field" {
+			return nil, nil, "", fmt.Errorf("--clear currently supports declared Project fields only; %q is at %s", name, location.Location)
+		}
+		canonical := location.Field
+		key := strings.ToLower(canonical)
+		if setFields[key] {
+			return nil, nil, "", fmt.Errorf("field %q cannot be set and cleared in the same operation", canonical)
+		}
+		if clearSeen[key] {
+			continue
+		}
+		clearSeen[key] = true
+		field, ok := schema.FindField(canonical)
+		if !ok {
+			return nil, nil, "", fmt.Errorf("declared field %q is absent from Project %s/%d", canonical, input.Project.Owner, input.Project.Number)
+		}
+		projectChanges = append(projectChanges, projectFieldChange{Name: "clear " + canonical, Field: field, Clear: true})
+	}
+	return projectChanges, organizationChanges, issueType, nil
+}
+
+// ValidateISODate rejects values that are not real calendar dates in the
+// exact YYYY-MM-DD form accepted by GitHub Project date fields.
+func ValidateISODate(value string) error {
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil || parsed.Format("2006-01-02") != value {
+		return fmt.Errorf("invalid target date %q; expected a real date in YYYY-MM-DD form", value)
+	}
+	return nil
+}
+
+func projectItemFieldValue(item ProjectItemState, fieldName string) (string, bool) {
+	for key, value := range item.Fields {
+		if !strings.EqualFold(key, fieldName) {
+			continue
+		}
+		return value, true
+	}
+	return "", false
+}
+
+func projectItemFieldMatches(item ProjectItemState, change projectFieldChange) bool {
+	if change.Clear {
+		for key, value := range item.Fields {
+			if !strings.EqualFold(key, change.Field.Name) {
+				continue
+			}
+			return value == ""
+		}
+		return true
+	}
+	value, present := projectItemFieldValue(item, change.Field.Name)
+	return present && value == change.Desired
+}
+
+func projectItemPreserved(before, after ProjectItemState, changedFields ...string) bool {
+	excluded := make(map[string]struct{}, len(changedFields))
+	for _, field := range changedFields {
+		if field != "" {
+			excluded[strings.ToLower(field)] = struct{}{}
+		}
+	}
+	filter := func(values map[string]json.RawMessage) map[string]string {
+		result := make(map[string]string)
+		for key, raw := range values {
+			if _, skip := excluded[strings.ToLower(key)]; skip {
+				continue
+			}
+			var decoded any
+			if err := json.Unmarshal(raw, &decoded); err != nil {
+				result[key] = string(raw)
+				continue
+			}
+			encoded, _ := json.Marshal(decoded)
+			result[key] = string(encoded)
+		}
+		return result
+	}
+	return reflect.DeepEqual(filter(before.raw), filter(after.raw))
+}
+
+func projectFieldsForResult(item ProjectItemState, schema ProjectSchema) map[string]string {
+	fields := make(map[string]string)
+	names := make([]string, 0, len(schema.Fields))
+	for _, field := range schema.Fields {
+		names = append(names, field.Name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		if value, ok := projectItemFieldValue(item, name); ok {
+			fields[name] = value
+		}
+	}
+	return fields
+}
+
+func partialProjectMutationError(step string, err error) error {
+	return fmt.Errorf("%s mutation did not verify (%v); an earlier narrow change may already have applied, so inspect before retrying", step, err)
 }

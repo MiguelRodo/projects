@@ -3,13 +3,54 @@ package cli
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/MiguelRodo/projects/internal/githubcli"
 )
+
+func cliProjectItemQueryArgs() []string {
+	return []string{
+		"api", "graphql",
+		"-f", "query=" + githubcli.ProjectItemQuery("issues"),
+		"-f", "owner=octo-org",
+		"-f", "repo=example",
+		"-F", "number=55",
+	}
+}
+
+func cliProjectItemQueryJSON(itemID string) string {
+	return fmt.Sprintf(`{"data":{"repository":{"target":{"url":"https://github.com/octo-org/example/issues/55","projectItems":{"nodes":[{"id":%q,"isArchived":false,"project":{"id":"PVT_12","number":12,"title":"Example planning","owner":{"login":"octo-org"}},"fieldValues":{"nodes":[],"pageInfo":{"hasNextPage":false}}}],"pageInfo":{"hasNextPage":false}}}}}}`, itemID)
+}
+
+func cliMissingProjectItemQueryJSON() string {
+	return `{"data":{"repository":{"target":{"url":"https://github.com/octo-org/example/issues/55","projectItems":{"nodes":[],"pageInfo":{"hasNextPage":false}}}}}}`
+}
+
+func exactTitleScanArgs(repo, title string) []string {
+	filter := fmt.Sprintf(
+		`.[] | select((.pull_request == null) and (.title == %s)) | {number, title, state, url: .html_url}`,
+		strconv.Quote(title),
+	)
+	return []string{
+		"api", "--paginate",
+		"-H", "Accept: application/vnd.github+json",
+		"-H", "X-GitHub-Api-Version: 2026-03-10",
+		fmt.Sprintf("repos/%s/issues?state=all&per_page=100", repo),
+		"--jq", filter,
+	}
+}
 
 func TestIssueCreatePlanDefault(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	fake := &runner{t: t} // Should not be called in plan mode
+	fake := &runner{t: t, responses: []response{
+		{
+			args:   exactTitleScanArgs("octo-org/example", "Sample Plan Issue"),
+			output: ``,
+		},
+	}}
 	exitCode := Run(
 		context.Background(),
 		[]string{"issue", "create", "--root", fixture(t, "single"), "--title", "Sample Plan Issue", "--json"},
@@ -25,8 +66,29 @@ func TestIssueCreatePlanDefault(t *testing.T) {
 		!strings.Contains(stdout.String(), `"title": "Sample Plan Issue"`) {
 		t.Fatalf("stdout = %s", stdout.String())
 	}
-	if !strings.Contains(stderr.String(), "[1/1] Planning issue creation") {
+	if !strings.Contains(stderr.String(), "[1/2] Inspecting") || !strings.Contains(stderr.String(), "[2/2] Planning issue creation") {
 		t.Fatalf("stderr = %s", stderr.String())
+	}
+}
+
+func TestIssueCreateAllowDuplicateSkipsRepositoryScan(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	fake := &runner{t: t}
+	exitCode := Run(
+		context.Background(),
+		[]string{"issue", "create", "--root", fixture(t, "single"), "--title", "Intentional duplicate", "--allow-duplicate", "--json"},
+		&stdout,
+		&stderr,
+		fake,
+	)
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %s", exitCode, stderr.String())
+	}
+	if fake.index != 0 {
+		t.Fatalf("GitHub calls = %d, want 0 when duplicate inspection is bypassed", fake.index)
+	}
+	if strings.Contains(stdout.String(), `"exactTitleMatches"`) || !strings.Contains(stderr.String(), "Skipping duplicate inspection") {
+		t.Fatalf("stdout = %s, stderr = %s", stdout.String(), stderr.String())
 	}
 }
 
@@ -34,11 +96,15 @@ func TestIssueCreateApply(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
+			args:   exactTitleScanArgs("octo-org/example", "Created Issue"),
+			output: ``,
+		},
+		{
 			args:   []string{"issue", "create", "--repo", "octo-org/example", "--title", "Created Issue", "--body", "Body text", "--label", "bug"},
 			output: "https://github.com/octo-org/example/issues/55\n",
 		},
 		{
-			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,labels,assignees,milestone,url"},
+			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,stateReason,labels,assignees,milestone,issueType,projectItems,url"},
 			output: `{"number":55,"title":"Created Issue","body":"Body text","state":"OPEN","url":"https://github.com/octo-org/example/issues/55","labels":[{"name":"bug"}]}`,
 		},
 	}}
@@ -67,7 +133,7 @@ func TestIssueEditPlan(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
-			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,labels,assignees,milestone,url"},
+			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,stateReason,labels,assignees,milestone,issueType,projectItems,url"},
 			output: `{"number":55,"title":"Original Title","body":"Original Body","state":"OPEN","url":"https://github.com/octo-org/example/issues/55"}`,
 		},
 	}}
@@ -93,7 +159,7 @@ func TestIssueEditApply(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
-			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,labels,assignees,milestone,url"},
+			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,stateReason,labels,assignees,milestone,issueType,projectItems,url"},
 			output: `{"number":55,"title":"Original Title","body":"Original Body","state":"OPEN","url":"https://github.com/octo-org/example/issues/55"}`,
 		},
 		{
@@ -101,7 +167,7 @@ func TestIssueEditApply(t *testing.T) {
 			output: "https://github.com/octo-org/example/issues/55\n",
 		},
 		{
-			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,labels,assignees,milestone,url"},
+			args:   []string{"issue", "view", "55", "--repo", "octo-org/example", "--json", "number,title,body,state,stateReason,labels,assignees,milestone,issueType,projectItems,url"},
 			output: `{"number":55,"title":"New Title","body":"Original Body","state":"OPEN","url":"https://github.com/octo-org/example/issues/55"}`,
 		},
 	}}
@@ -124,7 +190,12 @@ func TestIssueEditApply(t *testing.T) {
 
 func TestProjectItemAddPlan(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	fake := &runner{t: t}
+	fake := &runner{t: t, responses: []response{
+		{
+			args:   cliProjectItemQueryArgs(),
+			output: cliMissingProjectItemQueryJSON(),
+		},
+	}}
 	exitCode := Run(
 		context.Background(),
 		[]string{"project", "item-add", "--root", fixture(t, "single"), "--issue", "55", "--json"},
@@ -140,14 +211,25 @@ func TestProjectItemAddPlan(t *testing.T) {
 		!strings.Contains(stdout.String(), "issues/55") {
 		t.Fatalf("stdout = %s", stdout.String())
 	}
+	if strings.Contains(stdout.String(), `"contractPath"`) || strings.Contains(stdout.String(), `"fieldLocations"`) {
+		t.Fatalf("plan includes unnecessary contract detail: %s", stdout.String())
+	}
 }
 
 func TestProjectItemAddApply(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
+			args:   cliProjectItemQueryArgs(),
+			output: cliMissingProjectItemQueryJSON(),
+		},
+		{
 			args:   []string{"project", "item-add", "12", "--owner", "octo-org", "--url", "https://github.com/octo-org/example/issues/55", "--format", "json"},
 			output: `{"id": "PVTI_ITEM_55"}`,
+		},
+		{
+			args:   cliProjectItemQueryArgs(),
+			output: cliProjectItemQueryJSON("PVTI_ITEM_55"),
 		},
 	}}
 
@@ -169,7 +251,18 @@ func TestProjectItemAddApply(t *testing.T) {
 
 func TestProjectItemEditPlan(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	fake := &runner{t: t}
+	fake := &runner{t: t, responses: []response{
+		{
+			args: []string{
+				"api", "--paginate", "--slurp",
+				"-H", "Accept: application/vnd.github+json",
+				"-H", "X-GitHub-Api-Version: 2026-03-10",
+				"orgs/octo-org/issue-fields?per_page=100",
+			},
+			output: `[[{"id":1,"name":"Priority","data_type":"single_select","options":[{"id":2,"name":"High"}]}]]`,
+		},
+		{args: cliProjectItemQueryArgs(), output: cliProjectItemQueryJSON("PVTI_ITEM_55")},
+	}}
 	exitCode := Run(
 		context.Background(),
 		[]string{"project", "item-edit", "--root", fixture(t, "single"), "--issue", "55", "--priority", "P1", "--json"},
@@ -183,6 +276,64 @@ func TestProjectItemEditPlan(t *testing.T) {
 	if !strings.Contains(stdout.String(), `"action": "project_item_edit"`) ||
 		!strings.Contains(stdout.String(), `"apply": false`) ||
 		!strings.Contains(stdout.String(), `"priority": "High"`) {
+		t.Fatalf("stdout = %s", stdout.String())
+	}
+	if strings.Contains(stdout.String(), `"contractPath"`) || strings.Contains(stdout.String(), `"fieldLocations"`) {
+		t.Fatalf("plan includes unnecessary contract detail: %s", stdout.String())
+	}
+}
+
+func TestIssueCreateRejectsExactTitleDuplicate(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	fake := &runner{t: t, responses: []response{{
+		args:   exactTitleScanArgs("octo-org/example", "Existing"),
+		output: "{\"number\":55,\"title\":\"Existing\",\"state\":\"open\",\"url\":\"https://github.com/octo-org/example/issues/55\"}\n",
+	}}}
+	exitCode := Run(context.Background(), []string{
+		"issue", "create", "--root", fixture(t, "single"), "--title", "Existing", "--apply",
+	}, &stdout, &stderr, fake)
+	if exitCode != 1 || !strings.Contains(stderr.String(), "exact-title issue already exists") {
+		t.Fatalf("exit code = %d, stderr = %s", exitCode, stderr.String())
+	}
+}
+
+func TestMutationCommandsRejectRepositoryDisagreementBeforeGitHub(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	exitCode := Run(context.Background(), []string{
+		"issue", "edit", "--root", fixture(t, "single"), "--repo", "other/repo", "--issue", "55", "--title", "Title",
+	}, &stdout, &stderr, &runner{t: t})
+	if exitCode != 2 || !strings.Contains(stderr.String(), "disagrees with contract repository") {
+		t.Fatalf("exit code = %d, stderr = %s", exitCode, stderr.String())
+	}
+}
+
+func TestProjectMutationTargetsAreMutuallyExclusive(t *testing.T) {
+	for _, command := range []string{"item-add", "item-edit"} {
+		var stdout, stderr bytes.Buffer
+		args := []string{"project", command, "--root", fixture(t, "single"), "--issue", "55", "--url", "https://github.com/octo-org/example/issues/55"}
+		if command == "item-edit" {
+			args = append(args, "--status", "Todo")
+		}
+		exitCode := Run(context.Background(), args, &stdout, &stderr, &runner{t: t})
+		if exitCode != 2 || !strings.Contains(stderr.String(), "mutually exclusive") {
+			t.Fatalf("%s exit code = %d, stderr = %s", command, exitCode, stderr.String())
+		}
+	}
+}
+
+func TestDispatcherIssueCreatePlanIncludesRoutingLabel(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	fake := &runner{t: t, responses: []response{{
+		args:   exactTitleScanArgs("octo-user/issues", "Routed"),
+		output: ``,
+	}}}
+	exitCode := Run(context.Background(), []string{
+		"issue", "create", "--root", fixture(t, "dispatcher"), "--project-key", "alpha", "--title", "Routed", "--json",
+	}, &stdout, &stderr, fake)
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %s", exitCode, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), `"project:alpha"`) {
 		t.Fatalf("stdout = %s", stdout.String())
 	}
 }
