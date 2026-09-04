@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/MiguelRodo/projects/internal/contract"
@@ -44,11 +45,40 @@ func readFileOrStdin(path string) (string, error) {
 	return string(data), nil
 }
 
+func resolveContractRepository(configuration *contract.Configuration, supplied string) (string, error) {
+	declared := strings.TrimSpace(configuration.Repository)
+	if declared == "" {
+		return "", errors.New("the contract does not declare an issue repository")
+	}
+	if supplied != "" && !strings.EqualFold(strings.TrimSpace(supplied), declared) {
+		return "", fmt.Errorf("--repo %s disagrees with contract repository %s", supplied, declared)
+	}
+	return declared, nil
+}
+
+func appendNameOnce(values []string, value string) []string {
+	for _, existing := range values {
+		if strings.EqualFold(existing, value) {
+			return values
+		}
+	}
+	return append(values, value)
+}
+
+func sortedFieldNames(fields map[string]string) []string {
+	names := make([]string, 0, len(fields))
+	for name := range fields {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
 func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer, runner githubcli.Runner) int {
 	flags := flag.NewFlagSet("issue create", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	root := flags.String("root", ".", "repository root containing .projects/project.md")
-	repo := flags.String("repo", "", "target issue repository (defaults to contract repository)")
+	repo := flags.String("repo", "", "optional repository assertion (must agree with contract)")
 	title := flags.String("title", "", "issue title (required)")
 	body := flags.String("body", "", "issue body text")
 	bodyFile := flags.String("body-file", "", "path to file containing issue body (or - for stdin)")
@@ -57,6 +87,7 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 	var assignees stringList
 	flags.Var(&assignees, "assignee", "issue assignee (may be repeated or comma-separated)")
 	milestone := flags.String("milestone", "", "milestone name")
+	allowDuplicate := flags.Bool("allow-duplicate", false, "allow creation despite an existing issue with the exact same title")
 
 	projectKey := flags.String("project-key", "", "exact dispatcher Project key")
 	routingLabel := flags.String("routing-label", "", "exact dispatcher routing label")
@@ -105,18 +136,17 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 		return operationError(stderr, "validate contract", err)
 	}
 
-	targetRepo := *repo
-	if targetRepo == "" {
-		targetRepo = configuration.Repository
-	}
-	if targetRepo == "" {
-		return usageError(stderr, "target repository could not be resolved from contract; specify --repo")
+	targetRepo, err := resolveContractRepository(configuration, *repo)
+	if err != nil {
+		return usageError(stderr, err.Error())
 	}
 
 	hasProject := *projectKey != "" || *routingLabel != "" || *projectNumber > 0 ||
 		*priority != "" || *class != "" || *status != "" || *targetDate != ""
 
 	var resolvedProject contract.Project
+	resolvedStatus := ""
+	createLabels := append([]string(nil), labels...)
 	if hasProject {
 		p, err := configuration.Resolve(contract.Selector{
 			Key:          *projectKey,
@@ -138,21 +168,54 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 				return operationError(stderr, "validate class", err)
 			}
 		}
+		if *status != "" {
+			resolvedStatus, err = resolvedProject.ResolveStatus(*status)
+			if err != nil {
+				return operationError(stderr, "resolve status", err)
+			}
+		}
+		if *targetDate != "" {
+			if err := githubcli.ValidateISODate(*targetDate); err != nil {
+				return usageError(stderr, err.Error())
+			}
+		}
+		if configuration.Mode == "dispatcher" && strings.HasPrefix(resolvedProject.Routing, "label:") {
+			createLabels = appendNameOnce(createLabels, strings.TrimPrefix(resolvedProject.Routing, "label:"))
+		}
+	}
+
+	if *apply {
+		progress(stderr, *quiet, "[1/4] Inspecting %s for exact-title duplicates and validating configuration", targetRepo)
+	} else {
+		progress(stderr, *quiet, "[1/2] Inspecting %s for exact-title duplicates", targetRepo)
+	}
+	exactTitleMatches, err := githubcli.FindIssuesByExactTitle(ctx, runner, targetRepo, *title)
+	if err != nil {
+		return operationError(stderr, "inspect equivalent issues", err)
+	}
+	if len(exactTitleMatches) > 0 && !*allowDuplicate {
+		locations := make([]string, 0, len(exactTitleMatches))
+		for _, match := range exactTitleMatches {
+			locations = append(locations, match.URL)
+		}
+		return operationError(stderr, "inspect equivalent issues", fmt.Errorf("exact-title issue already exists: %s; edit that issue or pass --allow-duplicate deliberately", strings.Join(locations, ", ")))
 	}
 
 	if !*apply {
-		progress(stderr, *quiet, "[1/1] Planning issue creation for %s", targetRepo)
+		progress(stderr, *quiet, "[2/2] Planning issue creation for %s", targetRepo)
 		plan := map[string]any{
-			"action":     "create_issue",
-			"apply":      false,
-			"repository": targetRepo,
-			"title":      *title,
+			"action":            "create_issue",
+			"apply":             false,
+			"repository":        targetRepo,
+			"title":             *title,
+			"allowDuplicate":    *allowDuplicate,
+			"exactTitleMatches": exactTitleMatches,
 		}
 		if bodyContent != "" {
 			plan["body"] = bodyContent
 		}
-		if len(labels) > 0 {
-			plan["labels"] = []string(labels)
+		if len(createLabels) > 0 {
+			plan["labels"] = []string(createLabels)
 		}
 		if len(assignees) > 0 {
 			plan["assignees"] = []string(assignees)
@@ -175,7 +238,7 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 				projPlan["class"] = cls
 			}
 			if *status != "" {
-				projPlan["status"] = resolvedProject.ResolveStatus(*status)
+				projPlan["status"] = resolvedStatus
 			}
 			if *targetDate != "" {
 				projPlan["targetDate"] = *targetDate
@@ -193,8 +256,8 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 		fmt.Fprintf(stdout, "Planned issue creation:\n")
 		fmt.Fprintf(stdout, "  Repository: %s\n", targetRepo)
 		fmt.Fprintf(stdout, "  Title:      %s\n", *title)
-		if len(labels) > 0 {
-			fmt.Fprintf(stdout, "  Labels:     %s\n", labels.String())
+		if len(createLabels) > 0 {
+			fmt.Fprintf(stdout, "  Labels:     %s\n", strings.Join(createLabels, ", "))
 		}
 		if len(assignees) > 0 {
 			fmt.Fprintf(stdout, "  Assignees:  %s\n", assignees.String())
@@ -213,7 +276,7 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 				fmt.Fprintf(stdout, "  Class:      %s\n", cls)
 			}
 			if *status != "" {
-				fmt.Fprintf(stdout, "  Status:     %s\n", resolvedProject.ResolveStatus(*status))
+				fmt.Fprintf(stdout, "  Status:     %s\n", resolvedStatus)
 			}
 			if *targetDate != "" {
 				fmt.Fprintf(stdout, "  TargetDate: %s\n", *targetDate)
@@ -223,13 +286,24 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 		return 0
 	}
 
-	progress(stderr, *quiet, "[1/4] Preparing issue creation in %s", targetRepo)
+	if hasProject {
+		if err := githubcli.ValidateProjectItemMutationConfiguration(ctx, runner, githubcli.MutateProjectItemInput{
+			Project:    resolvedProject,
+			Repo:       targetRepo,
+			Priority:   *priority,
+			Class:      *class,
+			Status:     *status,
+			TargetDate: *targetDate,
+		}); err != nil {
+			return operationError(stderr, "preflight Project configuration", err)
+		}
+	}
 	progress(stderr, *quiet, "[2/4] Creating issue in %s", targetRepo)
 	created, err := githubcli.CreateIssue(ctx, runner, githubcli.CreateIssueInput{
 		Repo:      targetRepo,
 		Title:     *title,
 		Body:      bodyContent,
-		Labels:    labels,
+		Labels:    createLabels,
 		Assignees: assignees,
 		Milestone: *milestone,
 	})
@@ -242,17 +316,18 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 	if hasProject {
 		progress(stderr, *quiet, "[4/4] Adding issue to Project %s/%d and setting fields", resolvedProject.Owner, resolvedProject.Number)
 		mutRes, err := githubcli.MutateProjectItem(ctx, runner, githubcli.MutateProjectItemInput{
-			Project:     resolvedProject,
-			Repo:        targetRepo,
-			IssueNumber: created.Number,
-			URL:         created.URL,
-			Priority:    *priority,
-			Class:       *class,
-			Status:      *status,
-			TargetDate:  *targetDate,
+			Project:      resolvedProject,
+			Repo:         targetRepo,
+			IssueNumber:  created.Number,
+			URL:          created.URL,
+			Priority:     *priority,
+			Class:        *class,
+			Status:       *status,
+			TargetDate:   *targetDate,
+			AddIfMissing: true,
 		})
 		if err != nil {
-			return operationError(stderr, "add issue to Project and update fields", err)
+			return operationError(stderr, "add issue to Project and update fields", fmt.Errorf("issue was created at %s; do not retry creation: %w", created.URL, err))
 		}
 		projectResult = &mutRes
 	}
@@ -276,8 +351,8 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 	fmt.Fprintf(stdout, "Title: %s\nState: %s\n", created.Title, created.State)
 	if projectResult != nil {
 		fmt.Fprintf(stdout, "Added to Project %s/%d (item %s)\n", resolvedProject.Owner, resolvedProject.Number, projectResult.ItemID)
-		for k, v := range projectResult.Fields {
-			fmt.Fprintf(stdout, "  %s: %s\n", k, v)
+		for _, name := range sortedFieldNames(projectResult.Fields) {
+			fmt.Fprintf(stdout, "  %s: %s\n", name, projectResult.Fields[name])
 		}
 	}
 	return 0
@@ -287,7 +362,7 @@ func runIssueEdit(ctx context.Context, args []string, stdout, stderr io.Writer, 
 	flags := flag.NewFlagSet("issue edit", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	root := flags.String("root", ".", "repository root containing .projects/project.md")
-	repo := flags.String("repo", "", "target issue repository (defaults to contract repository)")
+	repo := flags.String("repo", "", "optional repository assertion (must agree with contract)")
 	issueNumber := flags.Int("issue", 0, "issue number to edit (required)")
 	title := flags.String("title", "", "new issue title")
 	body := flags.String("body", "", "new issue body text")
@@ -339,18 +414,32 @@ func runIssueEdit(ctx context.Context, args []string, stdout, stderr io.Writer, 
 	if !hasTitle && !hasBody && !hasMilestone && !hasState && !hasLabels && !hasAssignees {
 		return usageError(stderr, "no issue edits specified; supply at least one edit flag")
 	}
+	if hasState {
+		switch strings.ToLower(strings.TrimSpace(*state)) {
+		case "open", "closed":
+		default:
+			return usageError(stderr, "--state must be open or closed")
+		}
+	}
+	if isFlagSet(flags, "close-reason") {
+		if !hasState || !strings.EqualFold(strings.TrimSpace(*state), "closed") {
+			return usageError(stderr, "--close-reason requires --state closed")
+		}
+		switch strings.ToLower(strings.TrimSpace(*closeReason)) {
+		case "completed", "not_planned":
+		default:
+			return usageError(stderr, "--close-reason must be completed or not_planned")
+		}
+	}
 
 	configuration, err := contract.Load(*root)
 	if err != nil {
 		return operationError(stderr, "validate contract", err)
 	}
 
-	targetRepo := *repo
-	if targetRepo == "" {
-		targetRepo = configuration.Repository
-	}
-	if targetRepo == "" {
-		return usageError(stderr, "target repository could not be resolved from contract; specify --repo")
+	targetRepo, err := resolveContractRepository(configuration, *repo)
+	if err != nil {
+		return usageError(stderr, err.Error())
 	}
 
 	var newBody *string
@@ -395,6 +484,7 @@ func runIssueEdit(ctx context.Context, args []string, stdout, stderr io.Writer, 
 			"current":     current,
 			"delta": map[string]any{
 				"title":           newTitle,
+				"body":            newBody,
 				"addLabels":       []string(addLabels),
 				"removeLabels":    []string(removeLabels),
 				"addAssignees":    []string(addAssignees),
@@ -414,6 +504,9 @@ func runIssueEdit(ctx context.Context, args []string, stdout, stderr io.Writer, 
 		fmt.Fprintf(stdout, "  Current Title: %s\n", current.Title)
 		if newTitle != nil {
 			fmt.Fprintf(stdout, "  New Title:     %s\n", *newTitle)
+		}
+		if newBody != nil {
+			fmt.Fprintf(stdout, "  New Body:      %d bytes (use --json to inspect exact text)\n", len(*newBody))
 		}
 		if len(addLabels) > 0 {
 			fmt.Fprintf(stdout, "  Add Labels:    %s\n", addLabels.String())
@@ -479,7 +572,7 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 	routingLabel := flags.String("routing-label", "", "exact dispatcher routing label")
 	projectNumber := flags.Int("project-number", 0, "exact declared Project number")
 	issueNumber := flags.Int("issue", 0, "issue number to add")
-	repo := flags.String("repo", "", "repository containing the issue")
+	repo := flags.String("repo", "", "optional repository assertion (must agree with contract)")
 	url := flags.String("url", "", "URL of the issue or pull request to add")
 
 	apply := flags.Bool("apply", false, "execute the addition on GitHub (default plans only)")
@@ -500,7 +593,13 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 	if flags.NArg() != 0 {
 		return usageError(stderr, "project item-add does not take positional arguments")
 	}
-	if *url == "" && *issueNumber <= 0 {
+	if *issueNumber < 0 {
+		return usageError(stderr, "--issue must be a positive integer")
+	}
+	if *url != "" && *issueNumber != 0 {
+		return usageError(stderr, "--issue and --url are mutually exclusive")
+	}
+	if *url == "" && *issueNumber == 0 {
 		return usageError(stderr, "either --issue or --url is required")
 	}
 
@@ -517,22 +616,35 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 		return operationError(stderr, "resolve Project", err)
 	}
 
-	targetURL := *url
-	targetRepo := *repo
-	if targetRepo == "" {
-		targetRepo = configuration.Repository
+	targetRepo, err := resolveContractRepository(configuration, *repo)
+	if err != nil {
+		return usageError(stderr, err.Error())
 	}
-	if targetURL == "" && *issueNumber > 0 {
-		targetURL = fmt.Sprintf("https://github.com/%s/issues/%d", targetRepo, *issueNumber)
+	if project.Repository != "" && !strings.EqualFold(project.Repository, targetRepo) {
+		return operationError(stderr, "resolve Project", fmt.Errorf("Project repository %s disagrees with contract repository %s", project.Repository, targetRepo))
+	}
+	target, err := githubcli.ResolveGitHubItemTarget(targetRepo, *issueNumber, *url)
+	if err != nil {
+		return usageError(stderr, err.Error())
 	}
 
 	if !*apply {
-		progress(stderr, *quiet, "[1/1] Planning item addition to Project %s/%d (%s)", project.Owner, project.Number, project.Title)
+		progress(stderr, *quiet, "[1/2] Inspecting complete Project membership for %s", target.URL)
+		current, err := githubcli.QueryProjectItem(ctx, runner, project, target)
+		if err != nil {
+			return operationError(stderr, "inspect Project membership", err)
+		}
+		progress(stderr, *quiet, "[2/2] Planning item addition to Project %s/%d (%s)", project.Owner, project.Number, project.Title)
 		plan := map[string]any{
-			"action":  "project_item_add",
-			"apply":   false,
-			"project": project,
-			"url":     targetURL,
+			"action":        "project_item_add",
+			"apply":         false,
+			"project":       project,
+			"url":           target.URL,
+			"alreadyMember": current != nil,
+			"wouldAdd":      current == nil,
+		}
+		if current != nil {
+			plan["current"] = current
 		}
 		if *jsonOutput {
 			if err := writeJSON(stdout, plan); err != nil {
@@ -541,26 +653,32 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 			return 0
 		}
 		fmt.Fprintf(stdout, "Planned addition to Project %s/%d (%s):\n", project.Owner, project.Number, project.Title)
-		fmt.Fprintf(stdout, "  URL: %s\n", targetURL)
-		fmt.Fprintln(stdout, "\nPlan only. Supply --apply to add the item on GitHub.")
+		fmt.Fprintf(stdout, "  URL: %s\n", target.URL)
+		if current != nil {
+			fmt.Fprintf(stdout, "  No change: already a member as item %s\n", current.ItemID)
+		} else {
+			fmt.Fprintln(stdout, "  Change: add Project membership")
+		}
+		fmt.Fprintln(stdout, "\nPlan only. Supply --apply to execute any required addition on GitHub.")
 		return 0
 	}
 
-	progress(stderr, *quiet, "[1/3] Resolving Project and inspecting item")
-	progress(stderr, *quiet, "[2/3] Adding item to Project %s/%d", project.Owner, project.Number)
-	itemID, err := githubcli.AddProjectItem(ctx, runner, project.Number, project.Owner, targetURL)
+	progress(stderr, *quiet, "[1/3] Inspecting complete Project membership")
+	progress(stderr, *quiet, "[2/3] Applying the membership addition if required")
+	item, added, err := githubcli.EnsureProjectItem(ctx, runner, project, target)
 	if err != nil {
-		return operationError(stderr, "add item to Project", err)
+		return operationError(stderr, "ensure Project membership", err)
 	}
-	progress(stderr, *quiet, "[3/3] Verified Project membership (item %s)", itemID)
+	progress(stderr, *quiet, "[3/3] Independently verified Project membership (item %s)", item.ItemID)
 
 	if *jsonOutput {
 		result := map[string]any{
-			"action":  "project_item_add",
-			"applied": true,
-			"itemId":  itemID,
-			"url":     targetURL,
-			"project": project,
+			"action":        "project_item_add",
+			"applied":       added,
+			"alreadyMember": !added,
+			"itemId":        item.ItemID,
+			"url":           target.URL,
+			"project":       project,
 		}
 		if err := writeJSON(stdout, result); err != nil {
 			return operationError(stderr, "write result JSON", err)
@@ -568,7 +686,11 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 		return 0
 	}
 
-	fmt.Fprintf(stdout, "Added %s to Project %s/%d (item %s)\n", targetURL, project.Owner, project.Number, itemID)
+	if added {
+		fmt.Fprintf(stdout, "Added %s to Project %s/%d (item %s)\n", target.URL, project.Owner, project.Number, item.ItemID)
+	} else {
+		fmt.Fprintf(stdout, "%s was already in Project %s/%d (item %s); no mutation was needed\n", target.URL, project.Owner, project.Number, item.ItemID)
+	}
 	return 0
 }
 
@@ -580,7 +702,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 	routingLabel := flags.String("routing-label", "", "exact dispatcher routing label")
 	projectNumber := flags.Int("project-number", 0, "exact declared Project number")
 	issueNumber := flags.Int("issue", 0, "issue number whose item to edit")
-	repo := flags.String("repo", "", "repository containing the issue")
+	repo := flags.String("repo", "", "optional repository assertion (must agree with contract)")
 	url := flags.String("url", "", "URL of the item to edit")
 
 	priority := flags.String("priority", "", "common Priority value (P0, P1, P2, P3)")
@@ -608,7 +730,13 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 	if flags.NArg() != 0 {
 		return usageError(stderr, "project item-edit does not take positional arguments")
 	}
-	if *url == "" && *issueNumber <= 0 {
+	if *issueNumber < 0 {
+		return usageError(stderr, "--issue must be a positive integer")
+	}
+	if *url != "" && *issueNumber != 0 {
+		return usageError(stderr, "--issue and --url are mutually exclusive")
+	}
+	if *url == "" && *issueNumber == 0 {
 		return usageError(stderr, "either --issue or --url is required")
 	}
 	if *priority == "" && *class == "" && *status == "" && *targetDate == "" && len(clearFields) == 0 {
@@ -628,15 +756,19 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 		return operationError(stderr, "resolve Project", err)
 	}
 
-	targetRepo := *repo
-	if targetRepo == "" {
-		targetRepo = configuration.Repository
+	targetRepo, err := resolveContractRepository(configuration, *repo)
+	if err != nil {
+		return usageError(stderr, err.Error())
 	}
-	targetURL := *url
-	if targetURL == "" && *issueNumber > 0 {
-		targetURL = fmt.Sprintf("https://github.com/%s/issues/%d", targetRepo, *issueNumber)
+	if project.Repository != "" && !strings.EqualFold(project.Repository, targetRepo) {
+		return operationError(stderr, "resolve Project", fmt.Errorf("Project repository %s disagrees with contract repository %s", project.Repository, targetRepo))
+	}
+	target, err := githubcli.ResolveGitHubItemTarget(targetRepo, *issueNumber, *url)
+	if err != nil {
+		return usageError(stderr, err.Error())
 	}
 
+	resolvedStatus := ""
 	if *priority != "" {
 		if _, err := project.ResolvePriority(*priority); err != nil {
 			return operationError(stderr, "resolve priority", err)
@@ -647,14 +779,40 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 			return operationError(stderr, "validate class", err)
 		}
 	}
+	if *status != "" {
+		resolvedStatus, err = project.ResolveStatus(*status)
+		if err != nil {
+			return operationError(stderr, "resolve status", err)
+		}
+	}
+	if *targetDate != "" {
+		if err := githubcli.ValidateISODate(*targetDate); err != nil {
+			return usageError(stderr, err.Error())
+		}
+	}
 
 	if !*apply {
-		progress(stderr, *quiet, "[1/1] Planning field updates on Project %s/%d (%s)", project.Owner, project.Number, project.Title)
+		progress(stderr, *quiet, "[1/2] Inspecting live schema, complete membership, and current fields")
+		current, err := githubcli.InspectProjectItemMutation(ctx, runner, githubcli.MutateProjectItemInput{
+			Project:     project,
+			Repo:        targetRepo,
+			URL:         target.URL,
+			Priority:    *priority,
+			Class:       *class,
+			Status:      *status,
+			TargetDate:  *targetDate,
+			ClearFields: clearFields,
+		})
+		if err != nil {
+			return operationError(stderr, "inspect Project mutation", err)
+		}
+		progress(stderr, *quiet, "[2/2] Planning field updates on Project %s/%d (%s)", project.Owner, project.Number, project.Title)
 		plan := map[string]any{
 			"action":  "project_item_edit",
 			"apply":   false,
 			"project": project,
-			"url":     targetURL,
+			"url":     target.URL,
+			"current": current,
 			"delta":   map[string]any{},
 		}
 		delta := plan["delta"].(map[string]any)
@@ -667,7 +825,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 			delta["class"] = cls
 		}
 		if *status != "" {
-			delta["status"] = project.ResolveStatus(*status)
+			delta["status"] = resolvedStatus
 		}
 		if *targetDate != "" {
 			delta["targetDate"] = *targetDate
@@ -683,7 +841,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 			return 0
 		}
 
-		fmt.Fprintf(stdout, "Planned Project field updates for %s on Project %s/%d:\n", targetURL, project.Owner, project.Number)
+		fmt.Fprintf(stdout, "Planned Project field updates for %s on Project %s/%d:\n", target.URL, project.Owner, project.Number)
 		if *priority != "" {
 			prov, _ := project.ResolvePriority(*priority)
 			fmt.Fprintf(stdout, "  Priority:   %s (%s)\n", *priority, prov)
@@ -693,7 +851,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 			fmt.Fprintf(stdout, "  Class:      %s\n", cls)
 		}
 		if *status != "" {
-			fmt.Fprintf(stdout, "  Status:     %s\n", project.ResolveStatus(*status))
+			fmt.Fprintf(stdout, "  Status:     %s\n", resolvedStatus)
 		}
 		if *targetDate != "" {
 			fmt.Fprintf(stdout, "  TargetDate: %s\n", *targetDate)
@@ -710,8 +868,8 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 	result, err := githubcli.MutateProjectItem(ctx, runner, githubcli.MutateProjectItemInput{
 		Project:     project,
 		Repo:        targetRepo,
-		IssueNumber: *issueNumber,
-		URL:         targetURL,
+		IssueNumber: 0,
+		URL:         target.URL,
 		Priority:    *priority,
 		Class:       *class,
 		Status:      *status,
@@ -721,7 +879,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 	if err != nil {
 		return operationError(stderr, "mutate Project item", err)
 	}
-	progress(stderr, *quiet, "[3/3] Verified Project item readback and field preservation")
+	progress(stderr, *quiet, "[3/3] Independently verified requested values and unrelated-field preservation")
 
 	if *jsonOutput {
 		if err := writeJSON(stdout, result); err != nil {
@@ -731,8 +889,8 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 	}
 
 	fmt.Fprintf(stdout, "Updated Project item %s on Project %s/%d:\n", result.ItemID, project.Owner, project.Number)
-	for k, v := range result.Fields {
-		fmt.Fprintf(stdout, "  %s: %s\n", k, v)
+	for _, name := range sortedFieldNames(result.Fields) {
+		fmt.Fprintf(stdout, "  %s: %s\n", name, result.Fields[name])
 	}
 	return 0
 }

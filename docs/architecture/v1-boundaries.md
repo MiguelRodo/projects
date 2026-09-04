@@ -51,9 +51,24 @@ Command data is written to stdout. A few numbered progress messages go to
 stderr, so JSON can be piped safely while a user or agent can still see where a
 slow command has reached. `--quiet` suppresses progress.
 
-Mutating commands plan by default, require `--apply` to execute, re-read
-stale-sensitive state, change only the owned value, and verify it separately.
-A successful provider response alone is never enough.
+Mutating commands plan by default and require `--apply` to execute. Their
+bounded live reads resolve exact-title issue collisions, contract-declared
+field locations, complete Project membership and current values. Apply mode
+re-reads stale-sensitive state, changes only the owned value, and verifies it
+separately. A successful provider response alone is never enough.
+
+The CLI packages sequences that have repeatedly been error-prone when assembled
+ad hoc: complete Project reads, membership add/readback, exact field and option
+resolution, organisation issue-field POST/readback, and preservation checks.
+It does not wrap every `gh` command. Unsupported locations or mutations fail
+explicitly and remain the direct adapter's responsibility.
+
+Project membership is a separate mutation. `project item-edit` refuses a
+missing item; `project item-add` is the explicit idempotent membership command.
+Issue creation may add membership because the same creation request explicitly
+selected a Project. Multi-field writes are sequential because GitHub offers no
+atomic operation across these surfaces, so failures identify possible partial
+application and require a fresh inspection before retrying.
 
 ## Existing scripts
 
