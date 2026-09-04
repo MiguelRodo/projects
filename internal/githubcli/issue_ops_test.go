@@ -181,12 +181,13 @@ func TestEditIssueRejectsConflictingLabelsAndInvalidState(t *testing.T) {
 func TestFindIssuesByExactTitleIsCompleteAndExcludesPullRequests(t *testing.T) {
 	fake := &fakeRunner{t: t, responses: []fakeResponse{{
 		args: []string{
-			"api", "--paginate", "--slurp",
+			"api", "--paginate",
 			"-H", "Accept: application/vnd.github+json",
 			"-H", "X-GitHub-Api-Version: 2026-03-10",
 			"repos/owner/repo/issues?state=all&per_page=100",
+			"--jq", `.[] | select((.pull_request == null) and (.title == "Same")) | {number, title, state, url: .html_url}`,
 		},
-		output: []byte(`[[{"number":3,"title":"Same","state":"open","html_url":"https://github.com/owner/repo/issues/3"}],[{"number":2,"title":"Same","state":"closed","html_url":"https://github.com/owner/repo/issues/2"},{"number":4,"title":"Same","html_url":"https://github.com/owner/repo/pull/4","pull_request":{}}]]`),
+		output: []byte("{\"number\":3,\"title\":\"Same\",\"state\":\"open\",\"url\":\"https://github.com/owner/repo/issues/3\"}\n{\"number\":2,\"title\":\"Same\",\"state\":\"closed\",\"url\":\"https://github.com/owner/repo/issues/2\"}\n"),
 	}}}
 	matches, err := FindIssuesByExactTitle(context.Background(), fake, "owner/repo", "Same")
 	if err != nil {

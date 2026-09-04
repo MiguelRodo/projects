@@ -53,13 +53,16 @@ slow command has reached. `--quiet` suppresses progress.
 
 Mutating commands plan by default and require `--apply` to execute. Their
 bounded live reads resolve exact-title issue collisions, contract-declared
-field locations, complete Project membership and current values. Apply mode
-re-reads stale-sensitive state, changes only the owned value, and verifies it
-separately. A successful provider response alone is never enough.
+field locations, exact Project membership and current values. Membership and
+field inspection start from the one target issue or pull request, so mutation
+commands do not serialise the whole Project. Apply mode re-reads
+stale-sensitive state, changes only the owned value, and verifies it separately.
+A successful provider response alone is never enough.
 
 The CLI packages sequences that have repeatedly been error-prone when assembled
-ad hoc: complete Project reads, membership add/readback, exact field and option
-resolution, organisation issue-field POST/readback, and preservation checks.
+ad hoc: count-checked Project inventories, target-centred membership
+add/readback, exact field and option resolution, organisation issue-field
+POST/readback, and preservation checks.
 It does not wrap every `gh` command. Unsupported locations or mutations fail
 explicitly and remain the direct adapter's responsibility.
 
@@ -117,7 +120,7 @@ GitHub resources.
 | Package | Responsibility |
 | --- | --- |
 | `internal/contract` | Parse, validate and resolve the active Markdown contract. |
-| `internal/githubcli` | Invoke `gh` without a shell, verify Project identity and enforce complete item reads. |
+| `internal/githubcli` | Invoke `gh` without a shell, verify Project identity, provide complete inventories, and use bounded target reads for mutations. |
 | `internal/cli` | Parse commands, keep stdout and stderr separate, render text or JSON, and map failures to exit codes. |
 | `internal/update` | Perform the read-only latest-release comparison. |
 | `internal/buildinfo` | Hold version, commit and build date supplied by GoReleaser. |

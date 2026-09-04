@@ -302,85 +302,320 @@ func splitGitHubRepository(repository string) (string, string, error) {
 	return repoParts[0], repoParts[1], nil
 }
 
-// QueryProjectItem performs a complete, count-checked Project read and returns
-// the one item whose content URL exactly matches target. It works for issues
-// and pull requests and cannot confuse equal Project numbers under other owners.
+type graphQLProjectItemFieldValue struct {
+	Typename    string   `json:"__typename"`
+	Date        *string  `json:"date"`
+	Title       *string  `json:"title"`
+	IterationID *string  `json:"iterationId"`
+	Value       *string  `json:"value"`
+	Number      *float64 `json:"number"`
+	Name        *string  `json:"name"`
+	OptionID    *string  `json:"optionId"`
+	Text        *string  `json:"text"`
+	Field       struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		DataType string `json:"dataType"`
+	} `json:"field"`
+}
+
+type graphQLProjectItemNode struct {
+	ID         string `json:"id"`
+	IsArchived bool   `json:"isArchived"`
+	Project    struct {
+		ID     string `json:"id"`
+		Number int    `json:"number"`
+		Title  string `json:"title"`
+		Owner  struct {
+			Login string `json:"login"`
+		} `json:"owner"`
+	} `json:"project"`
+	FieldValues struct {
+		Nodes    []graphQLProjectItemFieldValue `json:"nodes"`
+		PageInfo struct {
+			HasNextPage bool `json:"hasNextPage"`
+		} `json:"pageInfo"`
+	} `json:"fieldValues"`
+}
+
+type graphQLProjectItemResponse struct {
+	Data struct {
+		Repository *struct {
+			Target *struct {
+				URL          string `json:"url"`
+				ProjectItems struct {
+					Nodes    []graphQLProjectItemNode `json:"nodes"`
+					PageInfo struct {
+						HasNextPage bool `json:"hasNextPage"`
+					} `json:"pageInfo"`
+				} `json:"projectItems"`
+			} `json:"target"`
+		} `json:"repository"`
+	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
+// ProjectItemQuery returns a target-centred GraphQL query. It reads only the
+// Projects containing one issue or pull request, rather than serialising every
+// item in the selected Project. Scalar Project fields are included so callers
+// can verify requested values and preservation with one bounded readback.
+func ProjectItemQuery(kind string) string {
+	targetField := ""
+	switch kind {
+	case "issues":
+		targetField = "issue"
+	case "pull":
+		targetField = "pullRequest"
+	default:
+		return ""
+	}
+	return fmt.Sprintf(`query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    target: %s(number: $number) {
+      url
+      projectItems(first: 100) {
+        nodes {
+          id
+          isArchived
+          project {
+            id
+            number
+            title
+            owner {
+              ... on User { login }
+              ... on Organization { login }
+            }
+          }
+          fieldValues(first: 100) {
+            nodes {
+              __typename
+              ... on ProjectV2ItemFieldDateValue {
+                date
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldIterationValue {
+                title
+                iterationId
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldMultiSelectValue {
+                value
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldNumberValue {
+                number
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldSingleSelectValue {
+                name
+                optionId
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+              ... on ProjectV2ItemFieldTextValue {
+                text
+                field { ... on ProjectV2FieldCommon { id name dataType } }
+              }
+            }
+            pageInfo { hasNextPage }
+          }
+        }
+        pageInfo { hasNextPage }
+      }
+    }
+  }
+}`, targetField)
+}
+
+// QueryProjectItem resolves membership and current scalar Project fields from
+// the target issue or pull request. The query is bounded to at most 100 Project
+// memberships and 100 set field values per membership, and refuses to treat a
+// truncated response as proof.
 func QueryProjectItem(ctx context.Context, runner Runner, project contract.Project, target GitHubItemTarget) (*ProjectItemState, error) {
-	snapshot, err := ReadAllProjectItems(ctx, runner, project)
+	query := ProjectItemQuery(target.Kind)
+	if query == "" {
+		return nil, fmt.Errorf("unsupported GitHub item kind %q", target.Kind)
+	}
+	output, err := runner.Run(
+		ctx,
+		"api", "graphql",
+		"-f", "query="+query,
+		"-f", "owner="+target.Owner,
+		"-f", "repo="+target.Repo,
+		"-F", "number="+strconv.Itoa(target.Number),
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query Project membership for %s: %w", target.URL, err)
 	}
 
-	var match *ProjectItemState
-	for _, raw := range snapshot.Items {
-		state, ok, err := decodeProjectItem(raw)
-		if err != nil {
-			return nil, err
-		}
-		if !ok || !strings.EqualFold(state.URL, target.URL) {
+	var response graphQLProjectItemResponse
+	if err := json.Unmarshal(output, &response); err != nil {
+		return nil, fmt.Errorf("decode Project membership for %s: %w", target.URL, err)
+	}
+	if len(response.Errors) > 0 {
+		return nil, fmt.Errorf("GraphQL error querying Project membership: %s", response.Errors[0].Message)
+	}
+	if response.Data.Repository == nil || response.Data.Repository.Target == nil {
+		return nil, fmt.Errorf("GitHub target %s was not found or is not accessible", target.URL)
+	}
+	observedTarget := response.Data.Repository.Target
+	if !strings.EqualFold(observedTarget.URL, target.URL) {
+		return nil, fmt.Errorf("GitHub target identity disagrees: got %s, want %s", observedTarget.URL, target.URL)
+	}
+	if observedTarget.ProjectItems.PageInfo.HasNextPage {
+		return nil, fmt.Errorf("%s belongs to more than 100 Projects; refusing an incomplete membership read", target.URL)
+	}
+
+	var match *graphQLProjectItemNode
+	for index := range observedTarget.ProjectItems.Nodes {
+		node := &observedTarget.ProjectItems.Nodes[index]
+		if !strings.EqualFold(node.Project.Owner.Login, project.Owner) || node.Project.Number != project.Number {
 			continue
+		}
+		if node.Project.Title != project.Title {
+			return nil, fmt.Errorf(
+				"Project identity disagrees with %s: got title %q, want %q",
+				project.ContractPath,
+				node.Project.Title,
+				project.Title,
+			)
 		}
 		if match != nil {
 			return nil, fmt.Errorf("Project %s/%d contains more than one item for %s", project.Owner, project.Number, target.URL)
 		}
-		match = &state
+		match = node
 	}
-	return match, nil
+	if match == nil {
+		return nil, nil
+	}
+	if match.ID == "" || match.Project.ID == "" {
+		return nil, fmt.Errorf("Project item for %s has incomplete node identity", target.URL)
+	}
+	if match.FieldValues.PageInfo.HasNextPage {
+		return nil, fmt.Errorf("Project item %s has more than 100 set fields; refusing an incomplete field read", match.ID)
+	}
+
+	state, err := decodeGraphQLProjectItem(*match, target)
+	if err != nil {
+		return nil, err
+	}
+	return &state, nil
 }
 
-func decodeProjectItem(raw json.RawMessage) (ProjectItemState, bool, error) {
-	var envelope struct {
-		ID      string `json:"id"`
-		Content *struct {
-			Number     int    `json:"number"`
-			Repository string `json:"repository"`
-			Type       string `json:"type"`
-			URL        string `json:"url"`
-		} `json:"content"`
-	}
-	if err := json.Unmarshal(raw, &envelope); err != nil {
-		return ProjectItemState{}, false, fmt.Errorf("decode Project item: %w", err)
-	}
-	if envelope.Content == nil || envelope.Content.URL == "" {
-		return ProjectItemState{}, false, nil
-	}
-	if envelope.ID == "" {
-		return ProjectItemState{}, false, fmt.Errorf("Project item for %s has no item ID", envelope.Content.URL)
-	}
-
-	var rawFields map[string]json.RawMessage
-	if err := json.Unmarshal(raw, &rawFields); err != nil {
-		return ProjectItemState{}, false, fmt.Errorf("decode Project item fields: %w", err)
-	}
+func decodeGraphQLProjectItem(node graphQLProjectItemNode, target GitHubItemTarget) (ProjectItemState, error) {
 	fields := make(map[string]string)
-	for key, value := range rawFields {
-		if builtInProjectItemKey(key) {
+	rawFields := make(map[string]json.RawMessage)
+	rawFields["id"] = mustMarshalProjectValue(node.ID)
+	rawFields["content"] = mustMarshalProjectValue(map[string]any{
+		"number":     target.Number,
+		"repository": target.Repository,
+		"type":       target.Kind,
+		"url":        target.URL,
+	})
+	rawFields["project"] = mustMarshalProjectValue(map[string]any{
+		"id":     node.Project.ID,
+		"number": node.Project.Number,
+		"owner":  node.Project.Owner.Login,
+		"title":  node.Project.Title,
+	})
+	rawFields["isArchived"] = mustMarshalProjectValue(node.IsArchived)
+
+	for _, value := range node.FieldValues.Nodes {
+		if value.Field.Name == "" {
+			// Built-in list fields (labels, assignees, reviewers and similar)
+			// are not writable through this CLI's scalar field mutation path.
 			continue
 		}
-		if scalar, ok := projectScalarString(value); ok {
-			fields[key] = scalar
+		for existing := range rawFields {
+			if strings.EqualFold(existing, value.Field.Name) {
+				return ProjectItemState{}, fmt.Errorf("Project item %s has duplicate set field name %q", node.ID, value.Field.Name)
+			}
 		}
+
+		scalar, present := graphQLProjectScalar(value)
+		canonical := map[string]any{
+			"dataType": value.Field.DataType,
+			"fieldId":  value.Field.ID,
+			"type":     value.Typename,
+		}
+		if present {
+			canonical["value"] = scalar
+			fields[value.Field.Name] = scalar
+		} else {
+			canonical["value"] = nil
+		}
+		if value.OptionID != nil {
+			canonical["optionId"] = *value.OptionID
+		}
+		if value.IterationID != nil {
+			canonical["iterationId"] = *value.IterationID
+		}
+		rawFields[value.Field.Name] = mustMarshalProjectValue(canonical)
 	}
+
 	return ProjectItemState{
-		ItemID:      envelope.ID,
-		IssueNumber: envelope.Content.Number,
-		URL:         envelope.Content.URL,
+		ItemID:      node.ID,
+		IssueNumber: target.Number,
+		URL:         target.URL,
 		Fields:      fields,
 		raw:         rawFields,
-	}, true, nil
+	}, nil
 }
 
-func builtInProjectItemKey(key string) bool {
-	switch strings.ToLower(key) {
-	case "id", "content", "title", "type", "repository", "assignees", "labels", "linked pull requests", "milestone":
-		return true
+func graphQLProjectScalar(value graphQLProjectItemFieldValue) (string, bool) {
+	var raw any
+	switch value.Typename {
+	case "ProjectV2ItemFieldDateValue":
+		if value.Date == nil {
+			return "", false
+		}
+		raw = *value.Date
+	case "ProjectV2ItemFieldIterationValue":
+		if value.Title == nil {
+			return "", false
+		}
+		raw = *value.Title
+	case "ProjectV2ItemFieldMultiSelectValue":
+		if value.Value == nil {
+			return "", false
+		}
+		raw = *value.Value
+	case "ProjectV2ItemFieldNumberValue":
+		if value.Number == nil {
+			return "", false
+		}
+		raw = *value.Number
+	case "ProjectV2ItemFieldSingleSelectValue":
+		if value.Name == nil {
+			return "", false
+		}
+		raw = *value.Name
+	case "ProjectV2ItemFieldTextValue":
+		if value.Text == nil {
+			return "", false
+		}
+		raw = *value.Text
 	default:
-		return false
+		return "", false
 	}
+	encoded, _ := json.Marshal(raw)
+	if stringValue, ok := raw.(string); ok {
+		return stringValue, true
+	}
+	return string(encoded), true
+}
+
+func mustMarshalProjectValue(value any) json.RawMessage {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	return encoded
 }
 
 // EnsureProjectItem adds a missing item and proves membership with a separate,
-// complete read. Existing membership is an idempotent no-op.
+// target-centred read. Existing membership is an idempotent no-op.
 func EnsureProjectItem(ctx context.Context, runner Runner, project contract.Project, target GitHubItemTarget) (ProjectItemState, bool, error) {
 	before, err := QueryProjectItem(ctx, runner, project, target)
 	if err != nil {
@@ -402,7 +637,7 @@ func EnsureProjectItem(ctx context.Context, runner Runner, project contract.Proj
 		return ProjectItemState{}, true, fmt.Errorf("Project item readback failed: %s is not in Project %s/%d", target.URL, project.Owner, project.Number)
 	}
 	if after.ItemID != itemID {
-		return ProjectItemState{}, true, fmt.Errorf("Project item ID readback disagrees: add returned %s, complete read found %s", itemID, after.ItemID)
+		return ProjectItemState{}, true, fmt.Errorf("Project item ID readback disagrees: add returned %s, target read found %s", itemID, after.ItemID)
 	}
 	return *after, true, nil
 }
@@ -707,24 +942,30 @@ func ValidateProjectItemMutationConfiguration(ctx context.Context, runner Runner
 		Repo:       repo,
 		Kind:       "issues",
 	}
-	schema, err := QueryProjectSchema(ctx, runner, input.Project)
-	if err != nil {
-		return err
+	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
+	if projectMutationNeedsSchema(input) {
+		schema, err = QueryProjectSchema(ctx, runner, input.Project)
+		if err != nil {
+			return err
+		}
 	}
 	_, _, _, err = prepareProjectChanges(ctx, runner, input, target, schema)
 	return err
 }
 
 // InspectProjectItemMutation validates the requested fields against fresh live
-// definitions and returns the current complete item state for plan output.
+// definitions and returns the current target-centred item state for plan output.
 func InspectProjectItemMutation(ctx context.Context, runner Runner, input MutateProjectItemInput) (*ProjectItemState, error) {
 	target, err := validateProjectMutationInput(input)
 	if err != nil {
 		return nil, err
 	}
-	schema, err := QueryProjectSchema(ctx, runner, input.Project)
-	if err != nil {
-		return nil, err
+	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
+	if projectMutationNeedsSchema(input) {
+		schema, err = QueryProjectSchema(ctx, runner, input.Project)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if _, _, _, err := prepareProjectChanges(ctx, runner, input, target, schema); err != nil {
 		return nil, err
@@ -740,15 +981,19 @@ func InspectProjectItemMutation(ctx context.Context, runner Runner, input Mutate
 }
 
 // MutateProjectItem performs contract-bound field updates and independently
-// verifies each resulting value plus preservation of unrelated item state.
+// verifies the resulting values plus preservation of unrelated scalar Project
+// fields in one bounded final readback.
 func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectItemInput) (MutateProjectItemResult, error) {
 	target, err := validateProjectMutationInput(input)
 	if err != nil {
 		return MutateProjectItemResult{}, err
 	}
-	schema, err := QueryProjectSchema(ctx, runner, input.Project)
-	if err != nil {
-		return MutateProjectItemResult{}, err
+	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
+	if projectMutationNeedsSchema(input) {
+		schema, err = QueryProjectSchema(ctx, runner, input.Project)
+		if err != nil {
+			return MutateProjectItemResult{}, err
+		}
 	}
 
 	projectChanges, organizationChanges, issueType, err := prepareProjectChanges(ctx, runner, input, target, schema)
@@ -765,14 +1010,26 @@ func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectIt
 		if !input.AddIfMissing {
 			return MutateProjectItemResult{}, fmt.Errorf("%s is not a member of Project %s/%d; run project item-add explicitly", target.URL, input.Project.Owner, input.Project.Number)
 		}
-		state, wasAdded, err := EnsureProjectItem(ctx, runner, input.Project, target)
+		itemID, err := AddProjectItem(ctx, runner, input.Project.Number, input.Project.Owner, target.URL)
 		if err != nil {
 			return MutateProjectItemResult{}, err
 		}
-		current = &state
-		added = wasAdded
+		state, err := QueryProjectItem(ctx, runner, input.Project, target)
+		if err != nil {
+			return MutateProjectItemResult{}, fmt.Errorf("read back added Project item: %w", err)
+		}
+		if state == nil {
+			return MutateProjectItemResult{}, fmt.Errorf("Project item readback failed: %s is not in Project %s/%d", target.URL, input.Project.Owner, input.Project.Number)
+		}
+		if state.ItemID != itemID {
+			return MutateProjectItemResult{}, fmt.Errorf("Project item ID readback disagrees: add returned %s, target read found %s", itemID, state.ItemID)
+		}
+		current = state
+		added = true
 	}
 
+	baseline := *current
+	projectMutationApplied := false
 	for _, change := range projectChanges {
 		if projectItemFieldMatches(*current, change) {
 			continue
@@ -793,27 +1050,15 @@ func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectIt
 		if err := EditProjectItemField(ctx, runner, edit); err != nil {
 			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, err)
 		}
-		after, err := QueryProjectItem(ctx, runner, input.Project, target)
-		if err != nil {
-			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, fmt.Errorf("read back item: %w", err))
-		}
-		if after == nil || after.ItemID != current.ItemID {
-			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, errors.New("item identity or membership changed during readback"))
-		}
-		if !projectItemFieldMatches(*after, change) {
-			got, _ := projectItemFieldValue(*after, change.Field.Name)
-			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, fmt.Errorf("readback disagrees: got %q, want %q", got, change.Desired))
-		}
-		if !projectItemPreserved(*current, *after, change.Field.Name) {
-			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, errors.New("an unrelated Project item value changed"))
-		}
-		current = after
+		projectMutationApplied = true
 	}
 
+	nonProjectMutationApplied := false
 	for _, change := range organizationChanges {
 		if err := setOrganizationIssueField(ctx, runner, target, change.Field, change.Desired); err != nil {
 			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, err)
 		}
+		nonProjectMutationApplied = true
 	}
 
 	if issueType != "" {
@@ -827,19 +1072,31 @@ func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectIt
 		}); err != nil {
 			return MutateProjectItemResult{}, partialProjectMutationError("Class", err)
 		}
+		nonProjectMutationApplied = true
 	}
 
 	finalItem := current
-	if len(organizationChanges) > 0 || issueType != "" {
+	if projectMutationApplied || nonProjectMutationApplied {
 		finalItem, err = QueryProjectItem(ctx, runner, input.Project, target)
 		if err != nil {
-			return MutateProjectItemResult{}, fmt.Errorf("final Project item readback: %w", err)
+			return MutateProjectItemResult{}, partialProjectMutationError("final Project readback", err)
 		}
 		if finalItem == nil || finalItem.ItemID != current.ItemID {
-			return MutateProjectItemResult{}, errors.New("final Project item readback did not preserve identity and membership")
+			return MutateProjectItemResult{}, partialProjectMutationError("final Project readback", errors.New("item identity or membership changed"))
 		}
-		if !projectItemPreserved(*current, *finalItem, "") {
-			return MutateProjectItemResult{}, errors.New("Project item changed unexpectedly during non-Project-field updates")
+		for _, change := range projectChanges {
+			if projectItemFieldMatches(*finalItem, change) {
+				continue
+			}
+			got, _ := projectItemFieldValue(*finalItem, change.Field.Name)
+			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, fmt.Errorf("readback disagrees: got %q, want %q", got, change.Desired))
+		}
+		changedFields := make([]string, 0, len(projectChanges))
+		for _, change := range projectChanges {
+			changedFields = append(changedFields, change.Field.Name)
+		}
+		if !projectItemPreserved(baseline, *finalItem, changedFields...) {
+			return MutateProjectItemResult{}, partialProjectMutationError("final Project readback", errors.New("an unrelated scalar Project item value changed"))
 		}
 	}
 
@@ -892,6 +1149,23 @@ func validateProjectMutationValues(input MutateProjectItemInput) error {
 		}
 	}
 	return nil
+}
+
+func projectMutationNeedsSchema(input MutateProjectItemInput) bool {
+	requestedDimensions := map[string]bool{
+		"Priority": input.Priority != "",
+		"Class":    input.Class != "",
+		"Status":   input.Status != "",
+	}
+	for dimension, requested := range requestedDimensions {
+		if !requested {
+			continue
+		}
+		if location, ok := input.Project.FieldLocations[dimension]; ok && location.Location == "project field" {
+			return true
+		}
+	}
+	return input.TargetDate != "" || len(input.ClearFields) > 0
 }
 
 func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProjectItemInput, target GitHubItemTarget, schema ProjectSchema) ([]projectFieldChange, []organizationFieldChange, string, error) {
@@ -1047,26 +1321,22 @@ func ValidateISODate(value string) error {
 }
 
 func projectItemFieldValue(item ProjectItemState, fieldName string) (string, bool) {
-	for key, raw := range item.raw {
+	for key, value := range item.Fields {
 		if !strings.EqualFold(key, fieldName) {
 			continue
 		}
-		return projectScalarString(raw)
+		return value, true
 	}
 	return "", false
 }
 
 func projectItemFieldMatches(item ProjectItemState, change projectFieldChange) bool {
 	if change.Clear {
-		for key, raw := range item.raw {
+		for key, value := range item.Fields {
 			if !strings.EqualFold(key, change.Field.Name) {
 				continue
 			}
-			var value any
-			if err := json.Unmarshal(raw, &value); err != nil {
-				return false
-			}
-			return value == nil || value == ""
+			return value == ""
 		}
 		return true
 	}
@@ -1074,27 +1344,17 @@ func projectItemFieldMatches(item ProjectItemState, change projectFieldChange) b
 	return present && value == change.Desired
 }
 
-func projectScalarString(raw json.RawMessage) (string, bool) {
-	var value any
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return "", false
+func projectItemPreserved(before, after ProjectItemState, changedFields ...string) bool {
+	excluded := make(map[string]struct{}, len(changedFields))
+	for _, field := range changedFields {
+		if field != "" {
+			excluded[strings.ToLower(field)] = struct{}{}
+		}
 	}
-	switch typed := value.(type) {
-	case string:
-		return typed, true
-	case float64, bool:
-		encoded, _ := json.Marshal(typed)
-		return string(encoded), true
-	default:
-		return "", false
-	}
-}
-
-func projectItemPreserved(before, after ProjectItemState, changedField string) bool {
 	filter := func(values map[string]json.RawMessage) map[string]string {
 		result := make(map[string]string)
 		for key, raw := range values {
-			if changedField != "" && strings.EqualFold(key, changedField) {
+			if _, skip := excluded[strings.ToLower(key)]; skip {
 				continue
 			}
 			var decoded any

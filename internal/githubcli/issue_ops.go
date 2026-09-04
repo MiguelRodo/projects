@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"sort"
 	"strconv"
@@ -102,33 +103,28 @@ func ViewIssue(ctx context.Context, runner Runner, repo string, number int) (Iss
 // issues whose title exactly matches title. REST's issue collection also
 // contains pull requests, which are deliberately excluded.
 func FindIssuesByExactTitle(ctx context.Context, runner Runner, repo, title string) ([]IssueSummary, error) {
-	args := []string{"api", "--paginate", "--slurp"}
+	filter := fmt.Sprintf(
+		`.[] | select((.pull_request == null) and (.title == %s)) | {number, title, state, url: .html_url}`,
+		strconv.Quote(title),
+	)
+	args := []string{"api", "--paginate"}
 	args = append(args, apiHeaders()...)
-	args = append(args, fmt.Sprintf("repos/%s/issues?state=all&per_page=100", repo))
+	args = append(args, fmt.Sprintf("repos/%s/issues?state=all&per_page=100", repo), "--jq", filter)
 	output, err := runner.Run(ctx, args...)
 	if err != nil {
 		return nil, fmt.Errorf("scan issues in %s for an exact-title match: %w", repo, err)
 	}
-	var pages [][]struct {
-		Number      int             `json:"number"`
-		Title       string          `json:"title"`
-		State       string          `json:"state"`
-		URL         string          `json:"html_url"`
-		PullRequest json.RawMessage `json:"pull_request"`
-	}
-	if err := json.Unmarshal(output, &pages); err != nil {
-		return nil, fmt.Errorf("decode complete issue scan: %w", err)
-	}
 	matches := make([]IssueSummary, 0)
-	for _, page := range pages {
-		for _, issue := range page {
-			if len(issue.PullRequest) != 0 && string(issue.PullRequest) != "null" {
-				continue
+	decoder := json.NewDecoder(strings.NewReader(string(output)))
+	for {
+		var issue IssueSummary
+		if err := decoder.Decode(&issue); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
 			}
-			if issue.Title == title {
-				matches = append(matches, IssueSummary{Number: issue.Number, Title: issue.Title, State: issue.State, URL: issue.URL})
-			}
+			return nil, fmt.Errorf("decode exact-title issue results: %w", err)
 		}
+		matches = append(matches, issue)
 	}
 	sort.Slice(matches, func(i, j int) bool { return matches[i].Number < matches[j].Number })
 	return matches, nil

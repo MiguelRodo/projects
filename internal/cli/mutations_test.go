@@ -3,23 +3,52 @@ package cli
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/MiguelRodo/projects/internal/githubcli"
 )
 
+func cliProjectItemQueryArgs() []string {
+	return []string{
+		"api", "graphql",
+		"-f", "query=" + githubcli.ProjectItemQuery("issues"),
+		"-f", "owner=octo-org",
+		"-f", "repo=example",
+		"-F", "number=55",
+	}
+}
+
+func cliProjectItemQueryJSON(itemID string) string {
+	return fmt.Sprintf(`{"data":{"repository":{"target":{"url":"https://github.com/octo-org/example/issues/55","projectItems":{"nodes":[{"id":%q,"isArchived":false,"project":{"id":"PVT_12","number":12,"title":"Example planning","owner":{"login":"octo-org"}},"fieldValues":{"nodes":[],"pageInfo":{"hasNextPage":false}}}],"pageInfo":{"hasNextPage":false}}}}}}`, itemID)
+}
+
+func cliMissingProjectItemQueryJSON() string {
+	return `{"data":{"repository":{"target":{"url":"https://github.com/octo-org/example/issues/55","projectItems":{"nodes":[],"pageInfo":{"hasNextPage":false}}}}}}`
+}
+
+func exactTitleScanArgs(repo, title string) []string {
+	filter := fmt.Sprintf(
+		`.[] | select((.pull_request == null) and (.title == %s)) | {number, title, state, url: .html_url}`,
+		strconv.Quote(title),
+	)
+	return []string{
+		"api", "--paginate",
+		"-H", "Accept: application/vnd.github+json",
+		"-H", "X-GitHub-Api-Version: 2026-03-10",
+		fmt.Sprintf("repos/%s/issues?state=all&per_page=100", repo),
+		"--jq", filter,
+	}
+}
+
 func TestIssueCreatePlanDefault(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
-			args: []string{
-				"api", "--paginate", "--slurp",
-				"-H", "Accept: application/vnd.github+json",
-				"-H", "X-GitHub-Api-Version: 2026-03-10",
-				"repos/octo-org/example/issues?state=all&per_page=100",
-			},
-			output: `[[]]`,
+			args:   exactTitleScanArgs("octo-org/example", "Sample Plan Issue"),
+			output: ``,
 		},
 	}}
 	exitCode := Run(
@@ -42,17 +71,33 @@ func TestIssueCreatePlanDefault(t *testing.T) {
 	}
 }
 
+func TestIssueCreateAllowDuplicateSkipsRepositoryScan(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	fake := &runner{t: t}
+	exitCode := Run(
+		context.Background(),
+		[]string{"issue", "create", "--root", fixture(t, "single"), "--title", "Intentional duplicate", "--allow-duplicate", "--json"},
+		&stdout,
+		&stderr,
+		fake,
+	)
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %s", exitCode, stderr.String())
+	}
+	if fake.index != 0 {
+		t.Fatalf("GitHub calls = %d, want 0 when duplicate inspection is bypassed", fake.index)
+	}
+	if strings.Contains(stdout.String(), `"exactTitleMatches"`) || !strings.Contains(stderr.String(), "Skipping duplicate inspection") {
+		t.Fatalf("stdout = %s, stderr = %s", stdout.String(), stderr.String())
+	}
+}
+
 func TestIssueCreateApply(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
-			args: []string{
-				"api", "--paginate", "--slurp",
-				"-H", "Accept: application/vnd.github+json",
-				"-H", "X-GitHub-Api-Version: 2026-03-10",
-				"repos/octo-org/example/issues?state=all&per_page=100",
-			},
-			output: `[[]]`,
+			args:   exactTitleScanArgs("octo-org/example", "Created Issue"),
+			output: ``,
 		},
 		{
 			args:   []string{"issue", "create", "--repo", "octo-org/example", "--title", "Created Issue", "--body", "Body text", "--label", "bug"},
@@ -147,12 +192,8 @@ func TestProjectItemAddPlan(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
-			args:   []string{"project", "view", "12", "--owner", "octo-org", "--format", "json"},
-			output: `{"number":12,"owner":{"login":"octo-org"},"title":"Example planning","url":"https://example.invalid/project"}`,
-		},
-		{
-			args:   []string{"project", "item-list", "12", "--owner", "octo-org", "--limit", "10000", "--format", "json"},
-			output: `{"items":[],"totalCount":0}`,
+			args:   cliProjectItemQueryArgs(),
+			output: cliMissingProjectItemQueryJSON(),
 		},
 	}}
 	exitCode := Run(
@@ -170,30 +211,25 @@ func TestProjectItemAddPlan(t *testing.T) {
 		!strings.Contains(stdout.String(), "issues/55") {
 		t.Fatalf("stdout = %s", stdout.String())
 	}
+	if strings.Contains(stdout.String(), `"contractPath"`) || strings.Contains(stdout.String(), `"fieldLocations"`) {
+		t.Fatalf("plan includes unnecessary contract detail: %s", stdout.String())
+	}
 }
 
 func TestProjectItemAddApply(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{
 		{
-			args:   []string{"project", "view", "12", "--owner", "octo-org", "--format", "json"},
-			output: `{"number":12,"owner":{"login":"octo-org"},"title":"Example planning","url":"https://example.invalid/project"}`,
-		},
-		{
-			args:   []string{"project", "item-list", "12", "--owner", "octo-org", "--limit", "10000", "--format", "json"},
-			output: `{"items":[],"totalCount":0}`,
+			args:   cliProjectItemQueryArgs(),
+			output: cliMissingProjectItemQueryJSON(),
 		},
 		{
 			args:   []string{"project", "item-add", "12", "--owner", "octo-org", "--url", "https://github.com/octo-org/example/issues/55", "--format", "json"},
 			output: `{"id": "PVTI_ITEM_55"}`,
 		},
 		{
-			args:   []string{"project", "view", "12", "--owner", "octo-org", "--format", "json"},
-			output: `{"number":12,"owner":{"login":"octo-org"},"title":"Example planning","url":"https://example.invalid/project"}`,
-		},
-		{
-			args:   []string{"project", "item-list", "12", "--owner", "octo-org", "--limit", "10000", "--format", "json"},
-			output: `{"items":[{"id":"PVTI_ITEM_55","content":{"number":55,"repository":"octo-org/example","title":"Issue","type":"Issue","url":"https://github.com/octo-org/example/issues/55"}}],"totalCount":1}`,
+			args:   cliProjectItemQueryArgs(),
+			output: cliProjectItemQueryJSON("PVTI_ITEM_55"),
 		},
 	}}
 
@@ -218,15 +254,6 @@ func TestProjectItemEditPlan(t *testing.T) {
 	fake := &runner{t: t, responses: []response{
 		{
 			args: []string{
-				"api", "graphql",
-				"-f", "query=" + githubcli.ProjectSchemaQuery("organization"),
-				"-f", "login=octo-org",
-				"-F", "number=12",
-			},
-			output: `{"data":{"organization":{"projectV2":{"id":"PVT_12","number":12,"title":"Example planning","fields":{"nodes":[],"pageInfo":{"hasNextPage":false}}}}}}`,
-		},
-		{
-			args: []string{
 				"api", "--paginate", "--slurp",
 				"-H", "Accept: application/vnd.github+json",
 				"-H", "X-GitHub-Api-Version: 2026-03-10",
@@ -234,14 +261,7 @@ func TestProjectItemEditPlan(t *testing.T) {
 			},
 			output: `[[{"id":1,"name":"Priority","data_type":"single_select","options":[{"id":2,"name":"High"}]}]]`,
 		},
-		{
-			args:   []string{"project", "view", "12", "--owner", "octo-org", "--format", "json"},
-			output: `{"number":12,"owner":{"login":"octo-org"},"title":"Example planning","url":"https://example.invalid/project"}`,
-		},
-		{
-			args:   []string{"project", "item-list", "12", "--owner", "octo-org", "--limit", "10000", "--format", "json"},
-			output: `{"items":[{"id":"PVTI_ITEM_55","priority":"Medium","content":{"number":55,"repository":"octo-org/example","title":"Issue","type":"Issue","url":"https://github.com/octo-org/example/issues/55"}}],"totalCount":1}`,
-		},
+		{args: cliProjectItemQueryArgs(), output: cliProjectItemQueryJSON("PVTI_ITEM_55")},
 	}}
 	exitCode := Run(
 		context.Background(),
@@ -258,18 +278,16 @@ func TestProjectItemEditPlan(t *testing.T) {
 		!strings.Contains(stdout.String(), `"priority": "High"`) {
 		t.Fatalf("stdout = %s", stdout.String())
 	}
+	if strings.Contains(stdout.String(), `"contractPath"`) || strings.Contains(stdout.String(), `"fieldLocations"`) {
+		t.Fatalf("plan includes unnecessary contract detail: %s", stdout.String())
+	}
 }
 
 func TestIssueCreateRejectsExactTitleDuplicate(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{{
-		args: []string{
-			"api", "--paginate", "--slurp",
-			"-H", "Accept: application/vnd.github+json",
-			"-H", "X-GitHub-Api-Version: 2026-03-10",
-			"repos/octo-org/example/issues?state=all&per_page=100",
-		},
-		output: `[[{"number":55,"title":"Existing","state":"open","html_url":"https://github.com/octo-org/example/issues/55"}]]`,
+		args:   exactTitleScanArgs("octo-org/example", "Existing"),
+		output: "{\"number\":55,\"title\":\"Existing\",\"state\":\"open\",\"url\":\"https://github.com/octo-org/example/issues/55\"}\n",
 	}}}
 	exitCode := Run(context.Background(), []string{
 		"issue", "create", "--root", fixture(t, "single"), "--title", "Existing", "--apply",
@@ -306,13 +324,8 @@ func TestProjectMutationTargetsAreMutuallyExclusive(t *testing.T) {
 func TestDispatcherIssueCreatePlanIncludesRoutingLabel(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	fake := &runner{t: t, responses: []response{{
-		args: []string{
-			"api", "--paginate", "--slurp",
-			"-H", "Accept: application/vnd.github+json",
-			"-H", "X-GitHub-Api-Version: 2026-03-10",
-			"repos/octo-user/issues/issues?state=all&per_page=100",
-		},
-		output: `[[]]`,
+		args:   exactTitleScanArgs("octo-user/issues", "Routed"),
+		output: ``,
 	}}}
 	exitCode := Run(context.Background(), []string{
 		"issue", "create", "--root", fixture(t, "dispatcher"), "--project-key", "alpha", "--title", "Routed", "--json",

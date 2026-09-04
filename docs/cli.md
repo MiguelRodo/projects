@@ -126,7 +126,8 @@ projects issue create --title "New issue title" --body "Issue description" --app
 
 Creation scans the complete issue repository for an exact title match and
 stops rather than creating a likely duplicate. If two distinct issues really
-must have the same title, make that choice visible with `--allow-duplicate`.
+must have the same title, make that choice visible with `--allow-duplicate`;
+the explicit override also skips the otherwise unnecessary repository scan.
 An explicit `--repo` is an assertion and must agree with the contract; it is
 not an escape hatch to mutate another repository.
 
@@ -166,11 +167,12 @@ For a dispatcher contract, provide an exact selector:
 projects project item-add --project-key work --issue 42 --apply
 ```
 
-The plan uses a complete, count-checked Project read. Apply is idempotent: an
-existing membership is reported as a verified no-op, while a new membership is
-read back independently and its item ID must agree with the mutation result.
-Use `--url` instead of `--issue` for a pull request. The URL repository must
-agree with the contract, and `--url` and `--issue` are mutually exclusive.
+The plan queries the one issue or pull request for its Project memberships. It
+does not download every item in the Project. Apply is idempotent: an existing
+membership is reported as a verified no-op, while a new membership is read back
+independently and its item ID must agree with the mutation result. Use `--url`
+instead of `--issue` for a pull request. The URL repository must agree with the
+contract, and `--url` and `--issue` are mutually exclusive.
 
 Edit Project item fields with verified readback:
 
@@ -181,8 +183,10 @@ projects project item-edit --issue 42 --priority P1 --status "In progress" --app
 
 `item-edit` never adds membership implicitly. Run `project item-add` first when
 membership itself is authorised. Each Project field update uses its declared
-provider field, reads the complete item back, checks the requested value and
-compares all unrelated item state with the pre-write snapshot.
+provider field. One bounded final query checks every requested value and
+compares the other scalar Project fields with the pre-write snapshot. A
+multi-field edit therefore does not download the Project or repeat the
+readback after each field.
 
 Priority is mapped through the contract's declared Priority mapping. If the
 contract declares `Priority mapping status: pending`, the command refuses

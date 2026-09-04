@@ -184,16 +184,21 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 		}
 	}
 
+	stageCount := 2
 	if *apply {
-		progress(stderr, *quiet, "[1/4] Inspecting %s for exact-title duplicates and validating configuration", targetRepo)
+		stageCount = 4
+	}
+	var exactTitleMatches []githubcli.IssueSummary
+	if *allowDuplicate {
+		progress(stderr, *quiet, "[1/%d] Skipping duplicate inspection by explicit request", stageCount)
 	} else {
-		progress(stderr, *quiet, "[1/2] Inspecting %s for exact-title duplicates", targetRepo)
+		progress(stderr, *quiet, "[1/%d] Inspecting %s for exact-title duplicates", stageCount, targetRepo)
+		exactTitleMatches, err = githubcli.FindIssuesByExactTitle(ctx, runner, targetRepo, *title)
+		if err != nil {
+			return operationError(stderr, "inspect equivalent issues", err)
+		}
 	}
-	exactTitleMatches, err := githubcli.FindIssuesByExactTitle(ctx, runner, targetRepo, *title)
-	if err != nil {
-		return operationError(stderr, "inspect equivalent issues", err)
-	}
-	if len(exactTitleMatches) > 0 && !*allowDuplicate {
+	if len(exactTitleMatches) > 0 {
 		locations := make([]string, 0, len(exactTitleMatches))
 		for _, match := range exactTitleMatches {
 			locations = append(locations, match.URL)
@@ -204,12 +209,14 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 	if !*apply {
 		progress(stderr, *quiet, "[2/2] Planning issue creation for %s", targetRepo)
 		plan := map[string]any{
-			"action":            "create_issue",
-			"apply":             false,
-			"repository":        targetRepo,
-			"title":             *title,
-			"allowDuplicate":    *allowDuplicate,
-			"exactTitleMatches": exactTitleMatches,
+			"action":         "create_issue",
+			"apply":          false,
+			"repository":     targetRepo,
+			"title":          *title,
+			"allowDuplicate": *allowDuplicate,
+		}
+		if !*allowDuplicate {
+			plan["exactTitleMatches"] = exactTitleMatches
 		}
 		if bodyContent != "" {
 			plan["body"] = bodyContent
@@ -629,7 +636,7 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 	}
 
 	if !*apply {
-		progress(stderr, *quiet, "[1/2] Inspecting complete Project membership for %s", target.URL)
+		progress(stderr, *quiet, "[1/2] Inspecting exact Project membership for %s", target.URL)
 		current, err := githubcli.QueryProjectItem(ctx, runner, project, target)
 		if err != nil {
 			return operationError(stderr, "inspect Project membership", err)
@@ -638,7 +645,7 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 		plan := map[string]any{
 			"action":        "project_item_add",
 			"apply":         false,
-			"project":       project,
+			"project":       compactProject(project),
 			"url":           target.URL,
 			"alreadyMember": current != nil,
 			"wouldAdd":      current == nil,
@@ -663,7 +670,7 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 		return 0
 	}
 
-	progress(stderr, *quiet, "[1/3] Inspecting complete Project membership")
+	progress(stderr, *quiet, "[1/3] Inspecting exact Project membership")
 	progress(stderr, *quiet, "[2/3] Applying the membership addition if required")
 	item, added, err := githubcli.EnsureProjectItem(ctx, runner, project, target)
 	if err != nil {
@@ -678,7 +685,7 @@ func runProjectItemAdd(ctx context.Context, args []string, stdout, stderr io.Wri
 			"alreadyMember": !added,
 			"itemId":        item.ItemID,
 			"url":           target.URL,
-			"project":       project,
+			"project":       compactProject(project),
 		}
 		if err := writeJSON(stdout, result); err != nil {
 			return operationError(stderr, "write result JSON", err)
@@ -792,7 +799,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 	}
 
 	if !*apply {
-		progress(stderr, *quiet, "[1/2] Inspecting live schema, complete membership, and current fields")
+		progress(stderr, *quiet, "[1/2] Inspecting live schema, exact membership, and current fields")
 		current, err := githubcli.InspectProjectItemMutation(ctx, runner, githubcli.MutateProjectItemInput{
 			Project:     project,
 			Repo:        targetRepo,
@@ -810,7 +817,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 		plan := map[string]any{
 			"action":  "project_item_edit",
 			"apply":   false,
-			"project": project,
+			"project": compactProject(project),
 			"url":     target.URL,
 			"current": current,
 			"delta":   map[string]any{},
@@ -879,7 +886,7 @@ func runProjectItemEdit(ctx context.Context, args []string, stdout, stderr io.Wr
 	if err != nil {
 		return operationError(stderr, "mutate Project item", err)
 	}
-	progress(stderr, *quiet, "[3/3] Independently verified requested values and unrelated-field preservation")
+	progress(stderr, *quiet, "[3/3] Independently verified requested values and other scalar Project fields")
 
 	if *jsonOutput {
 		if err := writeJSON(stdout, result); err != nil {
@@ -903,4 +910,12 @@ func isFlagSet(fs *flag.FlagSet, name string) bool {
 		}
 	})
 	return found
+}
+
+func compactProject(project contract.Project) map[string]any {
+	return map[string]any{
+		"number": project.Number,
+		"owner":  project.Owner,
+		"title":  project.Title,
+	}
 }
