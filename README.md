@@ -6,6 +6,14 @@ This repository provides one shared skill for ChatGPT, Codex and other agents th
 - `Set example#313 to P2.`
 - `Organise the existing issues and show me what changed.`
 
+The optional [`projects` Go CLI](docs/cli.md) handles repeated operations that
+benefit from one tested implementation. Its first commands validate the
+existing `.projects/` contract, read every Project item with a completeness
+check, and report whether a newer release exists. It does not replace the skill,
+the repository contract, or the direct GitHub path.
+
+Release maintainers should use the [Go release and APT guide](docs/releasing.md).
+
 ## Before you start
 
 You need Git, Bash and [GitHub CLI](https://cli.github.com/) 2.96 or newer on the computer where the repository is checked out. Check GitHub CLI with:

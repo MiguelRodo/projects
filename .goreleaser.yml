@@ -1,0 +1,89 @@
+version: 2
+
+project_name: projects
+
+builds:
+  - id: projects-linux
+    main: ./cmd/projects
+    binary: projects
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/MiguelRodo/projects/internal/buildinfo.version={{.Version}}
+        -X github.com/MiguelRodo/projects/internal/buildinfo.commit={{.Commit}}
+        -X github.com/MiguelRodo/projects/internal/buildinfo.date={{.Date}}
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+  - id: projects-darwin
+    main: ./cmd/projects
+    binary: projects
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/MiguelRodo/projects/internal/buildinfo.version={{.Version}}
+        -X github.com/MiguelRodo/projects/internal/buildinfo.commit={{.Commit}}
+        -X github.com/MiguelRodo/projects/internal/buildinfo.date={{.Date}}
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+  - id: projects-windows
+    main: ./cmd/projects
+    binary: projects
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/MiguelRodo/projects/internal/buildinfo.version={{.Version}}
+        -X github.com/MiguelRodo/projects/internal/buildinfo.commit={{.Commit}}
+        -X github.com/MiguelRodo/projects/internal/buildinfo.date={{.Date}}
+    goos:
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: release-archives
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+nfpms:
+  - id: projects
+    package_name: projects
+    formats:
+      - deb
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Arch }}"
+    homepage: https://github.com/MiguelRodo/projects
+    description: Deterministic CLI backend for GitHub issue and Project administration
+    section: utils
+    license: MIT
+    maintainer: MiguelRodo <23501332+MiguelRodo@users.noreply.github.com>
+    bindir: /usr/bin
+    recommends:
+      - gh
+    ids:
+      - projects-linux
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
+release:
+  footer: |
+    `projects` is optional. Repository scripts and direct GitHub operations remain supported.
+
+    Debian packages are also published through the signed
+    [apt-miguelrodo](https://github.com/MiguelRodo/apt-miguelrodo) repository.

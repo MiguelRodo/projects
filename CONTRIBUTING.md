@@ -1,6 +1,8 @@
 # Contributing to `projects`
 
-Thank you for contributing. The active product surface is the agent-neutral `github-project-admin` skill. A future CLI is deliberately deferred until repeated setup or command-generation friction justifies it.
+Thank you for contributing. The active product surface is the agent-neutral
+`github-project-admin` skill, with the optional `projects` CLI for repeated
+operations that benefit from one tested implementation.
 
 ## Start with the authoritative issue
 
@@ -52,8 +54,13 @@ The first command uses the validator distributed with the Agent Skill authoring 
 
 Tests must not mutate live GitHub issues, Projects, repositories or private systems. Use synthetic fixtures and fake commands.
 
-## Future CLI boundary
+## CLI boundary
 
-There is no CLI implementation yet. When a roadmap issue authorises one, prefer the executable name `projects`; use `projectscli` only if a collision review rejects it. The CLI must remain an optional backend for the skill and should first address setup and reliable command execution or generation.
+The executable is named `projects`. It is an optional backend for the skill,
+not a separate repository contract or a required collaborator tool. Add a CLI
+operation only when a real repeated failure supports it, then keep the direct
+provider and repository-script path available where practical.
 
-Do not create a second executable or revive a mandatory-client architecture without revising the architecture issue first.
+Do not create a second executable, restore the discarded workspace manager, or
+move agent-launcher behaviour from `pj` into this binary without revising issue
+#3 first.

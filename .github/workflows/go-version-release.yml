@@ -1,0 +1,49 @@
+name: Go Version and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact version, for example 0.1.0. Cannot be used with bump_type.
+        required: false
+      bump_type:
+        description: "Component to bump: major, minor or patch. Cannot be used with version."
+        required: false
+      version_force:
+        description: Skip strict version progression checks.
+        required: false
+        type: boolean
+        default: false
+      go_version:
+        description: Go version to install.
+        required: false
+        default: "1.26.5"
+      apt_repo:
+        description: Repository that publishes generated Debian packages.
+        required: false
+        default: MiguelRodo/apt-miguelrodo
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the release commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build and publish the release
+        uses: MiguelRodo/actions/go-version-release@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}
+          apt_signing_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          apt_signing_key_passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+          version: ${{ inputs.version }}
+          bump_type: ${{ inputs.bump_type }}
+          version_force: ${{ inputs.version_force }}
+          go_version: ${{ inputs.go_version }}
+          apt_repo: ${{ inputs.apt_repo }}
+          goreleaser_config: .goreleaser.yml
