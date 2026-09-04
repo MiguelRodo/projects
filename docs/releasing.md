@@ -52,6 +52,12 @@ gh workflow run go-version-release.yml \
   -f version=0.1.0
 ```
 
+The action creates the tag before it runs GoReleaser. If a failed run has
+already created the requested tag, do not rerun that same version after fixing
+the commit: the action will refuse to move an existing tag. Use the next patch
+version instead, or deliberately remove the stale tag after confirming that no
+GitHub Release was published.
+
 Later releases can request a bump:
 
 ```bash
