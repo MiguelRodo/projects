@@ -5,6 +5,10 @@ the semantic version tag and its floating aliases, runs GoReleaser, attaches
 checksummed archives and Debian packages to the GitHub Release, then publishes
 the `.deb` files to `MiguelRodo/apt-miguelrodo`.
 
+The shared action currently runs GoReleaser 1.x, so `.goreleaser.yml` uses the
+version 1 configuration format. Do not change it to the version 2 format until
+the shared action is upgraded as well.
+
 ## One-time repository setup
 
 The `projects` repository currently needs two Actions secrets before its first
@@ -47,6 +51,12 @@ gh workflow run go-version-release.yml \
   --repo MiguelRodo/projects \
   -f version=0.1.0
 ```
+
+The action creates the tag before it runs GoReleaser. If a failed run has
+already created the requested tag, do not rerun that same version after fixing
+the commit: the action will refuse to move an existing tag. Use the next patch
+version instead, or deliberately remove the stale tag after confirming that no
+GitHub Release was published.
 
 Later releases can request a bump:
 
