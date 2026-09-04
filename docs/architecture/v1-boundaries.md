@@ -51,10 +51,9 @@ Command data is written to stdout. A few numbered progress messages go to
 stderr, so JSON can be piped safely while a user or agent can still see where a
 slow command has reached. `--quiet` suppresses progress.
 
-The first release does not mutate GitHub. A later mutating command must plan by
-default, require an explicit apply choice, re-read stale-sensitive state, change
-only the owned value, then verify it separately. A successful provider response
-alone is never enough.
+Mutating commands plan by default, require `--apply` to execute, re-read
+stale-sensitive state, change only the owned value, and verify it separately.
+A successful provider response alone is never enough.
 
 ## Existing scripts
 

@@ -21,13 +21,21 @@ const usageText = `projects is an optional, deterministic backend for GitHub Pro
 
 Usage:
   projects contract validate [flags]
+  projects issue create [flags]
+  projects issue edit [flags]
   projects project item-list [flags]
+  projects project item-add [flags]
+  projects project item-edit [flags]
   projects update check [flags]
   projects version [--json]
 
 Commands:
   contract validate   Validate the complete .projects contract without GitHub access.
+  issue create        Plan or create an issue on GitHub with verified readback.
+  issue edit          Plan or edit an issue on GitHub with verified readback.
   project item-list   Resolve one declared Project and read every item with a count check.
+  project item-add    Plan or add an issue to a declared Project.
+  project item-edit   Plan or edit field values on a Project item with verified readback.
   update check        Check the latest GitHub release without installing anything.
   version             Show the installed build version.
 
@@ -51,11 +59,28 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer, runner gi
 			return runContractValidate(args[2:], stdout, stderr)
 		}
 		return usageError(stderr, "contract requires the validate subcommand")
-	case "project":
-		if len(args) >= 2 && (args[1] == "item-list" || args[1] == "items") {
-			return runProjectItemList(ctx, args[2:], stdout, stderr, runner)
+	case "issue":
+		if len(args) >= 2 {
+			switch args[1] {
+			case "create":
+				return runIssueCreate(ctx, args[2:], stdout, stderr, runner)
+			case "edit":
+				return runIssueEdit(ctx, args[2:], stdout, stderr, runner)
+			}
 		}
-		return usageError(stderr, "project requires the item-list subcommand")
+		return usageError(stderr, "issue requires the create or edit subcommand")
+	case "project":
+		if len(args) >= 2 {
+			switch args[1] {
+			case "item-list", "items":
+				return runProjectItemList(ctx, args[2:], stdout, stderr, runner)
+			case "item-add":
+				return runProjectItemAdd(ctx, args[2:], stdout, stderr, runner)
+			case "item-edit":
+				return runProjectItemEdit(ctx, args[2:], stdout, stderr, runner)
+			}
+		}
+		return usageError(stderr, "project requires the item-list, item-add, or item-edit subcommand")
 	case "update":
 		if len(args) >= 2 && args[1] == "check" {
 			return runUpdateCheck(ctx, args[2:], stdout, stderr, runner)

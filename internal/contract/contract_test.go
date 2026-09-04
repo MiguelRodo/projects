@@ -114,3 +114,45 @@ func TestSingleSelectorMustAgree(t *testing.T) {
 		t.Fatalf("mismatching number error = %v", err)
 	}
 }
+
+func TestProjectFieldLocationsAndHelpers(t *testing.T) {
+	t.Parallel()
+	configuration, err := Load(fixtureRoot(t, "single"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := configuration.Project
+	if p == nil {
+		t.Fatal("Project is nil")
+	}
+	if loc, ok := p.FieldLocations["Priority"]; !ok || loc.Location != "organization issue field" || loc.Field != "Priority" {
+		t.Fatalf("Priority field location = %+v", loc)
+	}
+
+	// Priority resolution
+	if val, err := p.ResolvePriority("P0"); err != nil || val != "Urgent" {
+		t.Fatalf("ResolvePriority(P0) = %q, err = %v", val, err)
+	}
+	if _, err := p.ResolvePriority("P99"); err == nil {
+		t.Fatal("ResolvePriority(P99) error = nil")
+	}
+
+	// Class validation when empty allows anything
+	if val, err := p.ValidateClass("task"); err != nil || val != "task" {
+		t.Fatalf("ValidateClass(task) = %q, err = %v", val, err)
+	}
+
+	// Class validation with declared values
+	p.ClassValues = []string{"Task", "Bug"}
+	if val, err := p.ValidateClass("task"); err != nil || val != "Task" {
+		t.Fatalf("ValidateClass(task) = %q, err = %v", val, err)
+	}
+	if _, err := p.ValidateClass("NonExistentClass"); err == nil {
+		t.Fatal("ValidateClass(NonExistentClass) error = nil")
+	}
+
+	// Status mapping
+	if val := p.ResolveStatus("Todo"); val != "Todo" {
+		t.Fatalf("ResolveStatus(Todo) = %q, want Todo", val)
+	}
+}

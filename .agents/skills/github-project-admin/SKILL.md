@@ -94,7 +94,7 @@ Use the first capable surface:
 2. proven native `gh` commands, versioned GitHub REST, and GraphQL;
 3. an equivalent authenticated provider connector that can perform the same inspection and independent readback.
 
-The CLI is optional. Its first release validates contracts, returns a complete count-checked Project item set, reports its version and checks for an update. Do not invent a CLI command for an unsupported mutation; use the direct operations in [the GitHub operations reference](references/github-operations.md).
+The CLI is optional. It validates contracts, returns a complete count-checked Project item set, plans and applies issue creation/edits and Project item additions/field updates with verified readback, reports its version and checks for an update. Do not invent a CLI command for an unsupported mutation; use the direct operations in [the GitHub operations reference](references/github-operations.md).
 
 If the current surface cannot perform an authorised mutation, inspect as far as safely possible. When the resolved Project contract declares a `Chat implementation label` and the current surface can create an issue and comment safely, use [the local Chat-to-pj implementation queue](references/local-implementation-queue.md) instead of asking the user to remember a shell command. The queue issue describes the goal; an exact command is optional. Add the separate unedited authority comment required by that reference and report the mutation as queued, not completed.
 

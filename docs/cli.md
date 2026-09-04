@@ -110,6 +110,68 @@ GitHub commands use the current authenticated `gh` account. Check it with:
 gh auth status
 ```
 
+## Create and edit issues
+
+Mutating commands plan by default and require `--apply` to execute. They independently verify changes through separate readback.
+
+Create an issue:
+
+```bash
+projects issue create --title "New issue title" --body "Issue description"
+projects issue create --title "New issue title" --body "Issue description" --apply
+```
+
+Optionally specify labels, assignees, milestone, or initial Project fields:
+
+```bash
+projects issue create \
+  --title "Add authentication preflight" \
+  --label bug \
+  --assignee monalisa \
+  --priority P1 \
+  --class Task \
+  --status "In progress" \
+  --apply
+```
+
+Edit an existing issue:
+
+```bash
+projects issue edit --issue 42 --title "Updated title" --add-label enhancement
+projects issue edit --issue 42 --title "Updated title" --add-label enhancement --apply
+projects issue edit --issue 42 --state closed --close-reason completed --apply
+```
+
+## Manage Project items and fields
+
+Add an issue to a declared Project:
+
+```bash
+projects project item-add --issue 42
+projects project item-add --issue 42 --apply
+```
+
+For a dispatcher contract, provide an exact selector:
+
+```bash
+projects project item-add --project-key work --issue 42 --apply
+```
+
+Edit Project item fields with verified readback:
+
+```bash
+projects project item-edit --issue 42 --priority P1 --status "In progress"
+projects project item-edit --issue 42 --priority P1 --status "In progress" --apply
+```
+
+Priority is mapped through the contract's declared Priority mapping. If the contract declares `Priority mapping status: pending`, the command refuses Priority updates until mapped.
+
+Clear a field with `--clear`:
+
+```bash
+projects project item-edit --issue 42 --clear "Target date" --apply
+```
+
 ## Version and update checks
 
 ```bash
@@ -135,8 +197,3 @@ projects project item-list --json >project-items.json
 Usage errors exit with status 2. Validation, GitHub and completeness failures
 exit with status 1. A failed command names the stage that failed and includes
 the underlying `gh` error when one exists.
-
-The first release is read-only. Issue creation, Project membership and field
-updates will be added only with plan-first behaviour, stale checks and separate
-readback. Until then, the skill's documented direct GitHub path remains the
-supported mutation route.
