@@ -506,20 +506,21 @@ func QueryProjectItem(ctx context.Context, runner Runner, project contract.Proje
 func decodeGraphQLProjectItem(node graphQLProjectItemNode, target GitHubItemTarget) (ProjectItemState, error) {
 	fields := make(map[string]string)
 	rawFields := make(map[string]json.RawMessage)
-	rawFields["id"] = mustMarshalProjectValue(node.ID)
-	rawFields["content"] = mustMarshalProjectValue(map[string]any{
+	rawFields["meta:id"] = mustMarshalProjectValue(node.ID)
+	rawFields["meta:content"] = mustMarshalProjectValue(map[string]any{
 		"number":     target.Number,
 		"repository": target.Repository,
 		"type":       target.Kind,
 		"url":        target.URL,
 	})
-	rawFields["project"] = mustMarshalProjectValue(map[string]any{
+	rawFields["meta:project"] = mustMarshalProjectValue(map[string]any{
 		"id":     node.Project.ID,
 		"number": node.Project.Number,
 		"owner":  node.Project.Owner.Login,
 		"title":  node.Project.Title,
 	})
-	rawFields["isArchived"] = mustMarshalProjectValue(node.IsArchived)
+	rawFields["meta:isarchived"] = mustMarshalProjectValue(node.IsArchived)
+	seenFields := make(map[string]struct{})
 
 	for _, value := range node.FieldValues.Nodes {
 		if value.Field.Name == "" {
@@ -527,11 +528,11 @@ func decodeGraphQLProjectItem(node graphQLProjectItemNode, target GitHubItemTarg
 			// are not writable through this CLI's scalar field mutation path.
 			continue
 		}
-		for existing := range rawFields {
-			if strings.EqualFold(existing, value.Field.Name) {
-				return ProjectItemState{}, fmt.Errorf("Project item %s has duplicate set field name %q", node.ID, value.Field.Name)
-			}
+		fieldKey := strings.ToLower(strings.TrimSpace(value.Field.Name))
+		if _, exists := seenFields[fieldKey]; exists {
+			return ProjectItemState{}, fmt.Errorf("Project item %s has duplicate set field name %q", node.ID, value.Field.Name)
 		}
+		seenFields[fieldKey] = struct{}{}
 
 		scalar, present := graphQLProjectScalar(value)
 		canonical := map[string]any{
@@ -551,7 +552,7 @@ func decodeGraphQLProjectItem(node graphQLProjectItemNode, target GitHubItemTarg
 		if value.IterationID != nil {
 			canonical["iterationId"] = *value.IterationID
 		}
-		rawFields[value.Field.Name] = mustMarshalProjectValue(canonical)
+		rawFields["field:"+fieldKey] = mustMarshalProjectValue(canonical)
 	}
 
 	return ProjectItemState{
@@ -734,11 +735,7 @@ func queryOrganizationIssueFields(ctx context.Context, runner Runner, owner stri
 	return result, nil
 }
 
-func resolveOrganizationIssueField(ctx context.Context, runner Runner, owner, name, dataType, desired string) (organizationIssueField, error) {
-	fields, err := queryOrganizationIssueFields(ctx, runner, owner)
-	if err != nil {
-		return organizationIssueField{}, err
-	}
+func resolveOrganizationIssueField(fields []organizationIssueField, owner, name, dataType, desired string) (organizationIssueField, error) {
 	var matches []organizationIssueField
 	for _, field := range fields {
 		if field.Name == name {
@@ -811,49 +808,56 @@ func queryIssueFieldValues(ctx context.Context, runner Runner, target GitHubItem
 	return result, nil
 }
 
-func setOrganizationIssueField(ctx context.Context, runner Runner, target GitHubItemTarget, field organizationIssueField, desired string) error {
-	freshField, err := resolveOrganizationIssueField(ctx, runner, target.Owner, field.Name, field.DataType, desired)
-	if err != nil {
-		return fmt.Errorf("re-read organization issue field %q: %w", field.Name, err)
+func setOrganizationIssueFields(ctx context.Context, runner Runner, target GitHubItemTarget, changes []organizationFieldChange) (bool, error) {
+	if len(changes) == 0 {
+		return false, nil
 	}
-	if freshField.ID != field.ID {
-		return fmt.Errorf("organization issue field %q identity changed from %d to %d; retry from a fresh plan", field.Name, field.ID, freshField.ID)
-	}
-	field = freshField
 	before, err := queryIssueFieldValues(ctx, runner, target)
 	if err != nil {
-		return err
+		return false, err
 	}
-	if currentIssueFieldValue(before, field.ID) == desired {
-		return nil
+	pending := make([]organizationFieldChange, 0, len(changes))
+	for _, change := range changes {
+		if currentIssueFieldValue(before, change.Field.ID) != change.Desired {
+			pending = append(pending, change)
+		}
 	}
-	body, err := json.Marshal(map[string]any{
-		"issue_field_values": []map[string]any{{"field_id": field.ID, "value": desired}},
-	})
+	if len(pending) == 0 {
+		return false, nil
+	}
+	values := make([]map[string]any, 0, len(pending))
+	changedIDs := make(map[int]struct{}, len(pending))
+	for _, change := range pending {
+		values = append(values, map[string]any{"field_id": change.Field.ID, "value": change.Desired})
+		changedIDs[change.Field.ID] = struct{}{}
+	}
+	body, err := json.Marshal(map[string]any{"issue_field_values": values})
 	if err != nil {
-		return fmt.Errorf("encode issue field update: %w", err)
+		return false, fmt.Errorf("encode issue field update: %w", err)
 	}
 	args := []string{"api", "--method", "POST"}
 	args = append(args, apiHeaders()...)
 	args = append(args, fmt.Sprintf("repos/%s/issues/%d/issue-field-values", target.Repository, target.Number), "--input", "-")
 	stdinRunner, ok := runner.(inputRunner)
 	if !ok {
-		return errors.New("GitHub runner does not support JSON request bodies")
+		return false, errors.New("GitHub runner does not support JSON request bodies")
 	}
 	if _, err := stdinRunner.RunInput(ctx, body, args...); err != nil {
-		return fmt.Errorf("set organization issue field %q: %w", field.Name, err)
+		return false, fmt.Errorf("set organization issue fields: %w", err)
 	}
 	after, err := queryIssueFieldValues(ctx, runner, target)
 	if err != nil {
-		return fmt.Errorf("read back organization issue field %q: %w", field.Name, err)
+		return true, fmt.Errorf("read back organization issue fields: %w", err)
 	}
-	if got := currentIssueFieldValue(after, field.ID); got != desired {
-		return fmt.Errorf("organization issue field %q readback disagrees: got %q, want %q", field.Name, got, desired)
+	for _, change := range pending {
+		if got := currentIssueFieldValue(after, change.Field.ID); got != change.Desired {
+			return true, fmt.Errorf("organization issue field %q readback disagrees: got %q, want %q", change.Field.Name, got, change.Desired)
+		}
 	}
-	if !issueFieldValuesPreserved(before, after, field.ID) {
-		return fmt.Errorf("an unrelated organization issue field changed while setting %q", field.Name)
+	if !issueFieldValuesPreserved(before, after, changedIDs) {
+		return true, errors.New("an unrelated organization issue field changed while setting requested fields")
 	}
-	return nil
+	return true, nil
 }
 
 func currentIssueFieldValue(values []issueFieldValue, fieldID int) string {
@@ -872,11 +876,11 @@ func currentIssueFieldValue(values []issueFieldValue, fieldID int) string {
 	return ""
 }
 
-func issueFieldValuesPreserved(before, after []issueFieldValue, changedID int) bool {
+func issueFieldValuesPreserved(before, after []issueFieldValue, changedIDs map[int]struct{}) bool {
 	canonical := func(values []issueFieldValue) map[int]string {
 		result := make(map[int]string)
 		for _, value := range values {
-			if value.IssueFieldID == changedID {
+			if _, changed := changedIDs[value.IssueFieldID]; changed {
 				continue
 			}
 			encoded, _ := json.Marshal(value)
@@ -924,17 +928,27 @@ type MutateProjectItemResult struct {
 	Fields  map[string]string `json:"fields"`
 }
 
-// ValidateProjectItemMutationConfiguration resolves the live Project schema
-// and any organization-native field definitions without reading or mutating a
-// particular issue. Callers can use it before creating an issue so deterministic
-// configuration failures do not leave a partially configured issue behind.
-func ValidateProjectItemMutationConfiguration(ctx context.Context, runner Runner, input MutateProjectItemInput) error {
+// PreparedProjectItemMutation holds live definitions for one command invocation.
+// Its fields are private so the requested changes cannot diverge from preflight.
+// Do not persist it or reuse it across separate commands.
+type PreparedProjectItemMutation struct {
+	input               MutateProjectItemInput
+	schema              ProjectSchema
+	projectChanges      []projectFieldChange
+	organizationChanges []organizationFieldChange
+	issueType           string
+}
+
+// PrepareProjectItemMutation resolves configuration before an issue is created,
+// or before an existing item is changed. The same invocation can then use Apply
+// without fetching those definitions again.
+func PrepareProjectItemMutation(ctx context.Context, runner Runner, input MutateProjectItemInput) (*PreparedProjectItemMutation, error) {
 	if err := validateProjectMutationValues(input); err != nil {
-		return err
+		return nil, err
 	}
 	owner, repo, err := splitGitHubRepository(input.Repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	target := GitHubItemTarget{
 		Repository: input.Repo,
@@ -942,14 +956,33 @@ func ValidateProjectItemMutationConfiguration(ctx context.Context, runner Runner
 		Repo:       repo,
 		Kind:       "issues",
 	}
+	if input.IssueNumber != 0 || input.URL != "" {
+		target, err = validateProjectMutationInput(input)
+		if err != nil {
+			return nil, err
+		}
+	}
 	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
 	if projectMutationNeedsSchema(input) {
 		schema, err = QueryProjectSchema(ctx, runner, input.Project)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	_, _, _, err = prepareProjectChanges(ctx, runner, input, target, schema)
+	projectChanges, organizationChanges, issueType, err := prepareProjectChanges(ctx, runner, input, target, schema)
+	if err != nil {
+		return nil, err
+	}
+	return &PreparedProjectItemMutation{
+		input: input, schema: schema, projectChanges: projectChanges,
+		organizationChanges: organizationChanges, issueType: issueType,
+	}, nil
+}
+
+// ValidateProjectItemMutationConfiguration checks live configuration without
+// reading or mutating a particular issue.
+func ValidateProjectItemMutationConfiguration(ctx context.Context, runner Runner, input MutateProjectItemInput) error {
+	_, err := PrepareProjectItemMutation(ctx, runner, input)
 	return err
 }
 
@@ -984,22 +1017,39 @@ func InspectProjectItemMutation(ctx context.Context, runner Runner, input Mutate
 // verifies the resulting values plus preservation of unrelated scalar Project
 // fields in one bounded final readback.
 func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectItemInput) (MutateProjectItemResult, error) {
+	if _, err := validateProjectMutationInput(input); err != nil {
+		return MutateProjectItemResult{}, err
+	}
+	prepared, err := PrepareProjectItemMutation(ctx, runner, input)
+	if err != nil {
+		return MutateProjectItemResult{}, err
+	}
+	return prepared.Apply(ctx, runner, input.IssueNumber, input.URL)
+}
+
+// Apply inspects the target afresh, applies the prepared changes and verifies
+// them independently. Only the target identity may be supplied after preflight.
+func (prepared *PreparedProjectItemMutation) Apply(ctx context.Context, runner Runner, issueNumber int, url string) (MutateProjectItemResult, error) {
+	if prepared == nil {
+		return MutateProjectItemResult{}, errors.New("Project mutation has not been prepared")
+	}
+	input := prepared.input
+	input.IssueNumber, input.URL = issueNumber, url
 	target, err := validateProjectMutationInput(input)
 	if err != nil {
 		return MutateProjectItemResult{}, err
 	}
-	schema := ProjectSchema{Fields: make(map[string]ProjectField)}
-	if projectMutationNeedsSchema(input) {
-		schema, err = QueryProjectSchema(ctx, runner, input.Project)
-		if err != nil {
-			return MutateProjectItemResult{}, err
+	if target.Kind != "issues" && (len(prepared.organizationChanges) > 0 || prepared.issueType != "") {
+		return MutateProjectItemResult{}, errors.New("organization issue fields and types cannot be set on a pull request")
+	}
+	if prepared.input.IssueNumber != 0 || prepared.input.URL != "" {
+		original, err := validateProjectMutationInput(prepared.input)
+		if err != nil || original.URL != target.URL {
+			return MutateProjectItemResult{}, errors.New("Project mutation target changed after preflight")
 		}
 	}
-
-	projectChanges, organizationChanges, issueType, err := prepareProjectChanges(ctx, runner, input, target, schema)
-	if err != nil {
-		return MutateProjectItemResult{}, err
-	}
+	schema := prepared.schema
+	projectChanges, organizationChanges, issueType := prepared.projectChanges, prepared.organizationChanges, prepared.issueType
 
 	current, err := QueryProjectItem(ctx, runner, input.Project, target)
 	if err != nil {
@@ -1053,12 +1103,8 @@ func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectIt
 		projectMutationApplied = true
 	}
 
-	nonProjectMutationApplied := false
-	for _, change := range organizationChanges {
-		if err := setOrganizationIssueField(ctx, runner, target, change.Field, change.Desired); err != nil {
-			return MutateProjectItemResult{}, partialProjectMutationError(change.Name, err)
-		}
-		nonProjectMutationApplied = true
+	if _, err := setOrganizationIssueFields(ctx, runner, target, organizationChanges); err != nil {
+		return MutateProjectItemResult{}, partialProjectMutationError("organization issue fields", err)
 	}
 
 	if issueType != "" {
@@ -1072,11 +1118,10 @@ func MutateProjectItem(ctx context.Context, runner Runner, input MutateProjectIt
 		}); err != nil {
 			return MutateProjectItemResult{}, partialProjectMutationError("Class", err)
 		}
-		nonProjectMutationApplied = true
 	}
 
 	finalItem := current
-	if projectMutationApplied || nonProjectMutationApplied {
+	if projectMutationApplied {
 		finalItem, err = QueryProjectItem(ctx, runner, input.Project, target)
 		if err != nil {
 			return MutateProjectItemResult{}, partialProjectMutationError("final Project readback", err)
@@ -1171,6 +1216,8 @@ func projectMutationNeedsSchema(input MutateProjectItemInput) bool {
 func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProjectItemInput, target GitHubItemTarget, schema ProjectSchema) ([]projectFieldChange, []organizationFieldChange, string, error) {
 	var projectChanges []projectFieldChange
 	var organizationChanges []organizationFieldChange
+	var organizationFields []organizationIssueField
+	organizationFieldsLoaded := false
 	issueType := ""
 	setFields := make(map[string]bool)
 
@@ -1192,6 +1239,9 @@ func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProje
 			if !ok {
 				return fmt.Errorf("option %q for %s is absent from Project field %q", desired, dimension, field.Name)
 			}
+			if setFields[strings.ToLower(field.Name)] {
+				return fmt.Errorf("Project field %q is requested by more than one dimension", field.Name)
+			}
 			projectChanges = append(projectChanges, projectFieldChange{Name: dimension, Field: field, Desired: desired, OptionID: optionID})
 			setFields[strings.ToLower(field.Name)] = true
 			return nil
@@ -1199,9 +1249,20 @@ func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProje
 			if target.Kind != "issues" {
 				return fmt.Errorf("%s uses an organization issue field and cannot be set on a pull request", dimension)
 			}
-			field, err := resolveOrganizationIssueField(ctx, runner, target.Owner, location.Field, "single_select", desired)
+			if !organizationFieldsLoaded {
+				var err error
+				organizationFields, err = queryOrganizationIssueFields(ctx, runner, target.Owner)
+				if err != nil {
+					return err
+				}
+				organizationFieldsLoaded = true
+			}
+			field, err := resolveOrganizationIssueField(organizationFields, target.Owner, location.Field, "single_select", desired)
 			if err != nil {
 				return err
+			}
+			if setFields[strings.ToLower(field.Name)] {
+				return fmt.Errorf("organization issue field %q is requested by more than one dimension", field.Name)
 			}
 			organizationChanges = append(organizationChanges, organizationFieldChange{Name: dimension, Field: field, Desired: desired})
 			setFields[strings.ToLower(field.Name)] = true
@@ -1354,16 +1415,20 @@ func projectItemPreserved(before, after ProjectItemState, changedFields ...strin
 	filter := func(values map[string]json.RawMessage) map[string]string {
 		result := make(map[string]string)
 		for key, raw := range values {
-			if _, skip := excluded[strings.ToLower(key)]; skip {
-				continue
+			normalizedKey := strings.ToLower(key)
+			if strings.HasPrefix(normalizedKey, "field:") {
+				fieldName := strings.TrimPrefix(normalizedKey, "field:")
+				if _, skip := excluded[fieldName]; skip {
+					continue
+				}
 			}
 			var decoded any
 			if err := json.Unmarshal(raw, &decoded); err != nil {
-				result[key] = string(raw)
+				result[normalizedKey] = string(raw)
 				continue
 			}
 			encoded, _ := json.Marshal(decoded)
-			result[key] = string(encoded)
+			result[normalizedKey] = string(encoded)
 		}
 		return result
 	}

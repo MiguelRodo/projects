@@ -188,13 +188,20 @@ compares the other scalar Project fields with the pre-write snapshot. A
 multi-field edit therefore does not download the Project or repeat the
 readback after each field.
 
+Within one invocation, issue creation reuses the definitions checked before
+creation when it adds and configures the new item. Definitions are never cached
+between commands. Organisation field changes share one definition lookup, one
+value read and one batch update, followed by an independent readback. An
+unchanged issue or organisation field needs no write or second read.
+
 Priority is mapped through the contract's declared Priority mapping. If the
 contract declares `Priority mapping status: pending`, the command refuses
 Priority updates until mapped. Project-native single-select fields and dates
 are supported. Contract-declared organisation issue types and single-select
 organisation issue fields are also supported for issues, with their own fresh
-definition lookup and preservation-checked readback. Pull requests cannot use
-those issue-only locations.
+definition lookup and preservation-checked readback. Operations that change
+only those issue fields do not make an additional Project-field readback.
+Pull requests cannot use those issue-only locations.
 
 Clear a field with `--clear`:
 

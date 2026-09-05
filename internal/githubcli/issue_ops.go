@@ -103,9 +103,14 @@ func ViewIssue(ctx context.Context, runner Runner, repo string, number int) (Iss
 // issues whose title exactly matches title. REST's issue collection also
 // contains pull requests, which are deliberately excluded.
 func FindIssuesByExactTitle(ctx context.Context, runner Runner, repo, title string) ([]IssueSummary, error) {
+	normalizedTitle := strings.TrimSpace(title)
+	encodedTitle, err := json.Marshal(normalizedTitle)
+	if err != nil {
+		return nil, fmt.Errorf("encode exact-title filter: %w", err)
+	}
 	filter := fmt.Sprintf(
 		`.[] | select((.pull_request == null) and (.title == %s)) | {number, title, state, url: .html_url}`,
-		strconv.Quote(title),
+		encodedTitle,
 	)
 	args := []string{"api", "--paginate"}
 	args = append(args, apiHeaders()...)
@@ -138,6 +143,7 @@ func CreateIssue(ctx context.Context, runner Runner, input CreateIssueInput) (Is
 	if strings.TrimSpace(input.Title) == "" {
 		return IssueView{}, errors.New("issue creation requires a non-empty title")
 	}
+	input.Title = strings.TrimSpace(input.Title)
 
 	args := []string{"issue", "create", "--repo", input.Repo, "--title", input.Title}
 	if input.Body != "" {
@@ -266,6 +272,7 @@ func EditIssue(ctx context.Context, runner Runner, input EditIssueInput) (IssueV
 		}
 	}
 
+	stateChanged := false
 	if input.State != nil {
 		targetState := strings.ToUpper(strings.TrimSpace(*input.State))
 		if targetState == "CLOSED" && strings.EqualFold(before.State, "OPEN") {
@@ -276,12 +283,20 @@ func EditIssue(ctx context.Context, runner Runner, input EditIssueInput) (IssueV
 			if _, err := runner.Run(ctx, closeArgs...); err != nil {
 				return IssueView{}, fmt.Errorf("close issue %s#%d: %w", input.Repo, input.Number, err)
 			}
+			stateChanged = true
 		} else if targetState == "OPEN" && strings.EqualFold(before.State, "CLOSED") {
 			reopenArgs := []string{"issue", "reopen", strconv.Itoa(input.Number), "--repo", input.Repo}
 			if _, err := runner.Run(ctx, reopenArgs...); err != nil {
 				return IssueView{}, fmt.Errorf("reopen issue %s#%d: %w", input.Repo, input.Number, err)
 			}
+			stateChanged = true
 		}
+	}
+	if !hasEdits && !stateChanged {
+		if err := verifyEditedIssue(before, before, input); err != nil {
+			return IssueView{}, err
+		}
+		return before, nil
 	}
 
 	after, err := ViewIssue(ctx, runner, input.Repo, input.Number)
