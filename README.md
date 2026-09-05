@@ -93,9 +93,16 @@ Create or open a [ChatGPT Project](https://chatgpt.com/projects), make the GitHu
 
 > For work concerning a GitHub repository, especially reading or updating GitHub issues or Projects, first retrieve and follow the target repository's `AGENTS.md`. Follow the skill and configuration files it references. If the repository or `AGENTS.md` is unavailable, say so rather than guessing.
 >
-> Treat my prompt as the desired outcome. If this chat cannot make a required GitHub change, return the smallest safe command block for me to paste into a terminal, including a check of the result.
+> Treat my prompt as the desired outcome. If this chat cannot make an authorised GitHub change, follow the repository's configured handoff. When its local Chat implementation queue is enabled, create the bounded queue issue and separate unedited authority comment described by the skill, and report the change as queued. Otherwise return the smallest executable command block with an independent result check.
 
-You can then ask for the result you want. The chat can inspect and propose the work. After you approve the proposal, it will do what its GitHub connection allows and give you terminal commands for anything it cannot do directly.
+You can then ask for the result you want. A request for a specific change supplies
+authority for that change. For broad organisation, ask for a proposal first and
+approve it before the chat applies it. The chat performs supported changes and
+uses the configured handoff for anything its GitHub connection cannot do.
+
+The [provider instruction reference](skills/github-project-admin/references/provider-project-instructions.md)
+contains the reusable wording. For the full Drive, registry and ChatGPT setup,
+start with the [project-bootstrap guide](https://miguelrodo.github.io/project-bootstrap/).
 
 ## 4. Set up an execution-capable agent
 
@@ -123,7 +130,55 @@ After the chat interface or execution-capable agent is ready, the initializer gi
 
 The request asks the surface to inspect existing issues, confirm the pending Priority location and mapping without changing the live field, propose useful Issue Type or Class values, preserve useful definitions and colours, organise the issues, build useful native parent/sub-issue relationships, repair generic root or category-wrapper issues, choose checkboxes versus sub-issues based on whether work needs independent planning state, and suggest optional sub-project labels only where they add value. It explicitly forbids live changes until you approve the proposal.
 
-After approval, an execution-capable agent can apply and verify the proposal. A chat interface that cannot write should return the smallest safe command block with independent readback. To add another Project later, rerun the initializer; it preserves every current route and contract.
+After approval, an execution-capable agent can apply and verify the proposal.
+A chat that cannot complete a change uses the configured local queue when
+available, or a command block with independent readback.
+
+## Add another GitHub Project
+
+If the repository already has a dispatcher (`Mode | dispatcher` in
+`.projects/project.md`), rerun the initializer from its root:
+
+```text
+bash .agents/skills/github-project-admin/scripts/init-project.sh
+```
+
+It preserves existing routes and child contracts, discovers the additional
+Project and asks for its key and routing label. Validate the result, review the
+diff and commit and push the configuration through the repository's normal
+workflow. Confirm the new Project's pending Priority mapping before using it.
+
+For a single-Project contract, rerunning the initializer preserves that setup
+and exits. Ask the agent to propose a conversion to a dispatcher that keeps the
+existing Project's field mappings, governance and membership, then adds the
+new route. Approve the concrete conversion before it is applied. Do not delete
+the existing contract to start over. If the new Project belongs to a different
+repository, install and initialise the skill there instead.
+
+## Complete queued Chat work locally
+
+New resolved contracts include `Chat implementation label | pj:implement-chat`.
+The [local implementation queue](skills/github-project-admin/references/local-implementation-queue.md)
+lets a chat hand off an authorised change it cannot finish, or mark an existing
+issue for bounded repository implementation. Each item needs the configured
+label and a separate unedited `PJ implementation authority:` comment stating
+the goal; implementation authority also names the target repositories.
+
+Install the local launcher using the
+[project-bootstrap operator guide](https://github.com/MiguelRodo/project-bootstrap/blob/main/operator/README.md),
+keep the managed repository checkouts and contracts in its workspace, and run:
+
+```text
+pj -i
+pj -i --repo example/repository
+```
+
+The optional selector limits processing to the exact managed issue repository.
+The local agent checks authority, follows each repository's instructions and
+verifies the result. Items created by the local authenticated GitHub user with
+a qualifying authority comment can proceed without a routine preview. Other
+items require local review. A queued item stays open until the work is verified;
+opening a PR alone does not complete implementation work.
 
 ## Issue Type / Class defaults
 
@@ -182,5 +237,10 @@ bash skills/github-project-admin/scripts/setup.sh --install-skill-from .
 ```
 
 The shorter operator guide is in [the skill README](skills/github-project-admin/README.md). [Issue #1](../../issues/1) contains the roadmap and [issue #67](../../issues/67) records the current architecture.
+
+The [current architecture](docs/architecture/v1-boundaries.md) describes the
+supported Markdown contracts and CLI. Files under `docs/spec/`, `schemas/` and
+`examples/` retain the older `projectctl/v1` design as historical material; they
+are not configuration instructions for `projects`.
 
 Changes use GitHub issues and pull requests. See [CONTRIBUTING.md](CONTRIBUTING.md). This project uses the [MIT Licence](LICENSE).
