@@ -2,6 +2,7 @@ package githubcli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -423,14 +424,12 @@ func TestMutateOrganizationIssuePriorityWithVerifiedPreservation(t *testing.T) {
 	fake := &fakeRunner{t: t, responses: []fakeResponse{
 		{args: fieldArgs, output: fieldDefinitions},
 		{args: projectItemQueryArgs("owner", "repo", "issues", 42), output: projectItemQueryJSON("Todo", "P2", "Task")},
-		{args: fieldArgs, output: fieldDefinitions},
 		{args: valueArgs, output: beforeValues},
 		{
 			args:  []string{"api", "--method", "POST", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "repos/owner/repo/issues/42/issue-field-values", "--input", "-"},
 			input: []byte(`{"issue_field_values":[{"field_id":11,"value":"High"}]}`), output: afterValues,
 		},
 		{args: valueArgs, output: afterValues},
-		{args: projectItemQueryArgs("owner", "repo", "issues", 42), output: projectItemQueryJSON("Todo", "P2", "Task")},
 	}}
 	result, err := MutateProjectItem(context.Background(), fake, MutateProjectItemInput{Project: p, Repo: "owner/repo", IssueNumber: 42, Priority: "P1"})
 	if err != nil {
@@ -439,16 +438,16 @@ func TestMutateOrganizationIssuePriorityWithVerifiedPreservation(t *testing.T) {
 	if result.Fields["Priority"] != "High" {
 		t.Fatalf("result fields = %+v", result.Fields)
 	}
+	if fake.calls != 5 {
+		t.Fatalf("GitHub calls = %d, want one definition read, membership read, value read, write and readback", fake.calls)
+	}
 }
 
 func TestSetOrganizationIssueFieldRejectsUnrelatedFieldChange(t *testing.T) {
-	fieldDefinitions := []byte(`[[{"id":11,"name":"Priority","data_type":"single_select","options":[{"id":101,"name":"High"}]}]]`)
 	beforeValues := []byte(`[[{"issue_field_id":11,"issue_field_name":"Priority","data_type":"single_select","value":102,"single_select_option":{"id":102,"name":"Medium"}},{"issue_field_id":12,"issue_field_name":"Effort","data_type":"single_select","value":201,"single_select_option":{"id":201,"name":"Low"}}]]`)
 	afterValues := []byte(`[[{"issue_field_id":11,"issue_field_name":"Priority","data_type":"single_select","value":101,"single_select_option":{"id":101,"name":"High"}},{"issue_field_id":12,"issue_field_name":"Effort","data_type":"single_select","value":202,"single_select_option":{"id":202,"name":"High"}}]]`)
-	fieldArgs := []string{"api", "--paginate", "--slurp", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "orgs/owner/issue-fields?per_page=100"}
 	valueArgs := []string{"api", "--paginate", "--slurp", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "repos/owner/repo/issues/42/issue-field-values?per_page=100"}
 	fake := &fakeRunner{t: t, responses: []fakeResponse{
-		{args: fieldArgs, output: fieldDefinitions},
 		{args: valueArgs, output: beforeValues},
 		{
 			args:  []string{"api", "--method", "POST", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "repos/owner/repo/issues/42/issue-field-values", "--input", "-"},
@@ -460,11 +459,9 @@ func TestSetOrganizationIssueFieldRejectsUnrelatedFieldChange(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = setOrganizationIssueField(context.Background(), fake, target, organizationIssueField{
-		ID:       11,
-		Name:     "Priority",
-		DataType: "single_select",
-	}, "High")
+	_, err = setOrganizationIssueFields(context.Background(), fake, target, []organizationFieldChange{{
+		Field: organizationIssueField{ID: 11, Name: "Priority", DataType: "single_select"}, Desired: "High",
+	}})
 	if err == nil || !strings.Contains(err.Error(), "unrelated organization issue field changed") {
 		t.Fatalf("error = %v, want unrelated-field preservation failure", err)
 	}
@@ -498,7 +495,6 @@ func TestMutateProjectItemSetsAndVerifiesOrganizationIssueTypeAsClass(t *testing
 		{args: []string{"issue", "view", "42", "--repo", "owner/repo", "--json", viewFields}, output: beforeIssue},
 		{args: []string{"issue", "edit", "42", "--repo", "owner/repo", "--type", "Task"}, output: []byte(`{}`)},
 		{args: []string{"issue", "view", "42", "--repo", "owner/repo", "--json", viewFields}, output: afterIssue},
-		{args: projectItemQueryArgs("owner", "repo", "issues", 42), output: projectItemQueryJSON("Todo", "P2", "Task")},
 	}}
 
 	result, err := MutateProjectItem(context.Background(), fake, MutateProjectItemInput{
@@ -524,5 +520,115 @@ func TestValidateISODate(t *testing.T) {
 		if err := ValidateISODate(value); err == nil {
 			t.Fatalf("ValidateISODate(%q) error = nil", value)
 		}
+	}
+}
+
+func TestProjectFieldNamesCannotCollideWithMetadata(t *testing.T) {
+	target, err := ResolveGitHubItemTarget("owner/repo", 42, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"ID", "Content", "Project", "isArchived", "meta:id"} {
+		t.Run(name, func(t *testing.T) {
+			decode := func(fieldName, itemID string) ProjectItemState {
+				var node graphQLProjectItemNode
+				payload := fmt.Sprintf(`{"id":%q,"fieldValues":{"nodes":[{"__typename":"ProjectV2ItemFieldTextValue","text":"keep","field":{"id":"FIELD_CUSTOM","name":%q,"dataType":"TEXT"}}]}}`, itemID, fieldName)
+				if err := json.Unmarshal([]byte(payload), &node); err != nil {
+					t.Fatal(err)
+				}
+				state, err := decodeGraphQLProjectItem(node, target)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return state
+			}
+			before := decode(name, "ITEM")
+			if before.Fields[name] != "keep" {
+				t.Fatalf("fields = %+v", before.Fields)
+			}
+			if !projectItemPreserved(before, decode(strings.ToLower(name), "ITEM")) {
+				t.Fatal("field-name casing alone changed the preservation result")
+			}
+			if projectItemPreserved(before, decode(name, "DIFFERENT_ITEM"), name) {
+				t.Fatal("excluding a custom field also excluded the item identity")
+			}
+		})
+	}
+}
+
+func TestOrganizationIssueFieldsUseOneBatchAndOneReadback(t *testing.T) {
+	target, err := ResolveGitHubItemTarget("owner/repo", 42, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	valueArgs := []string{"api", "--paginate", "--slurp", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "repos/owner/repo/issues/42/issue-field-values?per_page=100"}
+	after := []byte(`[[{"issue_field_id":11,"value":"High"},{"issue_field_id":12,"value":"Task"}]]`)
+	changes := []organizationFieldChange{
+		{Field: organizationIssueField{ID: 11, Name: "Priority"}, Desired: "High"},
+		{Field: organizationIssueField{ID: 12, Name: "Class"}, Desired: "Task"},
+	}
+	fake := &fakeRunner{t: t, responses: []fakeResponse{
+		{args: valueArgs, output: []byte(`[[{"issue_field_id":11,"value":"Medium"}]]`)},
+		{
+			args:  []string{"api", "--method", "POST", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "repos/owner/repo/issues/42/issue-field-values", "--input", "-"},
+			input: []byte(`{"issue_field_values":[{"field_id":11,"value":"High"},{"field_id":12,"value":"Task"}]}`), output: []byte(`{}`),
+		},
+		{args: valueArgs, output: after},
+	}}
+	changed, err := setOrganizationIssueFields(context.Background(), fake, target, changes)
+	if err != nil || !changed || fake.calls != 3 {
+		t.Fatalf("changed=%v, error=%v, calls=%d; want one read, one write and one readback", changed, err, fake.calls)
+	}
+	noop := &fakeRunner{t: t, responses: []fakeResponse{{args: valueArgs, output: after}}}
+	changed, err = setOrganizationIssueFields(context.Background(), noop, target, changes)
+	if err != nil || changed || noop.calls != 1 {
+		t.Fatalf("no-op changed=%v, error=%v, calls=%d; want one read only", changed, err, noop.calls)
+	}
+}
+
+func TestPreparedProjectMutationReusesDefinitionsAndBindsTarget(t *testing.T) {
+	p := contract.Project{
+		Owner: "octo-user", OwnerType: "user", Number: 40, Title: "Planning",
+		Priority:       map[string]string{"P1": "P1"},
+		FieldLocations: map[string]contract.FieldLocation{"Priority": {Location: "project field", Field: "Priority"}},
+	}
+	fake := &fakeRunner{t: t, responses: []fakeResponse{
+		{args: []string{"api", "graphql", "-f", "query=" + ProjectSchemaQuery("user"), "-f", "login=octo-user", "-F", "number=40"}, output: projectSchemaJSON()},
+		{args: projectItemQueryArgs("owner", "repo", "issues", 42), output: projectItemQueryJSON("Todo", "P2", "Task")},
+		{args: []string{"project", "item-edit", "--id", "PVTI_ITEM_42", "--project-id", "PVT_123", "--field-id", "FIELD_PRIORITY", "--single-select-option-id", "OPT_P1"}, output: []byte(`{}`)},
+		{args: projectItemQueryArgs("owner", "repo", "issues", 42), output: projectItemQueryJSON("Todo", "P1", "Task")},
+	}}
+	prepared, err := PrepareProjectItemMutation(context.Background(), fake, MutateProjectItemInput{Project: p, Repo: "owner/repo", Priority: "P1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := prepared.Apply(context.Background(), fake, 42, "https://github.com/other/repo/issues/42"); err == nil {
+		t.Fatal("prepared mutation accepted a different repository")
+	}
+	result, err := prepared.Apply(context.Background(), fake, 42, "https://github.com/owner/repo/issues/42")
+	if err != nil || result.Fields["Priority"] != "P1" || fake.calls != 4 {
+		t.Fatalf("result=%+v, error=%v, calls=%d; want one schema read for preflight and apply", result, err, fake.calls)
+	}
+}
+
+func TestPreparedMutationAllowsSameFieldNameAtDifferentProviderLocations(t *testing.T) {
+	p := contract.Project{
+		Owner: "octo-user", OwnerType: "user", Number: 40, Title: "Planning",
+		Priority: map[string]string{"P1": "P1"}, ClassValues: []string{"Task"},
+		FieldLocations: map[string]contract.FieldLocation{
+			"Priority": {Location: "project field", Field: "Priority"},
+			"Class":    {Location: "organization issue field", Field: "Priority"},
+		},
+	}
+	fake := &fakeRunner{t: t, responses: []fakeResponse{
+		{args: []string{"api", "graphql", "-f", "query=" + ProjectSchemaQuery("user"), "-f", "login=octo-user", "-F", "number=40"}, output: projectSchemaJSON()},
+		{
+			args:   []string{"api", "--paginate", "--slurp", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "orgs/owner/issue-fields?per_page=100"},
+			output: []byte(`[[{"id":11,"name":"Priority","data_type":"single_select","options":[{"id":101,"name":"Task"}]}]]`),
+		},
+	}}
+	_, err := PrepareProjectItemMutation(context.Background(), fake, MutateProjectItemInput{Project: p, Repo: "owner/repo", Priority: "P1", Class: "Task"})
+	if err != nil {
+		t.Fatal(err)
 	}
 }

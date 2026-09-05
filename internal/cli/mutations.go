@@ -118,6 +118,7 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 	if strings.TrimSpace(*title) == "" {
 		return usageError(stderr, "--title is required")
 	}
+	*title = strings.TrimSpace(*title)
 	if *body != "" && *bodyFile != "" {
 		return usageError(stderr, "--body and --body-file are mutually exclusive")
 	}
@@ -185,8 +186,10 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 	}
 
 	stageCount := 2
-	if *apply {
+	if *apply && hasProject {
 		stageCount = 4
+	} else if *apply {
+		stageCount = 3
 	}
 	var exactTitleMatches []githubcli.IssueSummary
 	if *allowDuplicate {
@@ -293,19 +296,22 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 		return 0
 	}
 
+	var preparedProject *githubcli.PreparedProjectItemMutation
 	if hasProject {
-		if err := githubcli.ValidateProjectItemMutationConfiguration(ctx, runner, githubcli.MutateProjectItemInput{
-			Project:    resolvedProject,
-			Repo:       targetRepo,
-			Priority:   *priority,
-			Class:      *class,
-			Status:     *status,
-			TargetDate: *targetDate,
-		}); err != nil {
+		preparedProject, err = githubcli.PrepareProjectItemMutation(ctx, runner, githubcli.MutateProjectItemInput{
+			Project:      resolvedProject,
+			Repo:         targetRepo,
+			Priority:     *priority,
+			Class:        *class,
+			Status:       *status,
+			TargetDate:   *targetDate,
+			AddIfMissing: true,
+		})
+		if err != nil {
 			return operationError(stderr, "preflight Project configuration", err)
 		}
 	}
-	progress(stderr, *quiet, "[2/4] Creating issue in %s", targetRepo)
+	progress(stderr, *quiet, "[2/%d] Creating issue in %s", stageCount, targetRepo)
 	created, err := githubcli.CreateIssue(ctx, runner, githubcli.CreateIssueInput{
 		Repo:      targetRepo,
 		Title:     *title,
@@ -317,22 +323,12 @@ func runIssueCreate(ctx context.Context, args []string, stdout, stderr io.Writer
 	if err != nil {
 		return operationError(stderr, "create issue", err)
 	}
-	progress(stderr, *quiet, "[3/4] Verified created issue %s#%d", targetRepo, created.Number)
+	progress(stderr, *quiet, "[3/%d] Verified created issue %s#%d", stageCount, targetRepo, created.Number)
 
 	var projectResult *githubcli.MutateProjectItemResult
 	if hasProject {
 		progress(stderr, *quiet, "[4/4] Adding issue to Project %s/%d and setting fields", resolvedProject.Owner, resolvedProject.Number)
-		mutRes, err := githubcli.MutateProjectItem(ctx, runner, githubcli.MutateProjectItemInput{
-			Project:      resolvedProject,
-			Repo:         targetRepo,
-			IssueNumber:  created.Number,
-			URL:          created.URL,
-			Priority:     *priority,
-			Class:        *class,
-			Status:       *status,
-			TargetDate:   *targetDate,
-			AddIfMissing: true,
-		})
+		mutRes, err := preparedProject.Apply(ctx, runner, created.Number, created.URL)
 		if err != nil {
 			return operationError(stderr, "add issue to Project and update fields", fmt.Errorf("issue was created at %s; do not retry creation: %w", created.URL, err))
 		}

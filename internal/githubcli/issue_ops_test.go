@@ -2,6 +2,7 @@ package githubcli
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -20,7 +21,7 @@ func TestCreateIssue(t *testing.T) {
 
 	view, err := CreateIssue(context.Background(), fake, CreateIssueInput{
 		Repo:      "owner/repo",
-		Title:     "Test Title",
+		Title:     "  Test Title  ",
 		Body:      "Test Body",
 		Labels:    []string{"bug"},
 		Assignees: []string{"monalisa"},
@@ -195,5 +196,40 @@ func TestFindIssuesByExactTitleIsCompleteAndExcludesPullRequests(t *testing.T) {
 	}
 	if len(matches) != 2 || matches[0].Number != 2 || matches[1].Number != 3 {
 		t.Fatalf("matches = %+v", matches)
+	}
+}
+
+func TestExactTitleFilterUsesJSONQuotingAndTrimsOuterWhitespace(t *testing.T) {
+	for _, title := range []string{"title \a\v value", "quote\"backslash\\", "\U000e0001", "plain title"} {
+		t.Run(title, func(t *testing.T) {
+			encoded, err := json.Marshal(title)
+			if err != nil {
+				t.Fatal(err)
+			}
+			fake := &fakeRunner{t: t, responses: []fakeResponse{{
+				args: []string{
+					"api", "--paginate", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10",
+					"repos/owner/repo/issues?state=all&per_page=100", "--jq",
+					`.[] | select((.pull_request == null) and (.title == ` + string(encoded) + `)) | {number, title, state, url: .html_url}`,
+				}, output: []byte(""),
+			}}}
+			if _, err := FindIssuesByExactTitle(context.Background(), fake, "owner/repo", "  "+title+"  "); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestEditIssueNoOpNeedsOnlyOneRead(t *testing.T) {
+	title := "Same title"
+	fake := &fakeRunner{t: t, responses: []fakeResponse{{
+		args:   []string{"issue", "view", "42", "--repo", "owner/repo", "--json", "number,title,body,state,stateReason,labels,assignees,milestone,issueType,projectItems,url"},
+		output: []byte(`{"number":42,"title":"Same title","state":"OPEN","url":"https://github.com/owner/repo/issues/42"}`),
+	}}}
+	if _, err := EditIssue(context.Background(), fake, EditIssueInput{Repo: "owner/repo", Number: 42, Title: &title}); err != nil {
+		t.Fatal(err)
+	}
+	if fake.calls != 1 {
+		t.Fatalf("calls=%d, want only the initial read for an unchanged issue", fake.calls)
 	}
 }

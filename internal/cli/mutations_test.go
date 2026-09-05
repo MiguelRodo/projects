@@ -3,8 +3,8 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -30,9 +30,13 @@ func cliMissingProjectItemQueryJSON() string {
 }
 
 func exactTitleScanArgs(repo, title string) []string {
+	encodedTitle, err := json.Marshal(strings.TrimSpace(title))
+	if err != nil {
+		panic(err)
+	}
 	filter := fmt.Sprintf(
 		`.[] | select((.pull_request == null) and (.title == %s)) | {number, title, state, url: .html_url}`,
-		strconv.Quote(title),
+		encodedTitle,
 	)
 	return []string{
 		"api", "--paginate",
@@ -123,8 +127,8 @@ func TestIssueCreateApply(t *testing.T) {
 		!strings.Contains(stdout.String(), `"number": 55`) {
 		t.Fatalf("stdout = %s", stdout.String())
 	}
-	if !strings.Contains(stderr.String(), "[2/4] Creating issue") ||
-		!strings.Contains(stderr.String(), "[3/4] Verified created issue") {
+	if !strings.Contains(stderr.String(), "[2/3] Creating issue") ||
+		!strings.Contains(stderr.String(), "[3/3] Verified created issue") {
 		t.Fatalf("stderr = %s", stderr.String())
 	}
 }
