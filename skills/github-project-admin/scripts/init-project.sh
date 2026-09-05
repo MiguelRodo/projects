@@ -638,9 +638,9 @@ save_onboarding_files() {
 print_provider_intro() {
   section "Choose how you will use the repository"
   cat <<'EOF'
-I will now show two ways to use the repository: a chat interface that may
-return commands for you to run, and an execution-capable agent that can run
-and verify commands after you approve its proposal.
+I will now show two ways to use the repository: a chat interface that can
+use the configured handoff for unsupported changes, and an execution-capable
+agent that can run and verify authorised work.
 
 Before using either remote surface, make sure the installed skill and
 repository configuration are committed and pushed. If the previous section
@@ -661,14 +661,18 @@ print_chatgpt_setup() {
   AGENTS.md. Follow the skill and configuration files it references. If the
   repository or AGENTS.md is unavailable, say so rather than guessing.
 
-  Treat my prompt as the desired outcome. If this chat cannot make a required
-  GitHub change, return the smallest safe command block for me to paste into a
-  terminal, including a check of the result.
+  Treat my prompt as the desired outcome. If this chat cannot make an authorised
+  GitHub change, follow the repository's configured handoff. When its local Chat
+  implementation queue is enabled, create the bounded queue issue and separate
+  unedited authority comment described by the skill, and report the change as
+  queued. Otherwise return the smallest executable command block with an
+  independent result check.
 
-After that, ask for the outcome you want in ordinary language. The chat can
-inspect and propose the work. After you approve the proposal, it will make the
-changes it can and return the smallest safe terminal commands for anything it
-cannot do directly.
+After that, ask for the outcome you want in ordinary language. A specific change
+request supplies authority for that change; broad organisation starts with a
+proposal for approval. The chat makes supported changes and uses the configured
+handoff for the rest. Run pj -i locally to process a queued handoff after setting
+up the launcher from project-bootstrap.
 EOF
 }
 

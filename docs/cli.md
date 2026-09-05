@@ -243,3 +243,10 @@ projects project item-list --json >project-items.json
 Usage errors exit with status 2. Validation, GitHub and completeness failures
 exit with status 1. A failed command names the stage that failed and includes
 the underlying `gh` error when one exists.
+
+An error during readback does not mean the preceding write failed. For example,
+a GitHub Project workflow can move an item to Done when its issue closes. The
+issue edit's strict preservation check reports that changed Project summary
+even when the closure succeeded. Inspect the issue state, Project membership
+and affected fields independently before deciding what remains; do not repeat
+the write just because verification stopped.

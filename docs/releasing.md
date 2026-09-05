@@ -11,8 +11,8 @@ the shared action is upgraded as well.
 
 ## One-time repository setup
 
-The `projects` repository currently needs two Actions secrets before its first
-release:
+The release workflow uses two Actions secrets. Configure these when enabling
+publishing in a repository, or rotate them when needed:
 
 - `APT_REPO_TOKEN`: a fine-grained token with Contents read and write access to
   `MiguelRodo/apt-miguelrodo`. The ordinary `GITHUB_TOKEN` cannot push to a
@@ -43,13 +43,12 @@ gh secret list --repo MiguelRodo/projects
 
 ## Publish a release
 
-The first release has no earlier semantic version tag, so give it an exact
-version:
+For routine releases, request a bump from the latest semantic version tag:
 
 ```bash
 gh workflow run go-version-release.yml \
   --repo MiguelRodo/projects \
-  -f version=0.1.0
+  -f bump_type=patch
 ```
 
 The action creates the tag before it runs GoReleaser. If a failed run has
@@ -58,16 +57,17 @@ the commit: the action will refuse to move an existing tag. Use the next patch
 version instead, or deliberately remove the stale tag after confirming that no
 GitHub Release was published.
 
-Later releases can request a bump:
+Use `minor` or `major` in the same way. For a first release in a repository with
+no semantic version tags, or an intentional exact next version, supply
+`-f version=X.Y.Z` instead of `-f bump_type=patch`, replacing `X.Y.Z` with the
+chosen next version. Check the existing releases first:
 
 ```bash
-gh workflow run go-version-release.yml \
-  --repo MiguelRodo/projects \
-  -f bump_type=patch
+gh release list --repo MiguelRodo/projects
 ```
 
-Use `minor` or `major` in the same way. The workflow also accepts the inputs in
-the GitHub Actions web interface. Watch a run with:
+The workflow also accepts the inputs in the GitHub Actions web interface.
+Watch a run with:
 
 ```bash
 gh run watch --repo MiguelRodo/projects
