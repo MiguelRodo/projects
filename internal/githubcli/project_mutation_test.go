@@ -610,3 +610,25 @@ func TestPreparedProjectMutationReusesDefinitionsAndBindsTarget(t *testing.T) {
 		t.Fatalf("result=%+v, error=%v, calls=%d; want one schema read for preflight and apply", result, err, fake.calls)
 	}
 }
+
+func TestPreparedMutationAllowsSameFieldNameAtDifferentProviderLocations(t *testing.T) {
+	p := contract.Project{
+		Owner: "octo-user", OwnerType: "user", Number: 40, Title: "Planning",
+		Priority: map[string]string{"P1": "P1"}, ClassValues: []string{"Task"},
+		FieldLocations: map[string]contract.FieldLocation{
+			"Priority": {Location: "project field", Field: "Priority"},
+			"Class":    {Location: "organization issue field", Field: "Priority"},
+		},
+	}
+	fake := &fakeRunner{t: t, responses: []fakeResponse{
+		{args: []string{"api", "graphql", "-f", "query=" + ProjectSchemaQuery("user"), "-f", "login=octo-user", "-F", "number=40"}, output: projectSchemaJSON()},
+		{
+			args:   []string{"api", "--paginate", "--slurp", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2026-03-10", "orgs/owner/issue-fields?per_page=100"},
+			output: []byte(`[[{"id":11,"name":"Priority","data_type":"single_select","options":[{"id":101,"name":"Task"}]}]]`),
+		},
+	}}
+	_, err := PrepareProjectItemMutation(context.Background(), fake, MutateProjectItemInput{Project: p, Repo: "owner/repo", Priority: "P1", Class: "Task"})
+	if err != nil {
+		t.Fatal(err)
+	}
+}

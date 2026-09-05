@@ -7,10 +7,14 @@ This repository provides one shared skill for ChatGPT, Codex and other agents th
 - `Organise the existing issues and show me what changed.`
 
 The optional [`projects` Go CLI](docs/cli.md) handles repeated operations that
-benefit from one tested implementation. Its first commands validate the
-existing `.projects/` contract, read every Project item with a completeness
-check, and report whether a newer release exists. It does not replace the skill,
-the repository contract, or the direct GitHub path.
+benefit from one tested implementation. It validates the `.projects/` contract,
+reads complete Project item sets, and supports issue and Project item changes
+with a plan before applying them and an independent check afterwards. It can
+also report whether a newer release exists.
+
+The [public guide](https://miguelrodo.github.io/project-bootstrap/) covers both
+this repository and `project-bootstrap`, which coordinates project setup and
+supplies the local `pj` agent launcher.
 
 Release maintainers should use the [Go release and APT guide](docs/releasing.md).
 

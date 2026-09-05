@@ -1220,6 +1220,7 @@ func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProje
 	organizationFieldsLoaded := false
 	issueType := ""
 	setFields := make(map[string]bool)
+	setDestinations := make(map[string]bool)
 
 	addSingleSelect := func(dimension, desired string) error {
 		location, ok := input.Project.FieldLocations[dimension]
@@ -1239,9 +1240,11 @@ func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProje
 			if !ok {
 				return fmt.Errorf("option %q for %s is absent from Project field %q", desired, dimension, field.Name)
 			}
-			if setFields[strings.ToLower(field.Name)] {
+			destination := "project:" + field.ID
+			if setDestinations[destination] {
 				return fmt.Errorf("Project field %q is requested by more than one dimension", field.Name)
 			}
+			setDestinations[destination] = true
 			projectChanges = append(projectChanges, projectFieldChange{Name: dimension, Field: field, Desired: desired, OptionID: optionID})
 			setFields[strings.ToLower(field.Name)] = true
 			return nil
@@ -1261,9 +1264,11 @@ func prepareProjectChanges(ctx context.Context, runner Runner, input MutateProje
 			if err != nil {
 				return err
 			}
-			if setFields[strings.ToLower(field.Name)] {
+			destination := "organization:" + strconv.Itoa(field.ID)
+			if setDestinations[destination] {
 				return fmt.Errorf("organization issue field %q is requested by more than one dimension", field.Name)
 			}
+			setDestinations[destination] = true
 			organizationChanges = append(organizationChanges, organizationFieldChange{Name: dimension, Field: field, Desired: desired})
 			setFields[strings.ToLower(field.Name)] = true
 			return nil
