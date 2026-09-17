@@ -72,10 +72,10 @@ Operator bootstrap is separate from creating an individual project. The local
 operator tooling (`pj`, `pja`, `pjcp`, `pjcd`, `pj-update-skills`) is maintained
 in its standalone canonical repository [`MiguelRodo/pj`](https://github.com/MiguelRodo/pj).
 
-Run the installer once per machine from a checkout of `MiguelRodo/pj`:
+Run the installer once per machine from the current `v0` release line:
 
 ```bash
-git clone https://github.com/MiguelRodo/pj.git
+git clone --depth 1 --branch v0 --single-branch https://github.com/MiguelRodo/pj.git
 cd pj
 bash install.sh
 ```
