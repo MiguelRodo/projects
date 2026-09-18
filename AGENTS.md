@@ -21,6 +21,16 @@ bash skills/project-bootstrap/tests/run.sh
 
 Tests must not mutate live GitHub, Drive or ChatGPT resources.
 
+## Ponytail
+
+For coding, refactoring, bug-fixing, review and implementation design, read
+`.agents/skills/ponytail/SKILL.md` and apply Ponytail in **full** mode by
+default. Do not use **ultra** unless the operator explicitly requests it.
+Vendoring/provenance notes are in `.agents/skills/ponytail/README.md`.
+
+Repository-specific instructions and the project-bootstrap contract take
+precedence over generic Ponytail guidance.
+
 <!-- github-projects:start -->
 ## GitHub issues and Projects
 
